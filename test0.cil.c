@@ -638,23 +638,6 @@ struct __anonstruct_thread_t_8 {
 };
 #line 54 "al.h"
 typedef struct __anonstruct_thread_t_8 thread_t;
-#line 23 "test2.c"
-struct list_entry;
-#line 23 "test2.c"
-struct head {
-   struct list_entry *lh_first ;
-};
-#line 25 "test2.c"
-struct __anonstruct_links_10 {
-   struct list_entry *le_next ;
-   struct list_entry **le_prev ;
-};
-#line 25 "test2.c"
-struct list_entry {
-   long key ;
-   long val ;
-   struct __anonstruct_links_10 links ;
-};
 /* compiler builtin: 
    void __builtin_varargs_start(__builtin_va_list  ) ;  */
 /* compiler builtin: 
@@ -1385,80 +1368,6 @@ extern size_t shquote(char const   * , char * , size_t  ) ;
 extern size_t shquotev(int  , char * const  * , char * , size_t  ) ;
 #line 292
 extern qdiv_t qdiv(quad_t  , quad_t  ) ;
-#line 49 "/usr/include/string.h"
-extern void *memchr(void const   * , int  , size_t  ) ;
-#line 50
-extern int memcmp(void const   * , void const   * , size_t  ) ;
-#line 51
-extern void *memcpy(void * __restrict   , void const   * __restrict   , size_t  ) ;
-#line 52
-extern void *memmove(void * , void const   * , size_t  ) ;
-#line 53
-extern void *memset(void * , int  , size_t  ) ;
-#line 54
-extern char *strcat(char * __restrict   , char const   * __restrict   ) ;
-#line 55
-extern char *strchr(char const   * , int  ) ;
-#line 56
-extern int strcmp(char const   * , char const   * ) ;
-#line 57
-extern int strcoll(char const   * , char const   * ) ;
-#line 58
-extern char *strcpy(char * __restrict   , char const   * __restrict   ) ;
-#line 59
-extern size_t strcspn(char const   * , char const   * ) ;
-#line 60
-extern char *strerror(int  ) ;
-#line 61
-extern size_t strlen(char const   * ) ;
-#line 62
-extern char *strncat(char * __restrict   , char const   * __restrict   , size_t  ) ;
-#line 63
-extern int strncmp(char const   * , char const   * , size_t  ) ;
-#line 64
-extern char *strncpy(char * __restrict   , char const   * __restrict   , size_t  ) ;
-#line 65
-extern char *strpbrk(char const   * , char const   * ) ;
-#line 66
-extern char *strrchr(char const   * , int  ) ;
-#line 67
-extern size_t strspn(char const   * , char const   * ) ;
-#line 68
-extern char *strstr(char const   * , char const   * ) ;
-#line 69
-extern char *strtok(char * __restrict   , char const   * __restrict   ) ;
-#line 72
-extern char *strtok_r(char * , char const   * , char ** ) ;
-#line 74
-extern size_t strxfrm(char * __restrict   , char const   * __restrict   , size_t  ) ;
-#line 77
-extern void *memccpy(void * , void const   * , int  , size_t  ) ;
-#line 78
-extern char *strdup(char const   * ) ;
-#line 57 "/usr/include/strings.h"
-extern int bcmp(void const   * , void const   * , size_t  ) ;
-#line 58
-extern void bcopy(void const   * , void * , size_t  ) ;
-#line 59
-extern void bzero(void * , size_t  ) ;
-#line 60
-extern int ffs(int  ) ;
-#line 61
-extern char *index(char const   * , int  ) ;
-#line 62
-extern char *rindex(char const   * , int  ) ;
-#line 63
-extern int strcasecmp(char const   * , char const   * ) ;
-#line 64
-extern int strncasecmp(char const   * , char const   * , size_t  ) ;
-#line 83 "/usr/include/string.h"
-extern char *strcasestr(char const   * , char const   * ) ;
-#line 84
-extern size_t strlcat(char * , char const   * , size_t  ) ;
-#line 85
-extern size_t strlcpy(char * , char const   * , size_t  ) ;
-#line 86
-extern char *strsep(char ** , char const   * ) ;
 #line 91 "/usr/include/unistd.h"
 extern  __attribute__((__noreturn__)) void _exit(int  ) ;
 #line 92
@@ -2220,334 +2129,59 @@ extern void timer_stop(struct timeval * , struct timeval * ) ;
 extern void dump_profile(profile_t * ) ;
 #line 10 "alx.h"
 static int default_spins  =    100;
-#line 8 "test2.c"
+#line 7 "test0.c"
 void help(void) 
 { 
 
   {
-#line 11
-  fprintf((FILE * __restrict  )(& __sF[2]), (char const   * __restrict  )"usage: test [-hnpx]\n  -p  number of threads (default: 2)\n  -n  number of repeats (default: 100)\n  -a  use adaptive lock (default)\n  -l  use lock only\n  -t  use transaction only\n  -x  transactional overhead (default: 25)\n  -h  show this\n");
-#line 20
+#line 10
+  fprintf((FILE * __restrict  )(& __sF[2]), (char const   * __restrict  )"usage: test [-hnpx]\n  -p  number of threads (default: 2)\n  -n  number of repeats (default: 1000000)\n  -l  use lock only\n  -t  use transaction only\n  -x  transactional overhead (default: 25)\n  -h  show this\n");
+#line 18
   exit(0);
 }
 }
-#line 23 "test2.c"
-struct head tab  =    {(struct list_entry *)((void *)0)};
-#line 31 "test2.c"
+#line 21 "test0.c"
+long cnt[3]  = {      0L,      0L,      0L};
+#line 23 "test0.c"
 profile_t _l1_prof  ;
-#line 31 "test2.c"
-void __attribute__((__constructor__))  _init_add(void) 
+#line 23 "test0.c"
+void __attribute__((__constructor__))  _init_empty(void) 
 { 
 
   {
-#line 31
+#line 23
   _l1_prof.name = "_l1_prof";
 }
 }
-#line 31 "test2.c"
-void __attribute__((__destructor__))  _atexit_add(void) 
+#line 23 "test0.c"
+void __attribute__((__destructor__))  _atexit_empty(void) 
 { 
 
   {
-#line 31
+#line 23
   dump_profile(& _l1_prof);
 }
 }
-#line 31 "test2.c"
-void _raw_add(long n ) 
-{ struct list_entry *p ;
-  struct list_entry *q ;
-  struct list_entry *r ;
-  void *tmp ;
+#line 23 "test0.c"
+void _raw_empty(void) 
+{ 
 
   {
-#line 37
-  tmp = tmalloc_reserve(sizeof(*r));
-#line 37
-  r = (struct list_entry *)tmp;
-#line 37
-  if (! r) {
-#line 37
-    __assert13("test2.c", 37, "add", "(r = (struct list_entry*)malloc(sizeof(*r)))");
-  }
-#line 38
-  r->key = n;
-#line 39
-  r->val = n + 1L;
-#line 40
-  q = (struct list_entry *)0;
-#line 41
-  p = tab.lh_first;
-#line 41
-  while (p) {
-#line 42
-    if (n == p->key) {
-#line 43
-      tmalloc_release((void *)r);
-#line 44
-      break;
-    }
-#line 46
-    if (n < p->key) {
-#line 47
-      while (1) {
-#line 47
-        r->links.le_prev = p->links.le_prev;
-#line 47
-        r->links.le_next = p;
-#line 47
-        *(p->links.le_prev) = r;
-#line 47
-        p->links.le_prev = & r->links.le_next;
-#line 47
-        break;
-      }
-#line 48
-      break;
-    }
-#line 50
-    q = p;
-#line 41
-    p = p->links.le_next;
-  }
-#line 52
-  if ((unsigned int )p == (unsigned int )((struct list_entry *)0)) {
-#line 53
-    if ((unsigned int )q == (unsigned int )((struct list_entry *)0)) {
-#line 54
-      while (1) {
-#line 54
-        r->links.le_next = tab.lh_first;
-#line 54
-        if ((unsigned int )r->links.le_next != (unsigned int )((void *)0)) {
-#line 54
-          (tab.lh_first)->links.le_prev = & r->links.le_next;
-        }
-#line 54
-        tab.lh_first = r;
-#line 54
-        r->links.le_prev = & tab.lh_first;
-#line 54
-        break;
-      }
-    } else {
-#line 56
-      while (1) {
-#line 56
-        r->links.le_next = q->links.le_next;
-#line 56
-        if ((unsigned int )r->links.le_next != (unsigned int )((void *)0)) {
-#line 56
-          (q->links.le_next)->links.le_prev = & r->links.le_next;
-        }
-#line 56
-        q->links.le_next = r;
-#line 56
-        r->links.le_prev = & q->links.le_next;
-#line 56
-        break;
-      }
-    }
-  }
-#line 58
+#line 27
   return;
 }
 }
-#line 31 "test2.c"
-void _stm_add(Thread *self , long n ) 
-{ struct list_entry *p ;
-  struct list_entry *q ;
-  struct list_entry *r ;
-  void *tmp ;
-  long tmp7 ;
-  long tmp8 ;
-  struct list_entry *var9 ;
-  long mem10 ;
-  long mem11 ;
-  struct list_entry **tmp12 ;
-  struct list_entry **mem13 ;
-  struct list_entry *tmp14 ;
-  struct list_entry *tmp15 ;
-  struct list_entry **mem16 ;
-  struct list_entry **tmp17 ;
-  struct list_entry *mem18 ;
-  struct list_entry *tmp19 ;
-  struct list_entry *var20 ;
-  struct list_entry *mem21 ;
-  struct list_entry **tmp22 ;
-  struct list_entry *var23 ;
-  struct list_entry *tmp24 ;
-  struct list_entry **tmp25 ;
-  struct list_entry *tmp26 ;
-  struct list_entry *mem27 ;
-  struct list_entry *mem28 ;
-  struct list_entry **tmp29 ;
-  struct list_entry *mem30 ;
-  struct list_entry *tmp31 ;
-  struct list_entry **tmp32 ;
+#line 23 "test0.c"
+void _stm_empty(Thread *self ) 
+{ 
 
   {
-#line 37
-  tmp = TxAlloc(self, sizeof(*r));
-#line 37
-  r = (struct list_entry *)tmp;
-#line 37
-  if (! r) {
-#line 37
-    __assert13("test2.c", 37, "add", "(r = (struct list_entry*)malloc(sizeof(*r)))");
-  }
-#line 38
-  tmp7 = n;
-#line 38
-  TxStoreSized(self, (intptr_t *)(& r->key), (intptr_t *)(& tmp7), sizeof(long ));
-#line 39
-  tmp8 = n + 1L;
-#line 39
-  TxStoreSized(self, (intptr_t *)(& r->val), (intptr_t *)(& tmp8), sizeof(long ));
-#line 40
-  q = (struct list_entry *)0;
-#line 23
-  TxLoadSized(self, (intptr_t *)(& var9), (intptr_t *)(& tab.lh_first), sizeof(struct list_entry *));
-#line 41
-  p = var9;
-#line 41
-  while (p) {
-    {
-    TxLoadSized(self, (intptr_t *)(& mem10), (intptr_t *)(& p->key), sizeof(long ));
-#line 42
-    if (n == mem10) {
-#line 43
-      TxFree(self, (void *)r);
-#line 44
-      break;
-    }
-    }
-    {
-    TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& p->key), sizeof(long ));
-#line 46
-    if (n < mem11) {
-#line 47
-      while (1) {
-        TxLoadSized(self, (intptr_t *)(& mem13), (intptr_t *)(& p->links.le_prev),
-                    sizeof(struct list_entry **));
-#line 47
-        tmp12 = mem13;
-#line 47
-        TxStoreSized(self, (intptr_t *)(& r->links.le_prev), (intptr_t *)(& tmp12),
-                     sizeof(struct list_entry **));
-#line 47
-        tmp14 = p;
-#line 47
-        TxStoreSized(self, (intptr_t *)(& r->links.le_next), (intptr_t *)(& tmp14),
-                     sizeof(struct list_entry *));
-        TxLoadSized(self, (intptr_t *)(& mem16), (intptr_t *)(& p->links.le_prev),
-                    sizeof(struct list_entry **));
-#line 47
-        tmp15 = r;
-#line 47
-        TxStoreSized(self, (intptr_t *)mem16, (intptr_t *)(& tmp15), sizeof(struct list_entry *));
-#line 47
-        tmp17 = & r->links.le_next;
-#line 47
-        TxStoreSized(self, (intptr_t *)(& p->links.le_prev), (intptr_t *)(& tmp17),
-                     sizeof(struct list_entry **));
-#line 47
-        break;
-      }
-#line 48
-      break;
-    }
-    }
-#line 50
-    q = p;
-    TxLoadSized(self, (intptr_t *)(& mem18), (intptr_t *)(& p->links.le_next), sizeof(struct list_entry *));
-#line 41
-    p = mem18;
-  }
-#line 52
-  if ((unsigned int )p == (unsigned int )((struct list_entry *)0)) {
-#line 53
-    if ((unsigned int )q == (unsigned int )((struct list_entry *)0)) {
-#line 54
-      while (1) {
-#line 23
-        TxLoadSized(self, (intptr_t *)(& var20), (intptr_t *)(& tab.lh_first), sizeof(struct list_entry *));
-#line 54
-        tmp19 = var20;
-#line 54
-        TxStoreSized(self, (intptr_t *)(& r->links.le_next), (intptr_t *)(& tmp19),
-                     sizeof(struct list_entry *));
-        {
-        TxLoadSized(self, (intptr_t *)(& mem21), (intptr_t *)(& r->links.le_next),
-                    sizeof(struct list_entry *));
-#line 54
-        if ((unsigned int )mem21 != (unsigned int )((void *)0)) {
-#line 23
-          TxLoadSized(self, (intptr_t *)(& var23), (intptr_t *)(& tab.lh_first), sizeof(struct list_entry *));
-#line 54
-          tmp22 = & r->links.le_next;
-#line 54
-          TxStoreSized(self, (intptr_t *)(& var23->links.le_prev), (intptr_t *)(& tmp22),
-                       sizeof(struct list_entry **));
-        }
-        }
-#line 54
-        tmp24 = r;
-#line 54
-        TxStoreSized(self, (intptr_t *)(& tab.lh_first), (intptr_t *)(& tmp24), sizeof(struct list_entry *));
-#line 54
-        tmp25 = & tab.lh_first;
-#line 54
-        TxStoreSized(self, (intptr_t *)(& r->links.le_prev), (intptr_t *)(& tmp25),
-                     sizeof(struct list_entry **));
-#line 54
-        break;
-      }
-    } else {
-#line 56
-      while (1) {
-        TxLoadSized(self, (intptr_t *)(& mem27), (intptr_t *)(& q->links.le_next),
-                    sizeof(struct list_entry *));
-#line 56
-        tmp26 = mem27;
-#line 56
-        TxStoreSized(self, (intptr_t *)(& r->links.le_next), (intptr_t *)(& tmp26),
-                     sizeof(struct list_entry *));
-        {
-        TxLoadSized(self, (intptr_t *)(& mem28), (intptr_t *)(& r->links.le_next),
-                    sizeof(struct list_entry *));
-#line 56
-        if ((unsigned int )mem28 != (unsigned int )((void *)0)) {
-          TxLoadSized(self, (intptr_t *)(& mem30), (intptr_t *)(& q->links.le_next),
-                      sizeof(struct list_entry *));
-#line 56
-          tmp29 = & r->links.le_next;
-#line 56
-          TxStoreSized(self, (intptr_t *)(& mem30->links.le_prev), (intptr_t *)(& tmp29),
-                       sizeof(struct list_entry **));
-        }
-        }
-#line 56
-        tmp31 = r;
-#line 56
-        TxStoreSized(self, (intptr_t *)(& q->links.le_next), (intptr_t *)(& tmp31),
-                     sizeof(struct list_entry *));
-#line 56
-        tmp32 = & q->links.le_next;
-#line 56
-        TxStoreSized(self, (intptr_t *)(& r->links.le_prev), (intptr_t *)(& tmp32),
-                     sizeof(struct list_entry **));
-#line 56
-        break;
-      }
-    }
-  }
-#line 58
+#line 27
   return;
 }
 }
-#line 31 "test2.c"
-static void add(long n ) 
+#line 23 "test0.c"
+static void empty(void) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
   void *(*stmfunc)(Thread * ) ;
@@ -2658,7 +2292,7 @@ static void add(long n )
 #line 43
         if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 44
-          _stm_add(self->stmThread, n);
+          _stm_empty(self->stmThread);
         } else {
 #line 46
           fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -2705,7 +2339,7 @@ static void add(long n )
 #line 56
           TxStart(self->stmThread, & buf, & ro);
 #line 57
-          _stm_add(self->stmThread, n);
+          _stm_empty(self->stmThread);
 #line 58
           TxCommit(self->stmThread);
 #line 59
@@ -2749,7 +2383,7 @@ static void add(long n )
 #line 66
       if (nest->level < 0L) {
 #line 67
-        _raw_add(n);
+        _raw_empty();
       } else {
 #line 69
         fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -2782,7 +2416,7 @@ static void add(long n )
 #line 76
         nest->level = -1L;
 #line 77
-        _raw_add(n);
+        _raw_empty();
 #line 78
         nest->level = 0L;
 #line 79
@@ -2796,716 +2430,33 @@ static void add(long n )
   return;
 }
 }
-#line 61 "test2.c"
-int _raw_del(long n ) 
-{ struct list_entry *p ;
-
-  {
-#line 67
-  p = tab.lh_first;
-#line 67
-  while (p) {
-#line 68
-    if (n == p->key) {
-#line 69
-      while (1) {
-#line 69
-        if ((unsigned int )p->links.le_next != (unsigned int )((void *)0)) {
-#line 69
-          (p->links.le_next)->links.le_prev = p->links.le_prev;
-        }
-#line 69
-        *(p->links.le_prev) = p->links.le_next;
-#line 69
-        break;
-      }
-#line 70
-      tmalloc_release((void *)p);
-#line 71
-      return ((int )1);
-    }
-#line 67
-    p = p->links.le_next;
-  }
-#line 74
-  return ((int )0);
-}
-}
-#line 61 "test2.c"
-int _stm_del(Thread *self , long n ) 
-{ struct list_entry *p ;
-  struct list_entry *var4 ;
-  long mem5 ;
-  struct list_entry *mem6 ;
-  struct list_entry **tmp7 ;
-  struct list_entry **mem8 ;
-  struct list_entry *mem9 ;
-  struct list_entry *tmp10 ;
-  struct list_entry *mem11 ;
-  struct list_entry **mem12 ;
-  struct list_entry *mem13 ;
-
-  {
-#line 23
-  TxLoadSized(self, (intptr_t *)(& var4), (intptr_t *)(& tab.lh_first), sizeof(struct list_entry *));
-#line 67
-  p = var4;
-#line 67
-  while (p) {
-    {
-    TxLoadSized(self, (intptr_t *)(& mem5), (intptr_t *)(& p->key), sizeof(long ));
-#line 68
-    if (n == mem5) {
-#line 69
-      while (1) {
-        {
-        TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& p->links.le_next),
-                    sizeof(struct list_entry *));
-#line 69
-        if ((unsigned int )mem6 != (unsigned int )((void *)0)) {
-          TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& p->links.le_prev),
-                      sizeof(struct list_entry **));
-          TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& p->links.le_next),
-                      sizeof(struct list_entry *));
-#line 69
-          tmp7 = mem8;
-#line 69
-          TxStoreSized(self, (intptr_t *)(& mem9->links.le_prev), (intptr_t *)(& tmp7),
-                       sizeof(struct list_entry **));
-        }
-        }
-        TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& p->links.le_next),
-                    sizeof(struct list_entry *));
-        TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& p->links.le_prev),
-                    sizeof(struct list_entry **));
-#line 69
-        tmp10 = mem11;
-#line 69
-        TxStoreSized(self, (intptr_t *)mem12, (intptr_t *)(& tmp10), sizeof(struct list_entry *));
-#line 69
-        break;
-      }
-#line 70
-      TxFree(self, (void *)p);
-#line 71
-      return ((int )1);
-    }
-    }
-    TxLoadSized(self, (intptr_t *)(& mem13), (intptr_t *)(& p->links.le_next), sizeof(struct list_entry *));
-#line 67
-    p = mem13;
-  }
-#line 74
-  return ((int )0);
-}
-}
-#line 61 "test2.c"
-static int del(long n ) 
-{ profile_t *prof ;
-  void *(*rawfunc)(void) ;
-  void *(*stmfunc)(Thread * ) ;
-  int ro ;
-  int cnt ;
-  thread_t *self ;
-  nest_t *nest ;
-  nest_t *nested ;
-  __intptr_t tmp ;
-  unsigned long tries ;
-  sigjmp_buf buf ;
-  struct timeval start ;
-  void *tmp___0 ;
-  void *tmp___1 ;
-  __intptr_t tmp___2 ;
-  int tmp___3 ;
-  unsigned long volatile   _x ;
-  __intptr_t tmp___4 ;
-  int tmp___5 ;
-  int tmp20 ;
-
-  {
-#line 15 "alx.h"
-  prof = & _l1_prof;
-#line 16
-  rawfunc = (void *(*)(void))0;
-#line 17
-  stmfunc = (void *(*)(Thread * ))0;
-#line 18
-  ro = 0;
-#line 19
-  cnt = default_spins;
-#line 24
-  tries = 0UL;
-#line 28
-  tmp___0 = pthread_getspecific(_al_key);
-#line 28
-  self = (thread_t *)tmp___0;
-#line 28
-  if (! self) {
-#line 28
-    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 29
-  nest = self->prof_list.slh_first;
-#line 29
-  while (nest) {
-#line 30
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 30
-      break;
-    }
-#line 29
-    nest = nest->next.sle_next;
-  }
-#line 32
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
-#line 33
-    tmp___1 = malloc(sizeof(*nest));
-#line 33
-    nest = (nest_t *)tmp___1;
-#line 33
-    if (! nest) {
-#line 33
-      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
-    }
-#line 34
-    nest->prof = prof;
-#line 35
-    nest->level = 0L;
-#line 36
-    while (1) {
-#line 36
-      nest->next.sle_next = self->prof_list.slh_first;
-#line 36
-      self->prof_list.slh_first = nest;
-#line 36
-      break;
-    }
-  }
-#line 38
-  nested = self->prof_list.slh_first;
-#line 38
-  while (nested) {
-#line 39
-    if (0L < nested->level) {
-#line 39
-      break;
-    }
-#line 38
-    nested = nested->next.sle_next;
-  }
-#line 41
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L;
-  } else {
-#line 41
-    if (nest->level == 0L) {
-#line 41
-      tmp___5 = transactMode(prof);
-#line 41
-      if (tmp___5) {
-        _L: /* CIL Label */ 
-#line 42
-        if (! (0L <= nest->level)) {
-#line 42
-          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
-        }
-#line 43
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-#line 44
-          tmp20 = _stm_del(self->stmThread, n);
-        } else {
-#line 46
-          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 47
-          while (1) {
-#line 47
-            tmp = (int )prof->lockHeld;
-#line 47
-            if (! ((long )tmp == -1L)) {
-#line 47
-              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
-                                tmp + 1);
-#line 47
-              if (! (tmp___2 != tmp)) {
-#line 47
-                break;
-              }
-            }
-#line 49
-            cnt --;
-#line 49
-            if (cnt <= 0) {
-#line 49
-              busy();
-#line 49
-              cnt = default_spins;
-            }
-          }
-#line 51
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 52
-          tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 52
-          if (tmp___3) {
-#line 52
-            nest->level = 0L;
-          }
-#line 53
-          timer_start(& start);
-#line 54
-          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
-#line 55
-          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
-#line 56
-          TxStart(self->stmThread, & buf, & ro);
-#line 57
-          tmp20 = _stm_del(self->stmThread, n);
-#line 58
-          TxCommit(self->stmThread);
-#line 59
-          while (1) {
-#line 59
-            _x = prof->triesCommit;
-#line 59
-            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
-#line 59
-              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
-            }
-#line 59
-            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
-#line 59
-            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
-#line 59
-              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
-            }
-#line 59
-            prof->triesCommit = _x;
-#line 59
-            break;
-          }
-#line 60
-          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
-#line 61
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 62
-          timer_stop(& start, & self->timeSTM);
-        }
-      } else {
-        goto _L___0;
-      }
-    } else {
-      _L___0: /* CIL Label */ 
-#line 65
-      if (! (nest->level <= 0L)) {
-#line 65
-        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
-      }
-#line 66
-      if (nest->level < 0L) {
-#line 67
-        tmp20 = _raw_del(n);
-      } else {
-#line 69
-        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 70
-        while (1) {
-#line 70
-          if (! (prof->lockHeld != (long volatile   )0)) {
-#line 70
-            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
-#line 70
-            if (! (tmp___4 != 0)) {
-#line 70
-              break;
-            }
-          }
-#line 72
-          cnt --;
-#line 72
-          if (cnt <= 0) {
-#line 72
-            busy();
-#line 72
-            cnt = default_spins;
-          }
-        }
-#line 74
-        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 75
-        timer_start(& start);
-#line 76
-        nest->level = -1L;
-#line 77
-        tmp20 = _raw_del(n);
-#line 78
-        nest->level = 0L;
-#line 79
-        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 80
-        timer_stop(& start, & self->timeRaw);
-      }
-    }
-  }
-#line 83
-  return (tmp20);
-}
-}
-#line 77 "test2.c"
-int _raw_lookup(long n , struct list_entry *ret ) 
-{ struct list_entry *p ;
-
-  {
-#line 83
-  p = tab.lh_first;
-#line 83
-  while (p) {
-#line 84
-    if (n == p->key) {
-#line 85
-      memcpy((void * __restrict  )ret, (void const   * __restrict  )p, sizeof(*p));
-#line 86
-      return ((int )1);
-    }
-#line 83
-    p = p->links.le_next;
-  }
-#line 89
-  return ((int )0);
-}
-}
-#line 77 "test2.c"
-int _stm_lookup(Thread *self , long n , struct list_entry *ret ) 
-{ struct list_entry *p ;
-  struct list_entry *var5 ;
-  long mem6 ;
-  struct list_entry *mem7 ;
-
-  {
-#line 23
-  TxLoadSized(self, (intptr_t *)(& var5), (intptr_t *)(& tab.lh_first), sizeof(struct list_entry *));
-#line 83
-  p = var5;
-#line 83
-  while (p) {
-    {
-    TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& p->key), sizeof(long ));
-#line 84
-    if (n == mem6) {
-#line 85
-      memcpy((void * __restrict  )ret, (void const   * __restrict  )p, sizeof(*p));
-#line 86
-      return ((int )1);
-    }
-    }
-    TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& p->links.le_next), sizeof(struct list_entry *));
-#line 83
-    p = mem7;
-  }
-#line 89
-  return ((int )0);
-}
-}
-#line 77 "test2.c"
-static int lookup(long n , struct list_entry *ret ) 
-{ profile_t *prof ;
-  void *(*rawfunc)(void) ;
-  void *(*stmfunc)(Thread * ) ;
-  int ro ;
-  int cnt ;
-  thread_t *self ;
-  nest_t *nest ;
-  nest_t *nested ;
-  __intptr_t tmp ;
-  unsigned long tries ;
-  sigjmp_buf buf ;
-  struct timeval start ;
-  void *tmp___0 ;
-  void *tmp___1 ;
-  __intptr_t tmp___2 ;
-  int tmp___3 ;
-  unsigned long volatile   _x ;
-  __intptr_t tmp___4 ;
-  int tmp___5 ;
-  int tmp20 ;
-
-  {
-#line 15 "alx.h"
-  prof = & _l1_prof;
-#line 16
-  rawfunc = (void *(*)(void))0;
-#line 17
-  stmfunc = (void *(*)(Thread * ))0;
-#line 18
-  ro = 1;
-#line 19
-  cnt = default_spins;
-#line 24
-  tries = 0UL;
-#line 28
-  tmp___0 = pthread_getspecific(_al_key);
-#line 28
-  self = (thread_t *)tmp___0;
-#line 28
-  if (! self) {
-#line 28
-    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 29
-  nest = self->prof_list.slh_first;
-#line 29
-  while (nest) {
-#line 30
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 30
-      break;
-    }
-#line 29
-    nest = nest->next.sle_next;
-  }
-#line 32
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
-#line 33
-    tmp___1 = malloc(sizeof(*nest));
-#line 33
-    nest = (nest_t *)tmp___1;
-#line 33
-    if (! nest) {
-#line 33
-      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
-    }
-#line 34
-    nest->prof = prof;
-#line 35
-    nest->level = 0L;
-#line 36
-    while (1) {
-#line 36
-      nest->next.sle_next = self->prof_list.slh_first;
-#line 36
-      self->prof_list.slh_first = nest;
-#line 36
-      break;
-    }
-  }
-#line 38
-  nested = self->prof_list.slh_first;
-#line 38
-  while (nested) {
-#line 39
-    if (0L < nested->level) {
-#line 39
-      break;
-    }
-#line 38
-    nested = nested->next.sle_next;
-  }
-#line 41
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L;
-  } else {
-#line 41
-    if (nest->level == 0L) {
-#line 41
-      tmp___5 = transactMode(prof);
-#line 41
-      if (tmp___5) {
-        _L: /* CIL Label */ 
-#line 42
-        if (! (0L <= nest->level)) {
-#line 42
-          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
-        }
-#line 43
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-#line 44
-          tmp20 = _stm_lookup(self->stmThread, n, ret);
-        } else {
-#line 46
-          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 47
-          while (1) {
-#line 47
-            tmp = (int )prof->lockHeld;
-#line 47
-            if (! ((long )tmp == -1L)) {
-#line 47
-              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
-                                tmp + 1);
-#line 47
-              if (! (tmp___2 != tmp)) {
-#line 47
-                break;
-              }
-            }
-#line 49
-            cnt --;
-#line 49
-            if (cnt <= 0) {
-#line 49
-              busy();
-#line 49
-              cnt = default_spins;
-            }
-          }
-#line 51
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 52
-          tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 52
-          if (tmp___3) {
-#line 52
-            nest->level = 0L;
-          }
-#line 53
-          timer_start(& start);
-#line 54
-          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
-#line 55
-          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
-#line 56
-          TxStart(self->stmThread, & buf, & ro);
-#line 57
-          tmp20 = _stm_lookup(self->stmThread, n, ret);
-#line 58
-          TxCommit(self->stmThread);
-#line 59
-          while (1) {
-#line 59
-            _x = prof->triesCommit;
-#line 59
-            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
-#line 59
-              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
-            }
-#line 59
-            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
-#line 59
-            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
-#line 59
-              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
-            }
-#line 59
-            prof->triesCommit = _x;
-#line 59
-            break;
-          }
-#line 60
-          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
-#line 61
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 62
-          timer_stop(& start, & self->timeSTM);
-        }
-      } else {
-        goto _L___0;
-      }
-    } else {
-      _L___0: /* CIL Label */ 
-#line 65
-      if (! (nest->level <= 0L)) {
-#line 65
-        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
-      }
-#line 66
-      if (nest->level < 0L) {
-#line 67
-        tmp20 = _raw_lookup(n, ret);
-      } else {
-#line 69
-        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 70
-        while (1) {
-#line 70
-          if (! (prof->lockHeld != (long volatile   )0)) {
-#line 70
-            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
-#line 70
-            if (! (tmp___4 != 0)) {
-#line 70
-              break;
-            }
-          }
-#line 72
-          cnt --;
-#line 72
-          if (cnt <= 0) {
-#line 72
-            busy();
-#line 72
-            cnt = default_spins;
-          }
-        }
-#line 74
-        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 75
-        timer_start(& start);
-#line 76
-        nest->level = -1L;
-#line 77
-        tmp20 = _raw_lookup(n, ret);
-#line 78
-        nest->level = 0L;
-#line 79
-        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 80
-        timer_stop(& start, & self->timeRaw);
-      }
-    }
-  }
-#line 83
-  return (tmp20);
-}
-}
-#line 92 "test2.c"
+#line 29 "test0.c"
 void *task(void *arg ) 
-{ long n ;
-  long t ;
-  struct list_entry ret ;
-  long tmp ;
-  long tmp___0 ;
+{ int n ;
+  int tmp ;
 
   {
-#line 95
-  n = (long )((int )arg);
-#line 99
+#line 32
+  n = (int )arg;
+#line 34
   while (1) {
-#line 99
-    tmp___0 = n;
-#line 99
+#line 34
+    tmp = n;
+#line 34
     n --;
-#line 99
-    if (! tmp___0) {
-#line 99
+#line 34
+    if (! tmp) {
+#line 34
       break;
     }
-#line 100
-    tmp = random();
-#line 100
-    t = tmp % 1000L;
-#line 101
-    switch ((int )(n % 4L)) {
-    case 0: 
-#line 102
-    add(t);
-#line 102
-    break;
-    case 1: 
-#line 103
-    del(t);
-#line 103
-    break;
-    default: 
-#line 104
-    lookup(t, & ret);
-#line 104
-    break;
-    }
+#line 34
+    empty();
   }
-#line 107
+#line 35
   return ((void *)0);
 }
 }
-#line 110 "test2.c"
+#line 38 "test0.c"
 int main(int argc , char **argv ) 
 { int p ;
   int n ;
@@ -3514,119 +2465,84 @@ int main(int argc , char **argv )
   pthread_t t[256] ;
   void *r ;
   double tmp ;
-  struct list_entry *p___0 ;
-  long a ;
-  long b ;
-  long c ;
 
   {
-#line 113
+#line 41
   p = 2;
-#line 113
-  n = 100;
-#line 117
+#line 41
+  n = 1000000;
+#line 45
   while (1) {
-#line 117
-    ch = getopt(argc, (char * const  *)argv, "p:n:altx:");
-#line 117
+#line 45
+    ch = getopt(argc, (char * const  *)argv, "p:n:ltx:");
+#line 45
     if (! (ch != -1)) {
-#line 117
+#line 45
       break;
     }
-#line 118
+#line 46
     switch (ch) {
     case 110: 
-#line 119
+#line 47
     n = atoi((char const   *)optarg);
-#line 119
+#line 47
     break;
     case 112: 
-#line 120
+#line 48
     p = atoi((char const   *)optarg);
-#line 120
-    break;
-    case 97: 
-#line 121
-    setAdaptMode(0);
-#line 121
+#line 48
     break;
     case 108: 
-#line 122
+#line 49
     setAdaptMode(-1);
-#line 122
+#line 49
     break;
     case 116: 
-#line 123
+#line 50
     setAdaptMode(1);
-#line 123
+#line 50
     break;
     case 120: 
-#line 124
+#line 51
     tmp = atof((char const   *)optarg);
-#line 124
+#line 51
     setTransactOvhd(tmp);
-#line 124
+#line 51
     break;
     case 104: 
     default: 
-#line 126
+#line 53
     help();
     }
   }
-#line 129
+#line 56
   argc -= optind;
-#line 130
+#line 57
   argv += optind;
-#line 132
+#line 59
   if (256 <= p) {
-#line 132
+#line 59
     p = 256;
   }
-#line 133
+#line 60
   i = 0;
-#line 133
+#line 60
   while (i < p) {
-#line 133
+#line 60
     al_pthread_create(& t[i], (pthread_attr_t const   *)0, & task, (void *)n);
-#line 133
+#line 60
     i ++;
   }
-#line 134
+#line 61
   i = 0;
-#line 134
+#line 61
   while (i < p) {
-#line 134
+#line 61
     pthread_join(t[i], & r);
-#line 134
+#line 61
     i ++;
   }
-#line 137
-  a = 0L;
-#line 137
-  b = 0L;
-#line 137
-  c = 0L;
-#line 139
-  p___0 = tab.lh_first;
-#line 139
-  while (p___0) {
-#line 140
-    b = p___0->key;
-#line 141
-    if (! (a <= b)) {
-#line 141
-      printf((char const   * __restrict  )"*** Oops, %ld <= %ld\n", a, b);
-    }
-#line 142
-    a = b;
-#line 142
-    c ++;
-#line 139
-    p___0 = p___0->links.le_next;
-  }
-#line 144
-  printf((char const   * __restrict  )"number of elements=%ld\n", c);
-#line 146
+#line 62
   return (0);
 }
 }

@@ -29,26 +29,35 @@ CILLYFLAGS = --keepunused --doatomic --save-temps --check
 .ml.cmx:
 	$(OCAMLOPT) $(OCAMLCPPFLAGS) $(OCAMLCFLAGS) -c $(srcdir)/$<
 
-all: subdirs test1 test2 test3
+all: subdirs test0 test1 test2 test3 test4
 
+test0: test0.o al.o port.o
+	$(CC) $(LDFLAGS) -o test0 test0.o al.o port.o $(LIBS)
 test1: test1.o al.o port.o
 	$(CC) $(LDFLAGS) -o test1 test1.o al.o port.o $(LIBS)
 test2: test2.o al.o port.o
 	$(CC) $(LDFLAGS) -o test2 test2.o al.o port.o $(LIBS)
 test3: test3.o al.o port.o
 	$(CC) $(LDFLAGS) -o test3 test3.o al.o port.o $(LIBS)
+test4: test4.o al.o port.o
+	$(CC) $(LDFLAGS) -o test4 test4.o al.o port.o $(LIBS)
 
-check: atomic.cmo test1.check test2.check test3.check
+check: atomic.cmo test1.check test2.check test3.check test4.check
 
+test0.check: test0.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
 test1.check: test1.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
 test2.check: test2.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
 test3.check: test3.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h tree.h
 
+test0.o: test0.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
 test1.o: test1.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
 	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
 test2.o: test2.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
 	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
 test3.o: test3.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h tree.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+test4.o: test4.c alx.h al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h tree.h
 	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
 
 al.o: al.c al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h

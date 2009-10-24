@@ -11,6 +11,7 @@ help(void)
           "usage: test [-hnpx]\n"
           "  -p  number of threads (default: 2)\n"
           "  -n  number of repeats (default: 100)\n"
+          "  -a  use adaptive lock (default)\n"
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
           "  -x  transactional overhead (default: 25)\n"
@@ -98,6 +99,7 @@ validate(void* arg)
   struct tree_node *p;
   long a = 0,b = 0,c = 0;
 
+  setAdaptMode(-1);
   RB_FOREACH(p,TREE,&tab) {
     b = p->key;
     if (!(a <= b)) printf("*** Oops, %ld <= %ld\n",a,b);
@@ -115,10 +117,11 @@ main(int argc,char* argv[])
   pthread_t t[256];
   void* r;
 
-  while ((ch = getopt(argc,argv,"p:n:ltx:")) != -1) {
+  while ((ch = getopt(argc,argv,"p:n:atlx:")) != -1) {
     switch (ch) {
     case 'n': n = atoi(optarg); break;
     case 'p': p = atoi(optarg); break;
+    case 'a': setAdaptMode(0); break;
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
     case 'x': setTransactOvhd(atof(optarg)); break;

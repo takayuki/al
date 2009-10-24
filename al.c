@@ -9,6 +9,8 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 #include "al.h"
 #ifdef pthread_create
 #undef pthread_create
@@ -20,6 +22,8 @@
 pthread_key_t _al_key;
 static int adaptiveMode = 0;
 static double transactOvhd = 25.0;
+static double timeSTM = 0.0;
+static double timeRaw = 0.0;
 
 int
 setAdaptMode(int mode)
@@ -54,6 +58,7 @@ _dispatcher(void* _arg)
   self = malloc(sizeof(*self));
   if (self == 0)
     return (void*)EAGAIN;
+  memset(self,0,sizeof(*self));
   self->stmThread = TxNewThread();
   if (self->stmThread == 0) {
     free(self);
@@ -84,17 +89,20 @@ al_pthread_create(pthread_t* thread,
 int
 transactMode(profile_t* prof)
 {
-  int threadsInStmMode;
-  double avgTries,contention;
+  long lockHeld = prof->lockHeld;
+  long threadsWaiting = prof->threadsWaiting;
+  unsigned long triesCommit = prof->triesCommit;
+  double tries = (double)high(triesCommit);
+  double commit = (double)low(triesCommit);
+  double avgTries;
 
   if (adaptiveMode == -1) return 0;
   if (adaptiveMode == 1) return 1;
-  if (0 < prof->lockHeld) threadsInStmMode =  prof->lockHeld;
-  else threadsInStmMode = 0;
-  if (prof->commit == 0) avgTries =  1.0;
-  else avgTries = ((double)prof->tries) / prof->commit;
-  contention  = threadsInStmMode + prof->threadsWaiting;
-  return (avgTries * transactOvhd) < contention;
+  if (0 < lockHeld) threadsWaiting += lockHeld;
+  if (low(triesCommit) == 0) avgTries =  1.0;
+  else avgTries = tries / commit;
+  if (threadsWaiting <= 0)  threadsWaiting = 0;
+  return (avgTries * transactOvhd) < ((double)threadsWaiting);
 }
 
 void
@@ -134,27 +142,51 @@ TxLoadSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 }
 
 void
+timer_start(struct timeval* tv)
+{
+  assert(gettimeofday(tv,0) == 0);
+}
+
+void
+timer_stop(struct timeval* start,struct timeval* acc)
+{
+  struct timeval stop;
+
+  assert(gettimeofday(&stop,0) == 0);
+  stop.tv_sec -= start->tv_sec;
+  stop.tv_usec -= start->tv_usec;
+  if (stop.tv_usec < 0) {
+    stop.tv_sec--;
+    stop.tv_usec += 1000000;
+  }
+  if (!((0 <= stop.tv_sec && 0 < stop.tv_usec) ||
+	(0 < stop.tv_sec && 0 <= stop.tv_usec)))
+    stop.tv_usec++;
+  acc->tv_sec += stop.tv_sec;
+  acc->tv_usec += stop.tv_usec;
+  if (1000000 <= acc->tv_usec) {
+    acc->tv_sec++;
+    acc->tv_usec -= 1000000;
+  }
+}
+
+void
 dump_profile(profile_t* prof)
 {
-  double r1 = ((double)prof->waitLock)/prof->invokeInLockMode*100.0;
-  double r2 = ((double)(prof->tries-prof->commit))/prof->commit*100.0;
-  printf("%s:\n"
-         "%lu in lock; %lu conflicts(%.2lf%%)\n"
-         "%lu in transaction; %lu conflicts(%.2lf%%)\n",
-         prof->name,
-         (unsigned long)prof->invokeInLockMode,
-         (unsigned long)prof->waitLock,
-         isnan(r1) ? 0.0 : r1,
-         (unsigned long)prof->commit,
-         (unsigned long)(prof->tries-prof->commit),
-         isnan(r2) ? 0.0 : r2);
+  printf("raw=%.3lf[s],stm=%.3lf[s]\n",timeRaw,timeSTM);
 }
 
 static void
 destroy_thread(void* arg)
 {
   thread_t* self = (thread_t*)arg;
+  static pthread_mutex_t l = PTHREAD_MUTEX_INITIALIZER;  
 
+  pthread_mutex_lock(&l);
+  timeRaw += (double)self->timeRaw.tv_sec;
+  timeRaw += ((double)self->timeRaw.tv_usec) / 1000000;
+  timeSTM += (double)self->timeSTM.tv_sec;
+  timeSTM += ((double)self->timeSTM.tv_usec) / 1000000;
   TxFreeThread(self->stmThread);
   while (!SLIST_EMPTY(&self->prof_list)) {
     nest_t* nest;
@@ -163,18 +195,18 @@ destroy_thread(void* arg)
     free(nest);
   }
   free(arg);
+  pthread_mutex_unlock(&l);
 }
 
 __attribute__((constructor)) void
 init(void)
 {
-  pthread_key_create(&_al_key,destroy_thread);
   TxOnce();
+  pthread_key_create(&_al_key,destroy_thread);
 }
 
 __attribute__((destructor)) void
 finish(void)
 {
   TxShutdown();
-  pthread_key_create(&_al_key,destroy_thread);
 }

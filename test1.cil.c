@@ -407,20 +407,6 @@ typedef __intptr_t intptr_t;
 struct timeval;
 #line 285
 struct timeval;
-#line 75 "/usr/include/time.h"
-struct tm {
-   int tm_sec ;
-   int tm_min ;
-   int tm_hour ;
-   int tm_mday ;
-   int tm_mon ;
-   int tm_year ;
-   int tm_wday ;
-   int tm_yday ;
-   int tm_isdst ;
-   long tm_gmtoff ;
-   char *tm_zone ;
-};
 #line 49 "/usr/include/sys/time.h"
 struct timeval {
    long tv_sec ;
@@ -454,7 +440,21 @@ struct clockinfo {
    int stathz ;
    int profhz ;
 };
-#line 136 "/usr/include/time.h"
+#line 75 "/usr/include/time.h"
+struct tm {
+   int tm_sec ;
+   int tm_min ;
+   int tm_hour ;
+   int tm_mday ;
+   int tm_mon ;
+   int tm_year ;
+   int tm_wday ;
+   int tm_yday ;
+   int tm_isdst ;
+   long tm_gmtoff ;
+   char *tm_zone ;
+};
+#line 136
 struct sigevent;
 #line 136
 struct sigevent;
@@ -604,40 +604,39 @@ struct _Thread {
 };
 #line 77 "tl2/tl2.h"
 typedef struct _Thread Thread;
-#line 14 "al.h"
+#line 15 "al.h"
 struct __anonstruct_profile_t_6 {
    char const   *name ;
-   __intptr_t volatile   lockHeld ;
-   __intptr_t volatile   threadsWaiting ;
-   __intptr_t volatile   tries ;
-   __intptr_t volatile   commit ;
-   __intptr_t volatile   invokeInLockMode ;
-   __intptr_t volatile   waitLock ;
+   long volatile   lockHeld ;
+   long volatile   threadsWaiting ;
+   unsigned long volatile   triesCommit ;
 };
-#line 14 "al.h"
+#line 15 "al.h"
 typedef struct __anonstruct_profile_t_6 profile_t;
-#line 24 "al.h"
+#line 48 "al.h"
 struct __anonstruct_next_7 {
    struct _nest_t *sle_next ;
 };
-#line 24 "al.h"
+#line 48 "al.h"
 struct _nest_t {
    profile_t *prof ;
    long level ;
    struct __anonstruct_next_7 next ;
 };
-#line 24 "al.h"
+#line 48 "al.h"
 typedef struct _nest_t nest_t;
-#line 30 "al.h"
+#line 54 "al.h"
 struct __anonstruct_prof_list_9 {
    struct _nest_t *slh_first ;
 };
-#line 30 "al.h"
+#line 54 "al.h"
 struct __anonstruct_thread_t_8 {
    Thread *stmThread ;
+   struct timeval timeRaw ;
+   struct timeval timeSTM ;
    struct __anonstruct_prof_list_9 prof_list ;
 };
-#line 30 "al.h"
+#line 54 "al.h"
 typedef struct __anonstruct_thread_t_8 thread_t;
 /* compiler builtin: 
    void __builtin_varargs_start(__builtin_va_list  ) ;  */
@@ -1671,23 +1670,7 @@ extern long timezone  __asm__("__timezone13")  ;
 #line 129
 extern char *strptime(char const   * __restrict   , char const   * __restrict   ,
                       struct tm * __restrict   ) ;
-#line 237 "/usr/include/sys/time.h"
-extern int adjtime(struct timeval  const  * , struct timeval * ) ;
-#line 238
-extern int futimes(int  , struct timeval  const  * ) ;
-#line 239
-extern int getitimer(int  , struct itimerval * ) ;
-#line 240
-extern int gettimeofday(struct timeval * , struct timezone * ) ;
-#line 241
-extern int lutimes(char const   * , struct timeval  const  * ) ;
-#line 242
-extern int setitimer(int  , struct itimerval  const  * , struct itimerval * ) ;
-#line 243
-extern int settimeofday(struct timeval  const  * , struct timezone  const  * ) ;
-#line 244
-extern int utimes(char const   * , struct timeval  const  * ) ;
-#line 138 "/usr/include/time.h"
+#line 138
 extern int clock_getres(clockid_t  , struct timespec * ) ;
 #line 139
 extern int clock_gettime(clockid_t  , struct timespec * ) ;
@@ -1728,6 +1711,22 @@ extern time_t timelocal(struct tm * ) ;
 extern void tzsetwall(void) ;
 #line 169
 extern struct tm *offtime(time_t const   * , long  ) ;
+#line 237 "/usr/include/sys/time.h"
+extern int adjtime(struct timeval  const  * , struct timeval * ) ;
+#line 238
+extern int futimes(int  , struct timeval  const  * ) ;
+#line 239
+extern int getitimer(int  , struct itimerval * ) ;
+#line 240
+extern int gettimeofday(struct timeval * , struct timezone * ) ;
+#line 241
+extern int lutimes(char const   * , struct timeval  const  * ) ;
+#line 242
+extern int setitimer(int  , struct itimerval  const  * , struct itimerval * ) ;
+#line 243
+extern int settimeofday(struct timeval  const  * , struct timezone  const  * ) ;
+#line 244
+extern int utimes(char const   * , struct timeval  const  * ) ;
 #line 56 "/usr/include/sched.h"
 extern int sched_setparam(__pid_t  , struct sched_param  const  * ) ;
 #line 57
@@ -2105,26 +2104,30 @@ extern __intptr_t cmpxchg(__intptr_t volatile   * , __intptr_t  , __intptr_t  ) 
 extern __intptr_t fetch_and_add1(__intptr_t volatile   * ) ;
 #line 28
 extern __intptr_t fetch_and_sub1(__intptr_t volatile   * ) ;
-#line 37 "al.h"
+#line 63 "al.h"
 extern int al_pthread_create(pthread_t * , pthread_attr_t const   * , void *(*)(void * ) ,
                              void * ) ;
-#line 40
+#line 66
 extern pthread_key_t _al_key ;
-#line 41
+#line 67
 extern int setAdaptMode(int  ) ;
-#line 42
+#line 68
 extern double setTransactOvhd(double  ) ;
-#line 43
+#line 69
 extern int transactMode(profile_t * ) ;
-#line 44
+#line 70
 extern void busy(void) ;
-#line 45
+#line 71
 extern void TxStoreSized(Thread * , __intptr_t * , __intptr_t * , size_t  ) ;
-#line 46
+#line 72
 extern void TxLoadSized(Thread * , __intptr_t * , __intptr_t * , size_t  ) ;
-#line 47
+#line 73
+extern void timer_start(struct timeval * ) ;
+#line 74
+extern void timer_stop(struct timeval * , struct timeval * ) ;
+#line 75
 extern void dump_profile(profile_t * ) ;
-#line 9 "alx.h"
+#line 10 "alx.h"
 static int default_spins  =    100;
 #line 7 "test1.c"
 void help(void) 
@@ -2132,76 +2135,62 @@ void help(void)
 
   {
 #line 10
-  fprintf((FILE * __restrict  )(& __sF[2]), (char const   * __restrict  )"usage: test [-hnpx]\n  -p  number of threads (default: 2)\n  -n  number of repeats (default: 1000000)\n  -l  use lock only\n  -t  use transaction only\n  -x  transactional overhead (default: 25)\n  -h  show this\n");
-#line 18
+  fprintf((FILE * __restrict  )(& __sF[2]), (char const   * __restrict  )"usage: test [-hnpx]\n  -p  number of threads (default: 2)\n  -n  number of repeats (default: 1000000)\n  -a  use adaptive lock (default)\n  -l  use lock only\n  -t  use transaction only\n  -x  transactional overhead (default: 25)\n  -h  show this\n");
+#line 19
   exit(0);
 }
 }
-#line 21 "test1.c"
-long cnt[3]  = {      0L,      0L,      0L};
-#line 23 "test1.c"
+#line 22 "test1.c"
+long cnt  ;
+#line 24 "test1.c"
 profile_t _l1_prof  ;
-#line 23 "test1.c"
+#line 24 "test1.c"
 void __attribute__((__constructor__))  _init_incr(void) 
 { 
 
   {
-#line 23
+#line 24
   _l1_prof.name = "_l1_prof";
 }
 }
-#line 23 "test1.c"
+#line 24 "test1.c"
 void __attribute__((__destructor__))  _atexit_incr(void) 
 { 
 
   {
-#line 23
+#line 24
   dump_profile(& _l1_prof);
 }
 }
-#line 23 "test1.c"
-void _raw_incr(long n ) 
-{ long *p ;
+#line 24 "test1.c"
+void _raw_incr(void) 
+{ 
 
   {
+#line 28
+  cnt ++;
 #line 29
-  (cnt[1]) ++;
-#line 30
-  p = & cnt[2];
-#line 31
-  *p += n;
-#line 32
   return;
 }
 }
-#line 23 "test1.c"
-void _stm_incr(Thread *self , long n ) 
-{ long *p ;
-  long tmp4 ;
-  long var5 ;
-  long tmp6 ;
-  long mem7 ;
+#line 24 "test1.c"
+void _stm_incr(Thread *self ) 
+{ long tmp2 ;
+  long var3 ;
 
   {
-#line 21
-  TxLoadSized(self, (intptr_t *)(& var5), (intptr_t *)(& cnt[1]), sizeof(long ));
+#line 22
+  TxLoadSized(self, (intptr_t *)(& var3), (intptr_t *)(& cnt), sizeof(long ));
+#line 28
+  tmp2 = var3 + 1L;
+#line 28
+  TxStoreSized(self, (intptr_t *)(& cnt), (intptr_t *)(& tmp2), sizeof(long ));
 #line 29
-  tmp4 = var5 + 1L;
-#line 29
-  TxStoreSized(self, (intptr_t *)(& cnt[1]), (intptr_t *)(& tmp4), sizeof(long ));
-#line 30
-  p = & cnt[2];
-  TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)p, sizeof(long ));
-#line 31
-  tmp6 = mem7 + n;
-#line 31
-  TxStoreSized(self, (intptr_t *)p, (intptr_t *)(& tmp6), sizeof(long ));
-#line 32
   return;
 }
 }
-#line 23 "test1.c"
-static void incr(long n ) 
+#line 24 "test1.c"
+static void incr(void) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
   void *(*stmfunc)(Thread * ) ;
@@ -2211,273 +2200,274 @@ static void incr(long n )
   nest_t *nest ;
   nest_t *nested ;
   __intptr_t tmp ;
+  unsigned long tries ;
   sigjmp_buf buf ;
+  struct timeval start ;
   void *tmp___0 ;
   void *tmp___1 ;
   __intptr_t tmp___2 ;
   int tmp___3 ;
+  unsigned long volatile   _x ;
   __intptr_t tmp___4 ;
-  __intptr_t tmp___5 ;
-  int tmp___6 ;
+  int tmp___5 ;
 
   {
-#line 14 "alx.h"
+#line 15 "alx.h"
   prof = & _l1_prof;
-#line 15
-  rawfunc = (void *(*)(void))0;
 #line 16
-  stmfunc = (void *(*)(Thread * ))0;
+  rawfunc = (void *(*)(void))0;
 #line 17
-  ro = 0;
+  stmfunc = (void *(*)(Thread * ))0;
 #line 18
+  ro = 0;
+#line 19
   cnt = default_spins;
-#line 25
+#line 24
+  tries = 0UL;
+#line 28
   tmp___0 = pthread_getspecific(_al_key);
-#line 25
+#line 28
   self = (thread_t *)tmp___0;
-#line 25
+#line 28
   if (! self) {
-#line 25
-    __assert13("alx.h", 25, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 26
-  nest = self->prof_list.slh_first;
-#line 26
-  while (nest) {
-#line 27
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 27
-      break;
-    }
-#line 26
-    nest = nest->next.sle_next;
+#line 28
+    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
   }
 #line 29
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+  nest = self->prof_list.slh_first;
+#line 29
+  while (nest) {
 #line 30
-    tmp___1 = malloc(sizeof(*nest));
+    if ((unsigned int )nest->prof == (unsigned int )prof) {
 #line 30
-    nest = (nest_t *)tmp___1;
-#line 30
-    if (! nest) {
-#line 30
-      __assert13("alx.h", 30, "_al_template", "nest = malloc(sizeof(*nest))");
+      break;
     }
-#line 31
-    nest->prof = prof;
+#line 29
+    nest = nest->next.sle_next;
+  }
 #line 32
+  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+#line 33
+    tmp___1 = malloc(sizeof(*nest));
+#line 33
+    nest = (nest_t *)tmp___1;
+#line 33
+    if (! nest) {
+#line 33
+      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
+    }
+#line 34
+    nest->prof = prof;
+#line 35
     nest->level = 0L;
-#line 33
+#line 36
     while (1) {
-#line 33
+#line 36
       nest->next.sle_next = self->prof_list.slh_first;
-#line 33
+#line 36
       self->prof_list.slh_first = nest;
-#line 33
+#line 36
       break;
     }
   }
-#line 35
+#line 38
   nested = self->prof_list.slh_first;
-#line 35
+#line 38
   while (nested) {
-#line 36
+#line 39
     if (0L < nested->level) {
-#line 36
+#line 39
       break;
     }
-#line 35
+#line 38
     nested = nested->next.sle_next;
   }
-#line 38
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L___0;
-  } else {
-#line 38
-    if (nest->level == 0L) {
-#line 38
-      tmp___6 = transactMode(prof);
-#line 38
-      if (tmp___6) {
-        _L___0: /* CIL Label */ 
-#line 39
-        if (! (0L <= nest->level)) {
-#line 39
-          __assert13("alx.h", 39, "_al_template", "0 <= nest->level");
-        }
-#line 40
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 41
-          _stm_incr(self->stmThread, n);
-        } else {
+  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+    goto _L;
+  } else {
+#line 41
+    if (nest->level == 0L) {
+#line 41
+      tmp___5 = transactMode(prof);
+#line 41
+      if (tmp___5) {
+        _L: /* CIL Label */ 
+#line 42
+        if (! (0L <= nest->level)) {
+#line 42
+          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
+        }
 #line 43
-          fetch_and_add1(& prof->threadsWaiting);
+        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 44
+          _stm_incr(self->stmThread);
+        } else {
+#line 46
+          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 47
           while (1) {
-#line 44
+#line 47
             tmp = (int )prof->lockHeld;
-#line 44
-            if (! (tmp == -1)) {
-#line 44
-              tmp___2 = cmpxchg(& prof->lockHeld, tmp, tmp + 1);
-#line 44
+#line 47
+            if (! ((long )tmp == -1L)) {
+#line 47
+              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
+                                tmp + 1);
+#line 47
               if (! (tmp___2 != tmp)) {
-#line 44
+#line 47
                 break;
               }
             }
-#line 46
+#line 49
             cnt --;
-#line 46
+#line 49
             if (cnt <= 0) {
-#line 47
+#line 49
               busy();
-#line 47
+#line 49
               cnt = default_spins;
             }
           }
-#line 50
-          fetch_and_sub1(& prof->threadsWaiting);
 #line 51
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 52
           tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 51
+#line 52
           if (tmp___3) {
-#line 51
+#line 52
             nest->level = 0L;
           }
-#line 52
-          fetch_and_add1((__intptr_t volatile   *)(& nest->level));
 #line 53
-          fetch_and_add1(& prof->tries);
+          timer_start(& start);
 #line 54
-          __asm__  volatile   ("": : : "memory");
+          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
 #line 55
-          TxStart(self->stmThread, & buf, & ro);
+          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
 #line 56
-          _stm_incr(self->stmThread, n);
+          TxStart(self->stmThread, & buf, & ro);
 #line 57
-          TxCommit(self->stmThread);
+          _stm_incr(self->stmThread);
 #line 58
-          fetch_and_add1(& prof->commit);
+          TxCommit(self->stmThread);
 #line 59
-          fetch_and_sub1((__intptr_t volatile   *)(& nest->level));
+          while (1) {
+#line 59
+            _x = prof->triesCommit;
+#line 59
+            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
+#line 59
+              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
+            }
+#line 59
+            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
+#line 59
+            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
+#line 59
+              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
+            }
+#line 59
+            prof->triesCommit = _x;
+#line 59
+            break;
+          }
 #line 60
-          fetch_and_sub1(& prof->lockHeld);
+          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
+#line 61
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 62
+          timer_stop(& start, & self->timeSTM);
         }
       } else {
-        goto _L___1;
+        goto _L___0;
       }
     } else {
-      _L___1: /* CIL Label */ 
-#line 63
-      if (! (nest->level <= 0L)) {
-#line 63
-        __assert13("alx.h", 63, "_al_template", "nest->level <= 0");
-      }
-#line 64
-      if (nest->level < 0L) {
+      _L___0: /* CIL Label */ 
 #line 65
-        _raw_incr(n);
-      } else {
+      if (! (nest->level <= 0L)) {
+#line 65
+        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
+      }
+#line 66
+      if (nest->level < 0L) {
 #line 67
-        fetch_and_add1(& prof->invokeInLockMode);
-#line 68
-        fetch_and_add1(& prof->threadsWaiting);
+        _raw_incr();
+      } else {
 #line 69
-        if (prof->lockHeld != (__intptr_t volatile   )0) {
-          goto _L;
-        } else {
-#line 69
-          tmp___5 = cmpxchg(& prof->lockHeld, 0, ~ 0);
-#line 69
-          if (tmp___5 != 0) {
-            _L: /* CIL Label */ 
-#line 71
-            fetch_and_add1(& prof->waitLock);
-#line 72
-            while (1) {
-#line 72
-              if (! (prof->lockHeld != (__intptr_t volatile   )0)) {
-#line 72
-                tmp___4 = cmpxchg(& prof->lockHeld, 0, ~ 0);
-#line 72
-                if (! (tmp___4 != 0)) {
-#line 72
-                  break;
-                }
-              }
-#line 74
-              cnt --;
-#line 74
-              if (cnt <= 0) {
-#line 75
-                busy();
-#line 75
-                cnt = default_spins;
-              }
+        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 70
+        while (1) {
+#line 70
+          if (! (prof->lockHeld != (long volatile   )0)) {
+#line 70
+            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
+#line 70
+            if (! (tmp___4 != 0)) {
+#line 70
+              break;
             }
           }
+#line 72
+          cnt --;
+#line 72
+          if (cnt <= 0) {
+#line 72
+            busy();
+#line 72
+            cnt = default_spins;
+          }
         }
-#line 78
-        fetch_and_sub1(& prof->threadsWaiting);
-#line 79
+#line 74
+        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 75
+        timer_start(& start);
+#line 76
         nest->level = -1L;
-#line 80
-        _raw_incr(n);
-#line 81
+#line 77
+        _raw_incr();
+#line 78
         nest->level = 0L;
-#line 82
-        fetch_and_add1(& prof->lockHeld);
+#line 79
+        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 80
+        timer_stop(& start, & self->timeRaw);
       }
     }
   }
-#line 85
+#line 83
   return;
 }
 }
-#line 35 "test1.c"
-void _raw_decr(long n ) 
-{ long *p ;
+#line 31 "test1.c"
+void _raw_decr(void) 
+{ 
 
   {
-#line 41
-  (cnt[1]) ++;
-#line 42
-  p = & cnt[2];
-#line 43
-  *p -= n;
-#line 44
+#line 35
+  cnt --;
+#line 36
   return;
 }
 }
-#line 35 "test1.c"
-void _stm_decr(Thread *self , long n ) 
-{ long *p ;
-  long tmp4 ;
-  long var5 ;
-  long tmp6 ;
-  long mem7 ;
+#line 31 "test1.c"
+void _stm_decr(Thread *self ) 
+{ long tmp2 ;
+  long var3 ;
 
   {
-#line 21
-  TxLoadSized(self, (intptr_t *)(& var5), (intptr_t *)(& cnt[1]), sizeof(long ));
-#line 41
-  tmp4 = var5 + 1L;
-#line 41
-  TxStoreSized(self, (intptr_t *)(& cnt[1]), (intptr_t *)(& tmp4), sizeof(long ));
-#line 42
-  p = & cnt[2];
-  TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)p, sizeof(long ));
-#line 43
-  tmp6 = mem7 - n;
-#line 43
-  TxStoreSized(self, (intptr_t *)p, (intptr_t *)(& tmp6), sizeof(long ));
-#line 44
+#line 22
+  TxLoadSized(self, (intptr_t *)(& var3), (intptr_t *)(& cnt), sizeof(long ));
+#line 35
+  tmp2 = var3 - 1L;
+#line 35
+  TxStoreSized(self, (intptr_t *)(& cnt), (intptr_t *)(& tmp2), sizeof(long ));
+#line 36
   return;
 }
 }
-#line 35 "test1.c"
-static void decr(long n ) 
+#line 31 "test1.c"
+static void decr(void) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
   void *(*stmfunc)(Thread * ) ;
@@ -2487,263 +2477,278 @@ static void decr(long n )
   nest_t *nest ;
   nest_t *nested ;
   __intptr_t tmp ;
+  unsigned long tries ;
   sigjmp_buf buf ;
+  struct timeval start ;
   void *tmp___0 ;
   void *tmp___1 ;
   __intptr_t tmp___2 ;
   int tmp___3 ;
+  unsigned long volatile   _x ;
   __intptr_t tmp___4 ;
-  __intptr_t tmp___5 ;
-  int tmp___6 ;
+  int tmp___5 ;
 
   {
-#line 14 "alx.h"
+#line 15 "alx.h"
   prof = & _l1_prof;
-#line 15
-  rawfunc = (void *(*)(void))0;
 #line 16
-  stmfunc = (void *(*)(Thread * ))0;
+  rawfunc = (void *(*)(void))0;
 #line 17
-  ro = 0;
+  stmfunc = (void *(*)(Thread * ))0;
 #line 18
+  ro = 0;
+#line 19
   cnt = default_spins;
-#line 25
+#line 24
+  tries = 0UL;
+#line 28
   tmp___0 = pthread_getspecific(_al_key);
-#line 25
+#line 28
   self = (thread_t *)tmp___0;
-#line 25
+#line 28
   if (! self) {
-#line 25
-    __assert13("alx.h", 25, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 26
-  nest = self->prof_list.slh_first;
-#line 26
-  while (nest) {
-#line 27
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 27
-      break;
-    }
-#line 26
-    nest = nest->next.sle_next;
+#line 28
+    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
   }
 #line 29
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+  nest = self->prof_list.slh_first;
+#line 29
+  while (nest) {
 #line 30
-    tmp___1 = malloc(sizeof(*nest));
+    if ((unsigned int )nest->prof == (unsigned int )prof) {
 #line 30
-    nest = (nest_t *)tmp___1;
-#line 30
-    if (! nest) {
-#line 30
-      __assert13("alx.h", 30, "_al_template", "nest = malloc(sizeof(*nest))");
+      break;
     }
-#line 31
-    nest->prof = prof;
+#line 29
+    nest = nest->next.sle_next;
+  }
 #line 32
+  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+#line 33
+    tmp___1 = malloc(sizeof(*nest));
+#line 33
+    nest = (nest_t *)tmp___1;
+#line 33
+    if (! nest) {
+#line 33
+      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
+    }
+#line 34
+    nest->prof = prof;
+#line 35
     nest->level = 0L;
-#line 33
+#line 36
     while (1) {
-#line 33
+#line 36
       nest->next.sle_next = self->prof_list.slh_first;
-#line 33
+#line 36
       self->prof_list.slh_first = nest;
-#line 33
+#line 36
       break;
     }
   }
-#line 35
+#line 38
   nested = self->prof_list.slh_first;
-#line 35
+#line 38
   while (nested) {
-#line 36
+#line 39
     if (0L < nested->level) {
-#line 36
+#line 39
       break;
     }
-#line 35
+#line 38
     nested = nested->next.sle_next;
   }
-#line 38
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L___0;
-  } else {
-#line 38
-    if (nest->level == 0L) {
-#line 38
-      tmp___6 = transactMode(prof);
-#line 38
-      if (tmp___6) {
-        _L___0: /* CIL Label */ 
-#line 39
-        if (! (0L <= nest->level)) {
-#line 39
-          __assert13("alx.h", 39, "_al_template", "0 <= nest->level");
-        }
-#line 40
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 41
-          _stm_decr(self->stmThread, n);
-        } else {
+  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+    goto _L;
+  } else {
+#line 41
+    if (nest->level == 0L) {
+#line 41
+      tmp___5 = transactMode(prof);
+#line 41
+      if (tmp___5) {
+        _L: /* CIL Label */ 
+#line 42
+        if (! (0L <= nest->level)) {
+#line 42
+          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
+        }
 #line 43
-          fetch_and_add1(& prof->threadsWaiting);
+        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 44
+          _stm_decr(self->stmThread);
+        } else {
+#line 46
+          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 47
           while (1) {
-#line 44
+#line 47
             tmp = (int )prof->lockHeld;
-#line 44
-            if (! (tmp == -1)) {
-#line 44
-              tmp___2 = cmpxchg(& prof->lockHeld, tmp, tmp + 1);
-#line 44
+#line 47
+            if (! ((long )tmp == -1L)) {
+#line 47
+              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
+                                tmp + 1);
+#line 47
               if (! (tmp___2 != tmp)) {
-#line 44
+#line 47
                 break;
               }
             }
-#line 46
+#line 49
             cnt --;
-#line 46
+#line 49
             if (cnt <= 0) {
-#line 47
+#line 49
               busy();
-#line 47
+#line 49
               cnt = default_spins;
             }
           }
-#line 50
-          fetch_and_sub1(& prof->threadsWaiting);
 #line 51
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 52
           tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 51
+#line 52
           if (tmp___3) {
-#line 51
+#line 52
             nest->level = 0L;
           }
-#line 52
-          fetch_and_add1((__intptr_t volatile   *)(& nest->level));
 #line 53
-          fetch_and_add1(& prof->tries);
+          timer_start(& start);
 #line 54
-          __asm__  volatile   ("": : : "memory");
+          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
 #line 55
-          TxStart(self->stmThread, & buf, & ro);
+          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
 #line 56
-          _stm_decr(self->stmThread, n);
+          TxStart(self->stmThread, & buf, & ro);
 #line 57
-          TxCommit(self->stmThread);
+          _stm_decr(self->stmThread);
 #line 58
-          fetch_and_add1(& prof->commit);
+          TxCommit(self->stmThread);
 #line 59
-          fetch_and_sub1((__intptr_t volatile   *)(& nest->level));
+          while (1) {
+#line 59
+            _x = prof->triesCommit;
+#line 59
+            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
+#line 59
+              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
+            }
+#line 59
+            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
+#line 59
+            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
+#line 59
+              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
+            }
+#line 59
+            prof->triesCommit = _x;
+#line 59
+            break;
+          }
 #line 60
-          fetch_and_sub1(& prof->lockHeld);
+          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
+#line 61
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 62
+          timer_stop(& start, & self->timeSTM);
         }
       } else {
-        goto _L___1;
+        goto _L___0;
       }
     } else {
-      _L___1: /* CIL Label */ 
-#line 63
-      if (! (nest->level <= 0L)) {
-#line 63
-        __assert13("alx.h", 63, "_al_template", "nest->level <= 0");
-      }
-#line 64
-      if (nest->level < 0L) {
+      _L___0: /* CIL Label */ 
 #line 65
-        _raw_decr(n);
-      } else {
+      if (! (nest->level <= 0L)) {
+#line 65
+        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
+      }
+#line 66
+      if (nest->level < 0L) {
 #line 67
-        fetch_and_add1(& prof->invokeInLockMode);
-#line 68
-        fetch_and_add1(& prof->threadsWaiting);
+        _raw_decr();
+      } else {
 #line 69
-        if (prof->lockHeld != (__intptr_t volatile   )0) {
-          goto _L;
-        } else {
-#line 69
-          tmp___5 = cmpxchg(& prof->lockHeld, 0, ~ 0);
-#line 69
-          if (tmp___5 != 0) {
-            _L: /* CIL Label */ 
-#line 71
-            fetch_and_add1(& prof->waitLock);
-#line 72
-            while (1) {
-#line 72
-              if (! (prof->lockHeld != (__intptr_t volatile   )0)) {
-#line 72
-                tmp___4 = cmpxchg(& prof->lockHeld, 0, ~ 0);
-#line 72
-                if (! (tmp___4 != 0)) {
-#line 72
-                  break;
-                }
-              }
-#line 74
-              cnt --;
-#line 74
-              if (cnt <= 0) {
-#line 75
-                busy();
-#line 75
-                cnt = default_spins;
-              }
+        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 70
+        while (1) {
+#line 70
+          if (! (prof->lockHeld != (long volatile   )0)) {
+#line 70
+            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
+#line 70
+            if (! (tmp___4 != 0)) {
+#line 70
+              break;
             }
           }
+#line 72
+          cnt --;
+#line 72
+          if (cnt <= 0) {
+#line 72
+            busy();
+#line 72
+            cnt = default_spins;
+          }
         }
-#line 78
-        fetch_and_sub1(& prof->threadsWaiting);
-#line 79
+#line 74
+        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 75
+        timer_start(& start);
+#line 76
         nest->level = -1L;
-#line 80
-        _raw_decr(n);
-#line 81
+#line 77
+        _raw_decr();
+#line 78
         nest->level = 0L;
-#line 82
-        fetch_and_add1(& prof->lockHeld);
+#line 79
+        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 80
+        timer_stop(& start, & self->timeRaw);
       }
     }
   }
-#line 85
+#line 83
   return;
 }
 }
-#line 47 "test1.c"
+#line 38 "test1.c"
 void *task(void *arg ) 
 { int n ;
   int tmp ;
 
   {
-#line 50
+#line 41
   n = (int )arg;
-#line 52
+#line 43
   while (1) {
-#line 52
+#line 43
     tmp = n;
-#line 52
+#line 43
     n --;
-#line 52
+#line 43
     if (! tmp) {
-#line 52
+#line 43
       break;
     }
-#line 53
+#line 44
     if (n % 2) {
-#line 53
-      decr(1L);
+#line 44
+      decr();
     } else {
-#line 53
-      incr(1L);
+#line 44
+      incr();
     }
   }
-#line 54
+#line 45
   return ((void *)0);
 }
 }
-#line 57 "test1.c"
+#line 48 "test1.c"
 int main(int argc , char **argv ) 
 { int p ;
   int n ;
@@ -2754,84 +2759,89 @@ int main(int argc , char **argv )
   double tmp ;
 
   {
-#line 60
+#line 51
   p = 2;
-#line 60
+#line 51
   n = 1000000;
-#line 64
+#line 55
   while (1) {
-#line 64
-    ch = getopt(argc, (char * const  *)argv, "p:n:ltx:");
-#line 64
+#line 55
+    ch = getopt(argc, (char * const  *)argv, "p:n:altx:");
+#line 55
     if (! (ch != -1)) {
-#line 64
+#line 55
       break;
     }
-#line 65
+#line 56
     switch (ch) {
     case 110: 
-#line 66
+#line 57
     n = atoi((char const   *)optarg);
-#line 66
+#line 57
     break;
     case 112: 
-#line 67
+#line 58
     p = atoi((char const   *)optarg);
-#line 67
+#line 58
+    break;
+    case 97: 
+#line 59
+    setAdaptMode(0);
+#line 59
     break;
     case 108: 
-#line 68
+#line 60
     setAdaptMode(-1);
-#line 68
+#line 60
     break;
     case 116: 
-#line 69
+#line 61
     setAdaptMode(1);
-#line 69
+#line 61
     break;
     case 120: 
-#line 70
+#line 62
     tmp = atof((char const   *)optarg);
-#line 70
+#line 62
     setTransactOvhd(tmp);
-#line 70
+#line 62
     break;
     case 104: 
     default: 
-#line 72
+#line 64
     help();
     }
   }
-#line 75
+#line 67
   argc -= optind;
-#line 76
+#line 68
   argv += optind;
-#line 78
+#line 70
   if (256 <= p) {
-#line 78
+#line 70
     p = 256;
   }
-#line 79
+#line 71
   i = 0;
-#line 79
+#line 71
   while (i < p) {
-#line 79
+#line 71
     al_pthread_create(& t[i], (pthread_attr_t const   *)0, & task, (void *)n);
-#line 79
+#line 71
     i ++;
   }
-#line 80
+#line 72
   i = 0;
-#line 80
+#line 72
   while (i < p) {
-#line 80
+#line 72
     pthread_join(t[i], & r);
-#line 80
+#line 72
     i ++;
   }
-#line 81
-  printf((char const   * __restrict  )"p=%d,n=%d,cnt=[%ld,%ld]\n", p, n, cnt[1], cnt[2]);
-#line 82
+#line 73
+  printf((char const   * __restrict  )"p=%d,n=%d,cnt=%ld\n", p, n, cnt);
+#line 74
   return (0);
 }
 }

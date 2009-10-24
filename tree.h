@@ -112,13 +112,14 @@ struct {								\
 
 /* Generates prototypes and inline functions */
 
-#define SPLAY_PROTOTYPE(name, type, field, cmp)				\
+#define SPLAY_PROTOTYPE(name, type, field, cmp, lock)			\
 void name##_SPLAY(struct name *, struct type *);			\
 void name##_SPLAY_MINMAX(struct name *, int);				\
 struct type *name##_SPLAY_INSERT(struct name *, struct type *);		\
 struct type *name##_SPLAY_REMOVE(struct name *, struct type *);		\
 									\
 /* Finds the node with the same key as elm */				\
+__attribute__((atomic (lock)))						\
 static __inline struct type *						\
 name##_SPLAY_FIND(struct name *head, struct type *elm)			\
 {									\
@@ -130,6 +131,7 @@ name##_SPLAY_FIND(struct name *head, struct type *elm)			\
 	return (NULL);							\
 }									\
 									\
+__attribute__((atomic (lock)))						\
 static __inline struct type *						\
 name##_SPLAY_NEXT(struct name *head, struct type *elm)			\
 {									\
@@ -144,6 +146,7 @@ name##_SPLAY_NEXT(struct name *head, struct type *elm)			\
 	return (elm);							\
 }									\
 									\
+__attribute__((atomic (lock)))						\
 static __inline struct type *						\
 name##_SPLAY_MIN_MAX(struct name *head, int val)			\
 {									\
@@ -154,7 +157,8 @@ name##_SPLAY_MIN_MAX(struct name *head, int val)			\
 /* Main splay operation.
  * Moves node close to the key of elm to top
  */
-#define SPLAY_GENERATE(name, type, field, cmp)				\
+#define SPLAY_GENERATE(name, type, field, cmp, lock)			\
+__attribute__((atomic (lock)))						\
 struct type *								\
 name##_SPLAY_INSERT(struct name *head, struct type *elm)		\
 {									\
@@ -179,6 +183,7 @@ name##_SPLAY_INSERT(struct name *head, struct type *elm)		\
     return (NULL);							\
 }									\
 									\
+__attribute__((atomic (lock)))						\
 struct type *								\
 name##_SPLAY_REMOVE(struct name *head, struct type *elm)		\
 {									\
@@ -200,14 +205,15 @@ name##_SPLAY_REMOVE(struct name *head, struct type *elm)		\
 	return (NULL);							\
 }									\
 									\
+__attribute__((atomic (lock)))						\
 void									\
 name##_SPLAY(struct name *head, struct type *elm)			\
 {									\
-	struct type __node, *__left, *__right, *__tmp;			\
+	struct type ____node, *__node = &____node, *__left, *__right, *__tmp;\
 	int __comp;							\
 \
-	SPLAY_LEFT(&__node, field) = SPLAY_RIGHT(&__node, field) = NULL;\
-	__left = __right = &__node;					\
+	SPLAY_LEFT(__node, field) = SPLAY_RIGHT(__node, field) = NULL;	\
+	__left = __right = __node;					\
 \
 	while ((__comp = (cmp)(elm, (head)->sph_root)) != 0) {		\
 		if (__comp < 0) {					\
@@ -232,18 +238,19 @@ name##_SPLAY(struct name *head, struct type *elm)			\
 			SPLAY_LINKRIGHT(head, __left, field);		\
 		}							\
 	}								\
-	SPLAY_ASSEMBLE(head, &__node, __left, __right, field);		\
+	SPLAY_ASSEMBLE(head, __node, __left, __right, field);		\
 }									\
 									\
 /* Splay with either the minimum or the maximum element			\
  * Used to find minimum or maximum element in tree.			\
  */									\
+__attribute__((atomic (lock)))						\
 void name##_SPLAY_MINMAX(struct name *head, int __comp) \
 {									\
-	struct type __node, *__left, *__right, *__tmp;			\
+	struct type ____node, *__node = &____node, *__left, *__right, *__tmp;\
 \
-	SPLAY_LEFT(&__node, field) = SPLAY_RIGHT(&__node, field) = NULL;\
-	__left = __right = &__node;					\
+	SPLAY_LEFT(__node, field) = SPLAY_RIGHT(__node, field) = NULL;	\
+	__left = __right = __node;					\
 \
 	while (1) {							\
 		if (__comp < 0) {					\
@@ -268,7 +275,7 @@ void name##_SPLAY_MINMAX(struct name *head, int __comp) \
 			SPLAY_LINKRIGHT(head, __left, field);		\
 		}							\
 	}								\
-	SPLAY_ASSEMBLE(head, &__node, __left, __right, field);		\
+	SPLAY_ASSEMBLE(head, __node, __left, __right, field);		\
 }
 
 #define SPLAY_NEGINF	-1

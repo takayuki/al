@@ -4,6 +4,7 @@
 #include <config.h>
 #endif
 #include <assert.h>
+#include <sys/time.h>
 #include "al.h"
 
 static int default_spins = 100;
@@ -20,7 +21,9 @@ _al_template(void)
   nest_t* nest;
   nest_t* nested;
   intptr_t tmp;
+  unsigned long tries = 0;
   sigjmp_buf buf;
+  struct timeval start;
 
   assert((self = pthread_getspecific(_al_key)));
   SLIST_FOREACH(nest,&self->prof_list,next) {
@@ -40,46 +43,41 @@ _al_template(void)
     if (nested != 0) {
       stmfunc(self->stmThread);
     } else {
-      inc(prof->threadsWaiting);
-      while ((tmp = load(prof->lockHeld)) == ~0 ||
-	     CAS(prof->lockHeld,tmp,tmp+1) != tmp) {
-	if (--cnt <= 0) {
-	  busy(); cnt = default_spins;
-	}
+      INC(prof->threadsWaiting);
+      while ((tmp = prof->lockHeld) == ~0L ||
+             CAS(prof->lockHeld,tmp,tmp+1) != tmp) {
+	if (--cnt <= 0) { busy(); cnt = default_spins; }
       }
-      dec(prof->threadsWaiting);
+      DEC(prof->threadsWaiting);
       if (sigsetjmp(buf,1)) nest->level = 0;
+      timer_start(&start);
       inc(nest->level);
-      inc(prof->tries);
-      mb();
+      inc(tries);
       TxStart(self->stmThread,&buf,&ro);
       stmfunc(self->stmThread);
       TxCommit(self->stmThread);
-      inc(prof->commit);
+      commit(prof->triesCommit,tries);
       dec(nest->level);
       DEC(prof->lockHeld);
+      timer_stop(&start,&self->timeSTM);
     }
   } else {
     assert(nest->level <= 0);
     if (nest->level < 0) {
       rawfunc();
     } else {
-      inc(prof->invokeInLockMode);
-      inc(prof->threadsWaiting);
-      if (load(prof->lockHeld) != 0 ||
-	  CAS(prof->lockHeld,0,~0) != 0) {
-	inc(prof->waitLock);
-	while (load(prof->lockHeld) != 0 ||
-	       CAS(prof->lockHeld,0,~0) != 0)
-	  if (--cnt <= 0) {
-	    busy(); cnt = default_spins;
-	  }
+      INC(prof->threadsWaiting);
+      while (prof->lockHeld != 0 ||
+	     CAS(prof->lockHeld,0,~0L) != 0) {
+	if (--cnt <= 0) { busy(); cnt = default_spins; }
       }
-      dec(prof->threadsWaiting);
-      store(nest->level,-1);
+      DEC(prof->threadsWaiting);
+      timer_start(&start);
+      nest->level = -1;
       rawfunc();
-      store(nest->level,0);
+      nest->level = 0;
       INC(prof->lockHeld);
+      timer_stop(&start,&self->timeRaw);
     }
   }
   return;

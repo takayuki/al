@@ -1,4 +1,4 @@
-AC_INIT([CIS 609 Final Project],[0.4],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.5],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])

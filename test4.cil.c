@@ -638,20 +638,18 @@ struct __anonstruct_thread_t_8 {
 };
 #line 54 "al.h"
 typedef struct __anonstruct_thread_t_8 thread_t;
-#line 22 "test3.c"
+#line 22 "test4.c"
 struct tree_node;
-#line 22 "test3.c"
+#line 22 "test4.c"
 struct TREE {
-   struct tree_node *rbh_root ;
+   struct tree_node *sph_root ;
 };
-#line 24 "test3.c"
+#line 24 "test4.c"
 struct __anonstruct_links_10 {
-   struct tree_node *rbe_left ;
-   struct tree_node *rbe_right ;
-   struct tree_node *rbe_parent ;
-   long rbe_color ;
+   struct tree_node *spe_left ;
+   struct tree_node *spe_right ;
 };
-#line 24 "test3.c"
+#line 24 "test4.c"
 struct tree_node {
    long key ;
    long val ;
@@ -2148,7 +2146,7 @@ extern void timer_stop(struct timeval * , struct timeval * ) ;
 extern void dump_profile(profile_t * ) ;
 #line 10 "alx.h"
 static int default_spins  =    100;
-#line 7 "test3.c"
+#line 7 "test4.c"
 void help(void) 
 { 
 
@@ -2159,11 +2157,11 @@ void help(void)
   exit(0);
 }
 }
-#line 22 "test3.c"
+#line 22 "test4.c"
 struct TREE tab  =    {(struct tree_node *)((void *)0)};
-#line 30 "test3.c"
+#line 30 "test4.c"
 profile_t _l1_prof  ;
-#line 30 "test3.c"
+#line 30 "test4.c"
 void __attribute__((__constructor__))  _init_node_cmp(void) 
 { 
 
@@ -2172,7 +2170,7 @@ void __attribute__((__constructor__))  _init_node_cmp(void)
   _l1_prof.name = "_l1_prof";
 }
 }
-#line 30 "test3.c"
+#line 30 "test4.c"
 void __attribute__((__destructor__))  _atexit_node_cmp(void) 
 { 
 
@@ -2181,7 +2179,7 @@ void __attribute__((__destructor__))  _atexit_node_cmp(void)
   dump_profile(& _l1_prof);
 }
 }
-#line 30 "test3.c"
+#line 30 "test4.c"
 int _raw_node_cmp(struct tree_node *x , struct tree_node *y ) 
 { 
 
@@ -2189,18 +2187,18 @@ int _raw_node_cmp(struct tree_node *x , struct tree_node *y )
 #line 34
   if (! ((unsigned int )x != (unsigned int )((struct tree_node *)0))) {
 #line 34
-    __assert13("test3.c", 34, "node_cmp", "x != 0");
+    __assert13("test4.c", 34, "node_cmp", "x != 0");
   }
 #line 35
   if (! ((unsigned int )y != (unsigned int )((struct tree_node *)0))) {
 #line 35
-    __assert13("test3.c", 35, "node_cmp", "y != 0");
+    __assert13("test4.c", 35, "node_cmp", "y != 0");
   }
 #line 36
   return ((int )(x->key - y->key));
 }
 }
-#line 30 "test3.c"
+#line 30 "test4.c"
 int _stm_node_cmp(Thread *self , struct tree_node *x , struct tree_node *y ) 
 { long mem4 ;
   long mem5 ;
@@ -2209,12 +2207,12 @@ int _stm_node_cmp(Thread *self , struct tree_node *x , struct tree_node *y )
 #line 34
   if (! ((unsigned int )x != (unsigned int )((struct tree_node *)0))) {
 #line 34
-    __assert13("test3.c", 34, "node_cmp", "x != 0");
+    __assert13("test4.c", 34, "node_cmp", "x != 0");
   }
 #line 35
   if (! ((unsigned int )y != (unsigned int )((struct tree_node *)0))) {
 #line 35
-    __assert13("test3.c", 35, "node_cmp", "y != 0");
+    __assert13("test4.c", 35, "node_cmp", "y != 0");
   }
   {
   TxLoadSized(self, (intptr_t *)(& mem4), (intptr_t *)(& x->key), sizeof(long ));
@@ -2224,7 +2222,7 @@ int _stm_node_cmp(Thread *self , struct tree_node *x , struct tree_node *y )
   }
 }
 }
-#line 30 "test3.c"
+#line 30 "test4.c"
 static int node_cmp(struct tree_node *x , struct tree_node *y ) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
@@ -2475,290 +2473,981 @@ static int node_cmp(struct tree_node *x , struct tree_node *y )
   return (tmp20);
 }
 }
-#line 39 "test3.c"
-void _raw_TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *parent ;
-  struct tree_node *gparent ;
-  struct tree_node *tmp ;
+#line 39 "test4.c"
+void TREE_SPLAY(struct TREE *head , struct tree_node *elm ) ;
+#line 39
+void TREE_SPLAY_MINMAX(struct TREE *head , int __comp ) ;
+#line 39
+struct tree_node *TREE_SPLAY_INSERT(struct TREE *head , struct tree_node *elm ) ;
+#line 39
+struct tree_node *TREE_SPLAY_REMOVE(struct TREE *head , struct tree_node *elm ) ;
+#line 39 "test4.c"
+__inline static struct tree_node *_raw_TREE_SPLAY_FIND(struct TREE *head , struct tree_node *elm ) 
+{ int tmp ;
 
   {
 #line 39
-  while (1) {
+  if ((unsigned int )head->sph_root == (unsigned int )((void *)0)) {
 #line 39
-    parent = elm->links.rbe_parent;
+    return ((struct tree_node *)((void *)0));
+  }
 #line 39
-    if ((unsigned int )parent != (unsigned int )((void *)0)) {
+  TREE_SPLAY(head, elm);
 #line 39
-      if (! (parent->links.rbe_color == 1L)) {
+  tmp = (int )node_cmp(elm, head->sph_root);
 #line 39
-        break;
-      }
-    } else {
+  if (tmp == (int )0) {
 #line 39
-      break;
-    }
+    return ((struct tree_node *)head->sph_root);
+  }
 #line 39
-    gparent = parent->links.rbe_parent;
-#line 39
-    if ((unsigned int )parent == (unsigned int )gparent->links.rbe_left) {
-#line 39
-      tmp = gparent->links.rbe_right;
-#line 39
-      if (tmp) {
-#line 39
-        if (tmp->links.rbe_color == 1L) {
-#line 39
-          tmp->links.rbe_color = 0L;
-#line 39
-          while (1) {
-#line 39
-            parent->links.rbe_color = 0L;
-#line 39
-            gparent->links.rbe_color = 1L;
-#line 39
-            break;
-          }
-#line 39
-          elm = gparent;
-#line 39
-          continue;
-        }
-      }
-#line 39
-      if ((unsigned int )parent->links.rbe_right == (unsigned int )elm) {
-#line 39
-        while (1) {
-#line 39
-          tmp = parent->links.rbe_right;
-#line 39
-          parent->links.rbe_right = tmp->links.rbe_left;
-#line 39
-          if ((unsigned int )parent->links.rbe_right != (unsigned int )((void *)0)) {
-#line 39
-            (tmp->links.rbe_left)->links.rbe_parent = parent;
-          }
-#line 39
-          tmp->links.rbe_parent = parent->links.rbe_parent;
-#line 39
-          if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-            if ((unsigned int )parent == (unsigned int )(parent->links.rbe_parent)->links.rbe_left) {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_left = tmp;
-            } else {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_right = tmp;
-            }
-          } else {
-#line 39
-            head->rbh_root = tmp;
-          }
-#line 39
-          tmp->links.rbe_left = parent;
-#line 39
-          parent->links.rbe_parent = tmp;
-#line 39
-          if (tmp->links.rbe_parent) {
+  return ((struct tree_node *)((void *)0));
+}
+}
+#line 39 "test4.c"
+__inline static struct tree_node *_stm_TREE_SPLAY_FIND(Thread *self , struct TREE *head ,
+                                                       struct tree_node *elm ) 
+{ int tmp ;
+  struct tree_node *mem5 ;
+  struct tree_node *mem6 ;
+  struct tree_node *mem7 ;
 
-          }
+  {
+  {
+  TxLoadSized(self, (intptr_t *)(& mem5), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
 #line 39
-          break;
-        }
+  if ((unsigned int )mem5 == (unsigned int )((void *)0)) {
 #line 39
-        tmp = parent;
+    return ((struct tree_node *)((void *)0));
+  }
+  }
 #line 39
-        parent = elm;
+  TREE_SPLAY(head, elm);
+  TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
 #line 39
-        elm = tmp;
-      }
+  tmp = (int )node_cmp(elm, mem6);
 #line 39
-      while (1) {
+  if (tmp == (int )0) {
+    {
+    TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
 #line 39
-        parent->links.rbe_color = 0L;
-#line 39
-        gparent->links.rbe_color = 1L;
-#line 39
-        break;
-      }
-#line 39
-      while (1) {
-#line 39
-        tmp = gparent->links.rbe_left;
-#line 39
-        gparent->links.rbe_left = tmp->links.rbe_right;
-#line 39
-        if ((unsigned int )gparent->links.rbe_left != (unsigned int )((void *)0)) {
-#line 39
-          (tmp->links.rbe_right)->links.rbe_parent = gparent;
-        }
-#line 39
-        tmp->links.rbe_parent = gparent->links.rbe_parent;
-#line 39
-        if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-          if ((unsigned int )gparent == (unsigned int )(gparent->links.rbe_parent)->links.rbe_left) {
-#line 39
-            (gparent->links.rbe_parent)->links.rbe_left = tmp;
-          } else {
-#line 39
-            (gparent->links.rbe_parent)->links.rbe_right = tmp;
-          }
-        } else {
-#line 39
-          head->rbh_root = tmp;
-        }
-#line 39
-        tmp->links.rbe_right = gparent;
-#line 39
-        gparent->links.rbe_parent = tmp;
-#line 39
-        if (tmp->links.rbe_parent) {
-
-        }
-#line 39
-        break;
-      }
-    } else {
-#line 39
-      tmp = gparent->links.rbe_left;
-#line 39
-      if (tmp) {
-#line 39
-        if (tmp->links.rbe_color == 1L) {
-#line 39
-          tmp->links.rbe_color = 0L;
-#line 39
-          while (1) {
-#line 39
-            parent->links.rbe_color = 0L;
-#line 39
-            gparent->links.rbe_color = 1L;
-#line 39
-            break;
-          }
-#line 39
-          elm = gparent;
-#line 39
-          continue;
-        }
-      }
-#line 39
-      if ((unsigned int )parent->links.rbe_left == (unsigned int )elm) {
-#line 39
-        while (1) {
-#line 39
-          tmp = parent->links.rbe_left;
-#line 39
-          parent->links.rbe_left = tmp->links.rbe_right;
-#line 39
-          if ((unsigned int )parent->links.rbe_left != (unsigned int )((void *)0)) {
-#line 39
-            (tmp->links.rbe_right)->links.rbe_parent = parent;
-          }
-#line 39
-          tmp->links.rbe_parent = parent->links.rbe_parent;
-#line 39
-          if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-            if ((unsigned int )parent == (unsigned int )(parent->links.rbe_parent)->links.rbe_left) {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_left = tmp;
-            } else {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_right = tmp;
-            }
-          } else {
-#line 39
-            head->rbh_root = tmp;
-          }
-#line 39
-          tmp->links.rbe_right = parent;
-#line 39
-          parent->links.rbe_parent = tmp;
-#line 39
-          if (tmp->links.rbe_parent) {
-
-          }
-#line 39
-          break;
-        }
-#line 39
-        tmp = parent;
-#line 39
-        parent = elm;
-#line 39
-        elm = tmp;
-      }
-#line 39
-      while (1) {
-#line 39
-        parent->links.rbe_color = 0L;
-#line 39
-        gparent->links.rbe_color = 1L;
-#line 39
-        break;
-      }
-#line 39
-      while (1) {
-#line 39
-        tmp = gparent->links.rbe_right;
-#line 39
-        gparent->links.rbe_right = tmp->links.rbe_left;
-#line 39
-        if ((unsigned int )gparent->links.rbe_right != (unsigned int )((void *)0)) {
-#line 39
-          (tmp->links.rbe_left)->links.rbe_parent = gparent;
-        }
-#line 39
-        tmp->links.rbe_parent = gparent->links.rbe_parent;
-#line 39
-        if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-          if ((unsigned int )gparent == (unsigned int )(gparent->links.rbe_parent)->links.rbe_left) {
-#line 39
-            (gparent->links.rbe_parent)->links.rbe_left = tmp;
-          } else {
-#line 39
-            (gparent->links.rbe_parent)->links.rbe_right = tmp;
-          }
-        } else {
-#line 39
-          head->rbh_root = tmp;
-        }
-#line 39
-        tmp->links.rbe_left = gparent;
-#line 39
-        gparent->links.rbe_parent = tmp;
-#line 39
-        if (tmp->links.rbe_parent) {
-
-        }
-#line 39
-        break;
-      }
+    return ((struct tree_node *)mem7);
     }
   }
 #line 39
-  (head->rbh_root)->links.rbe_color = 0L;
+  return ((struct tree_node *)((void *)0));
+}
+}
+#line 39 "test4.c"
+static struct tree_node *TREE_SPLAY_FIND(struct TREE *head , struct tree_node *elm ) 
+{ profile_t *prof ;
+  void *(*rawfunc)(void) ;
+  void *(*stmfunc)(Thread * ) ;
+  int ro ;
+  int cnt ;
+  thread_t *self ;
+  nest_t *nest ;
+  nest_t *nested ;
+  __intptr_t tmp ;
+  unsigned long tries ;
+  sigjmp_buf buf ;
+  struct timeval start ;
+  void *tmp___0 ;
+  void *tmp___1 ;
+  __intptr_t tmp___2 ;
+  int tmp___3 ;
+  unsigned long volatile   _x ;
+  __intptr_t tmp___4 ;
+  int tmp___5 ;
+  struct tree_node *tmp20 ;
+
+  {
+#line 15 "alx.h"
+  prof = & _l1_prof;
+#line 16
+  rawfunc = (void *(*)(void))0;
+#line 17
+  stmfunc = (void *(*)(Thread * ))0;
+#line 18
+  ro = 0;
+#line 19
+  cnt = default_spins;
+#line 24
+  tries = 0UL;
+#line 28
+  tmp___0 = pthread_getspecific(_al_key);
+#line 28
+  self = (thread_t *)tmp___0;
+#line 28
+  if (! self) {
+#line 28
+    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
+  }
+#line 29
+  nest = self->prof_list.slh_first;
+#line 29
+  while (nest) {
+#line 30
+    if ((unsigned int )nest->prof == (unsigned int )prof) {
+#line 30
+      break;
+    }
+#line 29
+    nest = nest->next.sle_next;
+  }
+#line 32
+  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+#line 33
+    tmp___1 = malloc(sizeof(*nest));
+#line 33
+    nest = (nest_t *)tmp___1;
+#line 33
+    if (! nest) {
+#line 33
+      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
+    }
+#line 34
+    nest->prof = prof;
+#line 35
+    nest->level = 0L;
+#line 36
+    while (1) {
+#line 36
+      nest->next.sle_next = self->prof_list.slh_first;
+#line 36
+      self->prof_list.slh_first = nest;
+#line 36
+      break;
+    }
+  }
+#line 38
+  nested = self->prof_list.slh_first;
+#line 38
+  while (nested) {
 #line 39
-  return;
+    if (0L < nested->level) {
+#line 39
+      break;
+    }
+#line 38
+    nested = nested->next.sle_next;
+  }
+#line 41
+  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+    goto _L;
+  } else {
+#line 41
+    if (nest->level == 0L) {
+#line 41
+      tmp___5 = transactMode(prof);
+#line 41
+      if (tmp___5) {
+        _L: /* CIL Label */ 
+#line 42
+        if (! (0L <= nest->level)) {
+#line 42
+          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
+        }
+#line 43
+        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+#line 44
+          tmp20 = _stm_TREE_SPLAY_FIND(self->stmThread, head, elm);
+        } else {
+#line 46
+          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 47
+          while (1) {
+#line 47
+            tmp = (int )prof->lockHeld;
+#line 47
+            if (! ((long )tmp == -1L)) {
+#line 47
+              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
+                                tmp + 1);
+#line 47
+              if (! (tmp___2 != tmp)) {
+#line 47
+                break;
+              }
+            }
+#line 49
+            cnt --;
+#line 49
+            if (cnt <= 0) {
+#line 49
+              busy();
+#line 49
+              cnt = default_spins;
+            }
+          }
+#line 51
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 52
+          tmp___3 = sigsetjmp((long *)(buf), 1);
+#line 52
+          if (tmp___3) {
+#line 52
+            nest->level = 0L;
+          }
+#line 53
+          timer_start(& start);
+#line 54
+          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
+#line 55
+          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
+#line 56
+          TxStart(self->stmThread, & buf, & ro);
+#line 57
+          tmp20 = _stm_TREE_SPLAY_FIND(self->stmThread, head, elm);
+#line 58
+          TxCommit(self->stmThread);
+#line 59
+          while (1) {
+#line 59
+            _x = prof->triesCommit;
+#line 59
+            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
+#line 59
+              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
+            }
+#line 59
+            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
+#line 59
+            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
+#line 59
+              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
+            }
+#line 59
+            prof->triesCommit = _x;
+#line 59
+            break;
+          }
+#line 60
+          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
+#line 61
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 62
+          timer_stop(& start, & self->timeSTM);
+        }
+      } else {
+        goto _L___0;
+      }
+    } else {
+      _L___0: /* CIL Label */ 
+#line 65
+      if (! (nest->level <= 0L)) {
+#line 65
+        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
+      }
+#line 66
+      if (nest->level < 0L) {
+#line 67
+        tmp20 = _raw_TREE_SPLAY_FIND(head, elm);
+      } else {
+#line 69
+        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 70
+        while (1) {
+#line 70
+          if (! (prof->lockHeld != (long volatile   )0)) {
+#line 70
+            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
+#line 70
+            if (! (tmp___4 != 0)) {
+#line 70
+              break;
+            }
+          }
+#line 72
+          cnt --;
+#line 72
+          if (cnt <= 0) {
+#line 72
+            busy();
+#line 72
+            cnt = default_spins;
+          }
+        }
+#line 74
+        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 75
+        timer_start(& start);
+#line 76
+        nest->level = -1L;
+#line 77
+        tmp20 = _raw_TREE_SPLAY_FIND(head, elm);
+#line 78
+        nest->level = 0L;
+#line 79
+        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 80
+        timer_stop(& start, & self->timeRaw);
+      }
+    }
+  }
+#line 83
+  return (tmp20);
 }
 }
-#line 39 "test3.c"
-void _stm_TREE_RB_INSERT_COLOR(Thread *self , struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *parent ;
-  struct tree_node *gparent ;
-  struct tree_node *tmp ;
+#line 39 "test4.c"
+__inline static struct tree_node *_raw_TREE_SPLAY_NEXT(struct TREE *head , struct tree_node *elm ) 
+{ 
+
+  {
+#line 39
+  TREE_SPLAY(head, elm);
+#line 39
+  if ((unsigned int )elm->links.spe_right != (unsigned int )((void *)0)) {
+#line 39
+    elm = elm->links.spe_right;
+#line 39
+    while ((unsigned int )elm->links.spe_left != (unsigned int )((void *)0)) {
+#line 39
+      elm = elm->links.spe_left;
+    }
+  } else {
+#line 39
+    elm = (struct tree_node *)((void *)0);
+  }
+#line 39
+  return ((struct tree_node *)elm);
+}
+}
+#line 39 "test4.c"
+__inline static struct tree_node *_stm_TREE_SPLAY_NEXT(Thread *self , struct TREE *head ,
+                                                       struct tree_node *elm ) 
+{ struct tree_node *mem4 ;
+  struct tree_node *mem5 ;
+  struct tree_node *mem6 ;
   struct tree_node *mem7 ;
-  long mem8 ;
+
+  {
+#line 39
+  TREE_SPLAY(head, elm);
+  {
+  TxLoadSized(self, (intptr_t *)(& mem4), (intptr_t *)(& elm->links.spe_right), sizeof(struct tree_node *));
+#line 39
+  if ((unsigned int )mem4 != (unsigned int )((void *)0)) {
+    TxLoadSized(self, (intptr_t *)(& mem5), (intptr_t *)(& elm->links.spe_right),
+                sizeof(struct tree_node *));
+#line 39
+    elm = mem5;
+#line 39
+    while (1) {
+      {
+      TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& elm->links.spe_left),
+                  sizeof(struct tree_node *));
+#line 39
+      if (! ((unsigned int )mem6 != (unsigned int )((void *)0))) {
+#line 39
+        break;
+      }
+      }
+      TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& elm->links.spe_left),
+                  sizeof(struct tree_node *));
+#line 39
+      elm = mem7;
+    }
+  } else {
+#line 39
+    elm = (struct tree_node *)((void *)0);
+  }
+  }
+#line 39
+  return ((struct tree_node *)elm);
+}
+}
+#line 39 "test4.c"
+static struct tree_node *TREE_SPLAY_NEXT(struct TREE *head , struct tree_node *elm ) 
+{ profile_t *prof ;
+  void *(*rawfunc)(void) ;
+  void *(*stmfunc)(Thread * ) ;
+  int ro ;
+  int cnt ;
+  thread_t *self ;
+  nest_t *nest ;
+  nest_t *nested ;
+  __intptr_t tmp ;
+  unsigned long tries ;
+  sigjmp_buf buf ;
+  struct timeval start ;
+  void *tmp___0 ;
+  void *tmp___1 ;
+  __intptr_t tmp___2 ;
+  int tmp___3 ;
+  unsigned long volatile   _x ;
+  __intptr_t tmp___4 ;
+  int tmp___5 ;
+  struct tree_node *tmp20 ;
+
+  {
+#line 15 "alx.h"
+  prof = & _l1_prof;
+#line 16
+  rawfunc = (void *(*)(void))0;
+#line 17
+  stmfunc = (void *(*)(Thread * ))0;
+#line 18
+  ro = 0;
+#line 19
+  cnt = default_spins;
+#line 24
+  tries = 0UL;
+#line 28
+  tmp___0 = pthread_getspecific(_al_key);
+#line 28
+  self = (thread_t *)tmp___0;
+#line 28
+  if (! self) {
+#line 28
+    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
+  }
+#line 29
+  nest = self->prof_list.slh_first;
+#line 29
+  while (nest) {
+#line 30
+    if ((unsigned int )nest->prof == (unsigned int )prof) {
+#line 30
+      break;
+    }
+#line 29
+    nest = nest->next.sle_next;
+  }
+#line 32
+  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+#line 33
+    tmp___1 = malloc(sizeof(*nest));
+#line 33
+    nest = (nest_t *)tmp___1;
+#line 33
+    if (! nest) {
+#line 33
+      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
+    }
+#line 34
+    nest->prof = prof;
+#line 35
+    nest->level = 0L;
+#line 36
+    while (1) {
+#line 36
+      nest->next.sle_next = self->prof_list.slh_first;
+#line 36
+      self->prof_list.slh_first = nest;
+#line 36
+      break;
+    }
+  }
+#line 38
+  nested = self->prof_list.slh_first;
+#line 38
+  while (nested) {
+#line 39
+    if (0L < nested->level) {
+#line 39
+      break;
+    }
+#line 38
+    nested = nested->next.sle_next;
+  }
+#line 41
+  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+    goto _L;
+  } else {
+#line 41
+    if (nest->level == 0L) {
+#line 41
+      tmp___5 = transactMode(prof);
+#line 41
+      if (tmp___5) {
+        _L: /* CIL Label */ 
+#line 42
+        if (! (0L <= nest->level)) {
+#line 42
+          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
+        }
+#line 43
+        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+#line 44
+          tmp20 = _stm_TREE_SPLAY_NEXT(self->stmThread, head, elm);
+        } else {
+#line 46
+          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 47
+          while (1) {
+#line 47
+            tmp = (int )prof->lockHeld;
+#line 47
+            if (! ((long )tmp == -1L)) {
+#line 47
+              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
+                                tmp + 1);
+#line 47
+              if (! (tmp___2 != tmp)) {
+#line 47
+                break;
+              }
+            }
+#line 49
+            cnt --;
+#line 49
+            if (cnt <= 0) {
+#line 49
+              busy();
+#line 49
+              cnt = default_spins;
+            }
+          }
+#line 51
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 52
+          tmp___3 = sigsetjmp((long *)(buf), 1);
+#line 52
+          if (tmp___3) {
+#line 52
+            nest->level = 0L;
+          }
+#line 53
+          timer_start(& start);
+#line 54
+          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
+#line 55
+          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
+#line 56
+          TxStart(self->stmThread, & buf, & ro);
+#line 57
+          tmp20 = _stm_TREE_SPLAY_NEXT(self->stmThread, head, elm);
+#line 58
+          TxCommit(self->stmThread);
+#line 59
+          while (1) {
+#line 59
+            _x = prof->triesCommit;
+#line 59
+            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
+#line 59
+              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
+            }
+#line 59
+            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
+#line 59
+            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
+#line 59
+              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
+            }
+#line 59
+            prof->triesCommit = _x;
+#line 59
+            break;
+          }
+#line 60
+          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
+#line 61
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 62
+          timer_stop(& start, & self->timeSTM);
+        }
+      } else {
+        goto _L___0;
+      }
+    } else {
+      _L___0: /* CIL Label */ 
+#line 65
+      if (! (nest->level <= 0L)) {
+#line 65
+        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
+      }
+#line 66
+      if (nest->level < 0L) {
+#line 67
+        tmp20 = _raw_TREE_SPLAY_NEXT(head, elm);
+      } else {
+#line 69
+        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 70
+        while (1) {
+#line 70
+          if (! (prof->lockHeld != (long volatile   )0)) {
+#line 70
+            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
+#line 70
+            if (! (tmp___4 != 0)) {
+#line 70
+              break;
+            }
+          }
+#line 72
+          cnt --;
+#line 72
+          if (cnt <= 0) {
+#line 72
+            busy();
+#line 72
+            cnt = default_spins;
+          }
+        }
+#line 74
+        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 75
+        timer_start(& start);
+#line 76
+        nest->level = -1L;
+#line 77
+        tmp20 = _raw_TREE_SPLAY_NEXT(head, elm);
+#line 78
+        nest->level = 0L;
+#line 79
+        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 80
+        timer_stop(& start, & self->timeRaw);
+      }
+    }
+  }
+#line 83
+  return (tmp20);
+}
+}
+#line 39 "test4.c"
+__inline static struct tree_node *_raw_TREE_SPLAY_MIN_MAX(struct TREE *head , int val ) 
+{ 
+
+  {
+#line 39
+  TREE_SPLAY_MINMAX(head, val);
+#line 39
+  return ((struct tree_node *)head->sph_root);
+}
+}
+#line 39 "test4.c"
+__inline static struct tree_node *_stm_TREE_SPLAY_MIN_MAX(Thread *self , struct TREE *head ,
+                                                          int val ) 
+{ struct tree_node *mem4 ;
+
+  {
+#line 39
+  TREE_SPLAY_MINMAX(head, val);
+  {
+  TxLoadSized(self, (intptr_t *)(& mem4), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 39
+  return ((struct tree_node *)mem4);
+  }
+}
+}
+#line 39 "test4.c"
+static struct tree_node *TREE_SPLAY_MIN_MAX(struct TREE *head , int val ) 
+{ profile_t *prof ;
+  void *(*rawfunc)(void) ;
+  void *(*stmfunc)(Thread * ) ;
+  int ro ;
+  int cnt ;
+  thread_t *self ;
+  nest_t *nest ;
+  nest_t *nested ;
+  __intptr_t tmp ;
+  unsigned long tries ;
+  sigjmp_buf buf ;
+  struct timeval start ;
+  void *tmp___0 ;
+  void *tmp___1 ;
+  __intptr_t tmp___2 ;
+  int tmp___3 ;
+  unsigned long volatile   _x ;
+  __intptr_t tmp___4 ;
+  int tmp___5 ;
+  struct tree_node *tmp20 ;
+
+  {
+#line 15 "alx.h"
+  prof = & _l1_prof;
+#line 16
+  rawfunc = (void *(*)(void))0;
+#line 17
+  stmfunc = (void *(*)(Thread * ))0;
+#line 18
+  ro = 0;
+#line 19
+  cnt = default_spins;
+#line 24
+  tries = 0UL;
+#line 28
+  tmp___0 = pthread_getspecific(_al_key);
+#line 28
+  self = (thread_t *)tmp___0;
+#line 28
+  if (! self) {
+#line 28
+    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
+  }
+#line 29
+  nest = self->prof_list.slh_first;
+#line 29
+  while (nest) {
+#line 30
+    if ((unsigned int )nest->prof == (unsigned int )prof) {
+#line 30
+      break;
+    }
+#line 29
+    nest = nest->next.sle_next;
+  }
+#line 32
+  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+#line 33
+    tmp___1 = malloc(sizeof(*nest));
+#line 33
+    nest = (nest_t *)tmp___1;
+#line 33
+    if (! nest) {
+#line 33
+      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
+    }
+#line 34
+    nest->prof = prof;
+#line 35
+    nest->level = 0L;
+#line 36
+    while (1) {
+#line 36
+      nest->next.sle_next = self->prof_list.slh_first;
+#line 36
+      self->prof_list.slh_first = nest;
+#line 36
+      break;
+    }
+  }
+#line 38
+  nested = self->prof_list.slh_first;
+#line 38
+  while (nested) {
+#line 39
+    if (0L < nested->level) {
+#line 39
+      break;
+    }
+#line 38
+    nested = nested->next.sle_next;
+  }
+#line 41
+  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+    goto _L;
+  } else {
+#line 41
+    if (nest->level == 0L) {
+#line 41
+      tmp___5 = transactMode(prof);
+#line 41
+      if (tmp___5) {
+        _L: /* CIL Label */ 
+#line 42
+        if (! (0L <= nest->level)) {
+#line 42
+          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
+        }
+#line 43
+        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+#line 44
+          tmp20 = _stm_TREE_SPLAY_MIN_MAX(self->stmThread, head, val);
+        } else {
+#line 46
+          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 47
+          while (1) {
+#line 47
+            tmp = (int )prof->lockHeld;
+#line 47
+            if (! ((long )tmp == -1L)) {
+#line 47
+              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
+                                tmp + 1);
+#line 47
+              if (! (tmp___2 != tmp)) {
+#line 47
+                break;
+              }
+            }
+#line 49
+            cnt --;
+#line 49
+            if (cnt <= 0) {
+#line 49
+              busy();
+#line 49
+              cnt = default_spins;
+            }
+          }
+#line 51
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 52
+          tmp___3 = sigsetjmp((long *)(buf), 1);
+#line 52
+          if (tmp___3) {
+#line 52
+            nest->level = 0L;
+          }
+#line 53
+          timer_start(& start);
+#line 54
+          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
+#line 55
+          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
+#line 56
+          TxStart(self->stmThread, & buf, & ro);
+#line 57
+          tmp20 = _stm_TREE_SPLAY_MIN_MAX(self->stmThread, head, val);
+#line 58
+          TxCommit(self->stmThread);
+#line 59
+          while (1) {
+#line 59
+            _x = prof->triesCommit;
+#line 59
+            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
+#line 59
+              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
+            }
+#line 59
+            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
+#line 59
+            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
+#line 59
+              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
+            }
+#line 59
+            prof->triesCommit = _x;
+#line 59
+            break;
+          }
+#line 60
+          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
+#line 61
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 62
+          timer_stop(& start, & self->timeSTM);
+        }
+      } else {
+        goto _L___0;
+      }
+    } else {
+      _L___0: /* CIL Label */ 
+#line 65
+      if (! (nest->level <= 0L)) {
+#line 65
+        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
+      }
+#line 66
+      if (nest->level < 0L) {
+#line 67
+        tmp20 = _raw_TREE_SPLAY_MIN_MAX(head, val);
+      } else {
+#line 69
+        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 70
+        while (1) {
+#line 70
+          if (! (prof->lockHeld != (long volatile   )0)) {
+#line 70
+            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
+#line 70
+            if (! (tmp___4 != 0)) {
+#line 70
+              break;
+            }
+          }
+#line 72
+          cnt --;
+#line 72
+          if (cnt <= 0) {
+#line 72
+            busy();
+#line 72
+            cnt = default_spins;
+          }
+        }
+#line 74
+        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 75
+        timer_start(& start);
+#line 76
+        nest->level = -1L;
+#line 77
+        tmp20 = _raw_TREE_SPLAY_MIN_MAX(head, val);
+#line 78
+        nest->level = 0L;
+#line 79
+        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 80
+        timer_stop(& start, & self->timeRaw);
+      }
+    }
+  }
+#line 83
+  return (tmp20);
+}
+}
+#line 40 "test4.c"
+struct tree_node *_raw_TREE_SPLAY_INSERT(struct TREE *head , struct tree_node *elm ) 
+{ int __comp ;
+  int tmp ;
+
+  {
+#line 40
+  if ((unsigned int )head->sph_root == (unsigned int )((void *)0)) {
+#line 40
+    elm->links.spe_right = (struct tree_node *)((void *)0);
+#line 40
+    elm->links.spe_left = elm->links.spe_right;
+  } else {
+#line 40
+    TREE_SPLAY(head, elm);
+#line 40
+    tmp = (int )node_cmp(elm, head->sph_root);
+#line 40
+    __comp = (int )tmp;
+#line 40
+    if (__comp < 0) {
+#line 40
+      elm->links.spe_left = (head->sph_root)->links.spe_left;
+#line 40
+      elm->links.spe_right = head->sph_root;
+#line 40
+      (head->sph_root)->links.spe_left = (struct tree_node *)((void *)0);
+    } else {
+#line 40
+      if (__comp > 0) {
+#line 40
+        elm->links.spe_right = (head->sph_root)->links.spe_right;
+#line 40
+        elm->links.spe_left = head->sph_root;
+#line 40
+        (head->sph_root)->links.spe_right = (struct tree_node *)((void *)0);
+      } else {
+#line 40
+        return ((struct tree_node *)head->sph_root);
+      }
+    }
+  }
+#line 40
+  head->sph_root = elm;
+#line 40
+  return ((struct tree_node *)((void *)0));
+}
+}
+#line 40 "test4.c"
+struct tree_node *_stm_TREE_SPLAY_INSERT(Thread *self , struct TREE *head , struct tree_node *elm ) 
+{ int __comp ;
+  int tmp ;
+  struct tree_node *mem6 ;
+  struct tree_node *tmp7 ;
+  struct tree_node *tmp8 ;
   struct tree_node *mem9 ;
   struct tree_node *mem10 ;
-  struct tree_node *mem11 ;
-  long mem12 ;
-  long tmp13 ;
-  long tmp14 ;
-  long tmp15 ;
-  struct tree_node *mem16 ;
+  struct tree_node *tmp11 ;
+  struct tree_node *mem12 ;
+  struct tree_node *mem13 ;
+  struct tree_node *tmp14 ;
+  struct tree_node *mem15 ;
+  struct tree_node *tmp16 ;
   struct tree_node *mem17 ;
   struct tree_node *tmp18 ;
   struct tree_node *mem19 ;
@@ -2768,633 +3457,98 @@ void _stm_TREE_RB_INSERT_COLOR(Thread *self , struct TREE *head , struct tree_no
   struct tree_node *tmp23 ;
   struct tree_node *mem24 ;
   struct tree_node *mem25 ;
-  struct tree_node *mem26 ;
-  struct tree_node *mem27 ;
-  struct tree_node *tmp28 ;
-  struct tree_node *mem29 ;
-  struct tree_node *tmp30 ;
-  struct tree_node *mem31 ;
-  struct tree_node *tmp32 ;
-  struct tree_node *tmp33 ;
-  struct tree_node *tmp34 ;
-  struct tree_node *mem35 ;
-  long tmp36 ;
-  long tmp37 ;
-  struct tree_node *mem38 ;
-  struct tree_node *tmp39 ;
-  struct tree_node *mem40 ;
-  struct tree_node *mem41 ;
-  struct tree_node *tmp42 ;
-  struct tree_node *mem43 ;
-  struct tree_node *tmp44 ;
-  struct tree_node *mem45 ;
-  struct tree_node *mem46 ;
-  struct tree_node *mem47 ;
-  struct tree_node *mem48 ;
-  struct tree_node *tmp49 ;
-  struct tree_node *mem50 ;
-  struct tree_node *tmp51 ;
-  struct tree_node *mem52 ;
-  struct tree_node *tmp53 ;
-  struct tree_node *tmp54 ;
-  struct tree_node *tmp55 ;
-  struct tree_node *mem56 ;
-  struct tree_node *mem57 ;
-  long mem58 ;
-  long tmp59 ;
-  long tmp60 ;
-  long tmp61 ;
-  struct tree_node *mem62 ;
-  struct tree_node *mem63 ;
-  struct tree_node *tmp64 ;
-  struct tree_node *mem65 ;
-  struct tree_node *mem66 ;
-  struct tree_node *tmp67 ;
-  struct tree_node *mem68 ;
-  struct tree_node *tmp69 ;
-  struct tree_node *mem70 ;
-  struct tree_node *mem71 ;
-  struct tree_node *mem72 ;
-  struct tree_node *mem73 ;
-  struct tree_node *tmp74 ;
-  struct tree_node *mem75 ;
-  struct tree_node *tmp76 ;
-  struct tree_node *mem77 ;
-  struct tree_node *tmp78 ;
-  struct tree_node *tmp79 ;
-  struct tree_node *tmp80 ;
-  struct tree_node *mem81 ;
-  long tmp82 ;
-  long tmp83 ;
-  struct tree_node *mem84 ;
-  struct tree_node *tmp85 ;
-  struct tree_node *mem86 ;
-  struct tree_node *mem87 ;
-  struct tree_node *tmp88 ;
-  struct tree_node *mem89 ;
-  struct tree_node *tmp90 ;
-  struct tree_node *mem91 ;
-  struct tree_node *mem92 ;
-  struct tree_node *mem93 ;
-  struct tree_node *mem94 ;
-  struct tree_node *tmp95 ;
-  struct tree_node *mem96 ;
-  struct tree_node *tmp97 ;
-  struct tree_node *mem98 ;
-  struct tree_node *tmp99 ;
-  struct tree_node *tmp100 ;
-  struct tree_node *tmp101 ;
-  struct tree_node *mem102 ;
-  long tmp103 ;
-  struct tree_node *mem104 ;
+  struct tree_node *tmp26 ;
 
   {
-#line 39
-  while (1) {
-    TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& elm->links.rbe_parent),
+  {
+  TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+  if ((unsigned int )mem6 == (unsigned int )((void *)0)) {
+#line 40
+    tmp7 = (struct tree_node *)((void *)0);
+#line 40
+    TxStoreSized(self, (intptr_t *)(& elm->links.spe_right), (intptr_t *)(& tmp7),
+                 sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& elm->links.spe_right),
                 sizeof(struct tree_node *));
-#line 39
-    parent = mem7;
-#line 39
-    if ((unsigned int )parent != (unsigned int )((void *)0)) {
-      {
-      TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& parent->links.rbe_color),
-                  sizeof(long ));
-#line 39
-      if (! (mem8 == 1L)) {
-#line 39
-        break;
-      }
-      }
+#line 40
+    tmp8 = mem9;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& elm->links.spe_left), (intptr_t *)(& tmp8),
+                 sizeof(struct tree_node *));
+  } else {
+#line 40
+    TREE_SPLAY(head, elm);
+    TxLoadSized(self, (intptr_t *)(& mem10), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+    tmp = (int )node_cmp(elm, mem10);
+#line 40
+    __comp = (int )tmp;
+#line 40
+    if (__comp < 0) {
+      TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem13), (intptr_t *)(& mem12->links.spe_left),
+                  sizeof(struct tree_node *));
+#line 40
+      tmp11 = mem13;
+#line 40
+      TxStoreSized(self, (intptr_t *)(& elm->links.spe_left), (intptr_t *)(& tmp11),
+                   sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem15), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+      tmp14 = mem15;
+#line 40
+      TxStoreSized(self, (intptr_t *)(& elm->links.spe_right), (intptr_t *)(& tmp14),
+                   sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem17), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+      tmp16 = (struct tree_node *)((void *)0);
+#line 40
+      TxStoreSized(self, (intptr_t *)(& mem17->links.spe_left), (intptr_t *)(& tmp16),
+                   sizeof(struct tree_node *));
     } else {
-#line 39
-      break;
-    }
-    TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& parent->links.rbe_parent),
-                sizeof(struct tree_node *));
-#line 39
-    gparent = mem9;
-    {
-    TxLoadSized(self, (intptr_t *)(& mem10), (intptr_t *)(& gparent->links.rbe_left),
-                sizeof(struct tree_node *));
-#line 39
-    if ((unsigned int )parent == (unsigned int )mem10) {
-      TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& gparent->links.rbe_right),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp = mem11;
-#line 39
-      if (tmp) {
-        {
-        TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& tmp->links.rbe_color),
-                    sizeof(long ));
-#line 39
-        if (mem12 == 1L) {
-#line 39
-          tmp13 = 0L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp13),
-                       sizeof(long ));
-#line 39
-          while (1) {
-#line 39
-            tmp14 = 0L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp14),
-                         sizeof(long ));
-#line 39
-            tmp15 = 1L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_color), (intptr_t *)(& tmp15),
-                         sizeof(long ));
-#line 39
-            break;
-          }
-#line 39
-          elm = gparent;
-#line 39
-          continue;
-        }
-        }
-      }
-      {
-      TxLoadSized(self, (intptr_t *)(& mem16), (intptr_t *)(& parent->links.rbe_right),
-                  sizeof(struct tree_node *));
-#line 39
-      if ((unsigned int )mem16 == (unsigned int )elm) {
-#line 39
-        while (1) {
-          TxLoadSized(self, (intptr_t *)(& mem17), (intptr_t *)(& parent->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp = mem17;
-          TxLoadSized(self, (intptr_t *)(& mem19), (intptr_t *)(& tmp->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp18 = mem19;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_right), (intptr_t *)(& tmp18),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem20), (intptr_t *)(& parent->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem20 != (unsigned int )((void *)0)) {
-            TxLoadSized(self, (intptr_t *)(& mem22), (intptr_t *)(& tmp->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp21 = parent;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem22->links.rbe_parent), (intptr_t *)(& tmp21),
-                         sizeof(struct tree_node *));
-          }
-          }
-          TxLoadSized(self, (intptr_t *)(& mem24), (intptr_t *)(& parent->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp23 = mem24;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp23),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem25), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem25 != (unsigned int )((void *)0)) {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem26), (intptr_t *)(& parent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem27), (intptr_t *)(& mem26->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )parent == (unsigned int )mem27) {
-              TxLoadSized(self, (intptr_t *)(& mem29), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp28 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem29->links.rbe_left), (intptr_t *)(& tmp28),
-                           sizeof(struct tree_node *));
-            } else {
-              TxLoadSized(self, (intptr_t *)(& mem31), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp30 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem31->links.rbe_right), (intptr_t *)(& tmp30),
-                           sizeof(struct tree_node *));
-            }
-            }
-          } else {
-#line 39
-            tmp32 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp32),
-                         sizeof(struct tree_node *));
-          }
-          }
-#line 39
-          tmp33 = parent;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_left), (intptr_t *)(& tmp33),
-                       sizeof(struct tree_node *));
-#line 39
-          tmp34 = tmp;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_parent), (intptr_t *)(& tmp34),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem35), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if (mem35) {
-
-          }
-          }
-#line 39
-          break;
-        }
-#line 39
-        tmp = parent;
-#line 39
-        parent = elm;
-#line 39
-        elm = tmp;
-      }
-      }
-#line 39
-      while (1) {
-#line 39
-        tmp36 = 0L;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp36),
-                     sizeof(long ));
-#line 39
-        tmp37 = 1L;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_color), (intptr_t *)(& tmp37),
-                     sizeof(long ));
-#line 39
-        break;
-      }
-#line 39
-      while (1) {
-        TxLoadSized(self, (intptr_t *)(& mem38), (intptr_t *)(& gparent->links.rbe_left),
+#line 40
+      if (__comp > 0) {
+        TxLoadSized(self, (intptr_t *)(& mem19), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem20), (intptr_t *)(& mem19->links.spe_right),
                     sizeof(struct tree_node *));
-#line 39
-        tmp = mem38;
-        TxLoadSized(self, (intptr_t *)(& mem40), (intptr_t *)(& tmp->links.rbe_right),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp39 = mem40;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_left), (intptr_t *)(& tmp39),
+#line 40
+        tmp18 = mem20;
+#line 40
+        TxStoreSized(self, (intptr_t *)(& elm->links.spe_right), (intptr_t *)(& tmp18),
                      sizeof(struct tree_node *));
-        {
-        TxLoadSized(self, (intptr_t *)(& mem41), (intptr_t *)(& gparent->links.rbe_left),
-                    sizeof(struct tree_node *));
-#line 39
-        if ((unsigned int )mem41 != (unsigned int )((void *)0)) {
-          TxLoadSized(self, (intptr_t *)(& mem43), (intptr_t *)(& tmp->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp42 = gparent;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& mem43->links.rbe_parent), (intptr_t *)(& tmp42),
-                       sizeof(struct tree_node *));
-        }
-        }
-        TxLoadSized(self, (intptr_t *)(& mem45), (intptr_t *)(& gparent->links.rbe_parent),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp44 = mem45;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp44),
+        TxLoadSized(self, (intptr_t *)(& mem22), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+        tmp21 = mem22;
+#line 40
+        TxStoreSized(self, (intptr_t *)(& elm->links.spe_left), (intptr_t *)(& tmp21),
                      sizeof(struct tree_node *));
-        {
-        TxLoadSized(self, (intptr_t *)(& mem46), (intptr_t *)(& tmp->links.rbe_parent),
-                    sizeof(struct tree_node *));
-#line 39
-        if ((unsigned int )mem46 != (unsigned int )((void *)0)) {
-          {
-          TxLoadSized(self, (intptr_t *)(& mem47), (intptr_t *)(& gparent->links.rbe_parent),
-                      sizeof(struct tree_node *));
-          TxLoadSized(self, (intptr_t *)(& mem48), (intptr_t *)(& mem47->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )gparent == (unsigned int )mem48) {
-            TxLoadSized(self, (intptr_t *)(& mem50), (intptr_t *)(& gparent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp49 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem50->links.rbe_left), (intptr_t *)(& tmp49),
-                         sizeof(struct tree_node *));
-          } else {
-            TxLoadSized(self, (intptr_t *)(& mem52), (intptr_t *)(& gparent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp51 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem52->links.rbe_right), (intptr_t *)(& tmp51),
-                         sizeof(struct tree_node *));
-          }
-          }
-        } else {
-#line 39
-          tmp53 = tmp;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp53),
-                       sizeof(struct tree_node *));
-        }
-        }
-#line 39
-        tmp54 = gparent;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_right), (intptr_t *)(& tmp54),
+        TxLoadSized(self, (intptr_t *)(& mem24), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+        tmp23 = (struct tree_node *)((void *)0);
+#line 40
+        TxStoreSized(self, (intptr_t *)(& mem24->links.spe_right), (intptr_t *)(& tmp23),
                      sizeof(struct tree_node *));
-#line 39
-        tmp55 = tmp;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_parent), (intptr_t *)(& tmp55),
-                     sizeof(struct tree_node *));
+      } else {
         {
-        TxLoadSized(self, (intptr_t *)(& mem56), (intptr_t *)(& tmp->links.rbe_parent),
-                    sizeof(struct tree_node *));
-#line 39
-        if (mem56) {
-
-        }
-        }
-#line 39
-        break;
-      }
-    } else {
-      TxLoadSized(self, (intptr_t *)(& mem57), (intptr_t *)(& gparent->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp = mem57;
-#line 39
-      if (tmp) {
-        {
-        TxLoadSized(self, (intptr_t *)(& mem58), (intptr_t *)(& tmp->links.rbe_color),
-                    sizeof(long ));
-#line 39
-        if (mem58 == 1L) {
-#line 39
-          tmp59 = 0L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp59),
-                       sizeof(long ));
-#line 39
-          while (1) {
-#line 39
-            tmp60 = 0L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp60),
-                         sizeof(long ));
-#line 39
-            tmp61 = 1L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_color), (intptr_t *)(& tmp61),
-                         sizeof(long ));
-#line 39
-            break;
-          }
-#line 39
-          elm = gparent;
-#line 39
-          continue;
-        }
+        TxLoadSized(self, (intptr_t *)(& mem25), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+        return ((struct tree_node *)mem25);
         }
       }
-      {
-      TxLoadSized(self, (intptr_t *)(& mem62), (intptr_t *)(& parent->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      if ((unsigned int )mem62 == (unsigned int )elm) {
-#line 39
-        while (1) {
-          TxLoadSized(self, (intptr_t *)(& mem63), (intptr_t *)(& parent->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp = mem63;
-          TxLoadSized(self, (intptr_t *)(& mem65), (intptr_t *)(& tmp->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp64 = mem65;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_left), (intptr_t *)(& tmp64),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem66), (intptr_t *)(& parent->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem66 != (unsigned int )((void *)0)) {
-            TxLoadSized(self, (intptr_t *)(& mem68), (intptr_t *)(& tmp->links.rbe_right),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp67 = parent;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem68->links.rbe_parent), (intptr_t *)(& tmp67),
-                         sizeof(struct tree_node *));
-          }
-          }
-          TxLoadSized(self, (intptr_t *)(& mem70), (intptr_t *)(& parent->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp69 = mem70;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp69),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem71), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem71 != (unsigned int )((void *)0)) {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem72), (intptr_t *)(& parent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem73), (intptr_t *)(& mem72->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )parent == (unsigned int )mem73) {
-              TxLoadSized(self, (intptr_t *)(& mem75), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp74 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem75->links.rbe_left), (intptr_t *)(& tmp74),
-                           sizeof(struct tree_node *));
-            } else {
-              TxLoadSized(self, (intptr_t *)(& mem77), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp76 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem77->links.rbe_right), (intptr_t *)(& tmp76),
-                           sizeof(struct tree_node *));
-            }
-            }
-          } else {
-#line 39
-            tmp78 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp78),
-                         sizeof(struct tree_node *));
-          }
-          }
-#line 39
-          tmp79 = parent;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_right), (intptr_t *)(& tmp79),
-                       sizeof(struct tree_node *));
-#line 39
-          tmp80 = tmp;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_parent), (intptr_t *)(& tmp80),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem81), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if (mem81) {
-
-          }
-          }
-#line 39
-          break;
-        }
-#line 39
-        tmp = parent;
-#line 39
-        parent = elm;
-#line 39
-        elm = tmp;
-      }
-      }
-#line 39
-      while (1) {
-#line 39
-        tmp82 = 0L;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp82),
-                     sizeof(long ));
-#line 39
-        tmp83 = 1L;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_color), (intptr_t *)(& tmp83),
-                     sizeof(long ));
-#line 39
-        break;
-      }
-#line 39
-      while (1) {
-        TxLoadSized(self, (intptr_t *)(& mem84), (intptr_t *)(& gparent->links.rbe_right),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp = mem84;
-        TxLoadSized(self, (intptr_t *)(& mem86), (intptr_t *)(& tmp->links.rbe_left),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp85 = mem86;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_right), (intptr_t *)(& tmp85),
-                     sizeof(struct tree_node *));
-        {
-        TxLoadSized(self, (intptr_t *)(& mem87), (intptr_t *)(& gparent->links.rbe_right),
-                    sizeof(struct tree_node *));
-#line 39
-        if ((unsigned int )mem87 != (unsigned int )((void *)0)) {
-          TxLoadSized(self, (intptr_t *)(& mem89), (intptr_t *)(& tmp->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp88 = gparent;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& mem89->links.rbe_parent), (intptr_t *)(& tmp88),
-                       sizeof(struct tree_node *));
-        }
-        }
-        TxLoadSized(self, (intptr_t *)(& mem91), (intptr_t *)(& gparent->links.rbe_parent),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp90 = mem91;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp90),
-                     sizeof(struct tree_node *));
-        {
-        TxLoadSized(self, (intptr_t *)(& mem92), (intptr_t *)(& tmp->links.rbe_parent),
-                    sizeof(struct tree_node *));
-#line 39
-        if ((unsigned int )mem92 != (unsigned int )((void *)0)) {
-          {
-          TxLoadSized(self, (intptr_t *)(& mem93), (intptr_t *)(& gparent->links.rbe_parent),
-                      sizeof(struct tree_node *));
-          TxLoadSized(self, (intptr_t *)(& mem94), (intptr_t *)(& mem93->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )gparent == (unsigned int )mem94) {
-            TxLoadSized(self, (intptr_t *)(& mem96), (intptr_t *)(& gparent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp95 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem96->links.rbe_left), (intptr_t *)(& tmp95),
-                         sizeof(struct tree_node *));
-          } else {
-            TxLoadSized(self, (intptr_t *)(& mem98), (intptr_t *)(& gparent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp97 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem98->links.rbe_right), (intptr_t *)(& tmp97),
-                         sizeof(struct tree_node *));
-          }
-          }
-        } else {
-#line 39
-          tmp99 = tmp;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp99),
-                       sizeof(struct tree_node *));
-        }
-        }
-#line 39
-        tmp100 = gparent;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_left), (intptr_t *)(& tmp100),
-                     sizeof(struct tree_node *));
-#line 39
-        tmp101 = tmp;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& gparent->links.rbe_parent), (intptr_t *)(& tmp101),
-                     sizeof(struct tree_node *));
-        {
-        TxLoadSized(self, (intptr_t *)(& mem102), (intptr_t *)(& tmp->links.rbe_parent),
-                    sizeof(struct tree_node *));
-#line 39
-        if (mem102) {
-
-        }
-        }
-#line 39
-        break;
-      }
-    }
     }
   }
-  TxLoadSized(self, (intptr_t *)(& mem104), (intptr_t *)(& head->rbh_root), sizeof(struct tree_node *));
-#line 39
-  tmp103 = 0L;
-#line 39
-  TxStoreSized(self, (intptr_t *)(& mem104->links.rbe_color), (intptr_t *)(& tmp103),
-               sizeof(long ));
-#line 39
-  return;
+  }
+#line 40
+  tmp26 = elm;
+#line 40
+  TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp26), sizeof(struct tree_node *));
+#line 40
+  return ((struct tree_node *)((void *)0));
 }
 }
-#line 39 "test3.c"
-static void TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm ) 
+#line 40 "test4.c"
+static struct tree_node *TREE_SPLAY_INSERT(struct TREE *head , struct tree_node *elm ) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
   void *(*stmfunc)(Thread * ) ;
@@ -3414,6 +3568,7 @@ static void TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm )
   unsigned long volatile   _x ;
   __intptr_t tmp___4 ;
   int tmp___5 ;
+  struct tree_node *tmp20 ;
 
   {
 #line 15 "alx.h"
@@ -3505,7 +3660,7 @@ static void TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm )
 #line 43
         if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 44
-          _stm_TREE_RB_INSERT_COLOR(self->stmThread, head, elm);
+          tmp20 = _stm_TREE_SPLAY_INSERT(self->stmThread, head, elm);
         } else {
 #line 46
           fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -3552,7 +3707,7 @@ static void TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm )
 #line 56
           TxStart(self->stmThread, & buf, & ro);
 #line 57
-          _stm_TREE_RB_INSERT_COLOR(self->stmThread, head, elm);
+          tmp20 = _stm_TREE_SPLAY_INSERT(self->stmThread, head, elm);
 #line 58
           TxCommit(self->stmThread);
 #line 59
@@ -3596,7 +3751,7 @@ static void TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm )
 #line 66
       if (nest->level < 0L) {
 #line 67
-        _raw_TREE_RB_INSERT_COLOR(head, elm);
+        tmp20 = _raw_TREE_SPLAY_INSERT(head, elm);
       } else {
 #line 69
         fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -3629,7 +3784,7 @@ static void TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm )
 #line 76
         nest->level = -1L;
 #line 77
-        _raw_TREE_RB_INSERT_COLOR(head, elm);
+        tmp20 = _raw_TREE_SPLAY_INSERT(head, elm);
 #line 78
         nest->level = 0L;
 #line 79
@@ -3640,1552 +3795,805 @@ static void TREE_RB_INSERT_COLOR(struct TREE *head , struct tree_node *elm )
     }
   }
 #line 83
-  return;
+  return (tmp20);
 }
 }
-#line 39 "test3.c"
-void _raw_TREE_RB_REMOVE_COLOR(struct TREE *head , struct tree_node *parent , struct tree_node *elm ) 
-{ struct tree_node *tmp ;
-  struct tree_node *oleft ;
-  struct tree_node *oright ;
+#line 40 "test4.c"
+struct tree_node *_raw_TREE_SPLAY_REMOVE(struct TREE *head , struct tree_node *elm ) 
+{ struct tree_node *__tmp ;
+  int tmp ;
 
   {
-#line 39
-  while (1) {
-#line 39
-    if ((unsigned int )elm == (unsigned int )((void *)0)) {
-      goto _L___5;
+#line 40
+  if ((unsigned int )head->sph_root == (unsigned int )((void *)0)) {
+#line 40
+    return ((struct tree_node *)((void *)0));
+  }
+#line 40
+  TREE_SPLAY(head, elm);
+#line 40
+  tmp = (int )node_cmp(elm, head->sph_root);
+#line 40
+  if (tmp == (int )0) {
+#line 40
+    if ((unsigned int )(head->sph_root)->links.spe_left == (unsigned int )((void *)0)) {
+#line 40
+      head->sph_root = (head->sph_root)->links.spe_right;
     } else {
+#line 40
+      __tmp = (head->sph_root)->links.spe_right;
+#line 40
+      head->sph_root = (head->sph_root)->links.spe_left;
+#line 40
+      TREE_SPLAY(head, elm);
+#line 40
+      (head->sph_root)->links.spe_right = __tmp;
+    }
+#line 40
+    return ((struct tree_node *)elm);
+  }
+#line 40
+  return ((struct tree_node *)((void *)0));
+}
+}
+#line 40 "test4.c"
+struct tree_node *_stm_TREE_SPLAY_REMOVE(Thread *self , struct TREE *head , struct tree_node *elm ) 
+{ struct tree_node *__tmp ;
+  int tmp ;
+  struct tree_node *mem6 ;
+  struct tree_node *mem7 ;
+  struct tree_node *mem8 ;
+  struct tree_node *mem9 ;
+  struct tree_node *tmp10 ;
+  struct tree_node *mem11 ;
+  struct tree_node *mem12 ;
+  struct tree_node *mem13 ;
+  struct tree_node *mem14 ;
+  struct tree_node *tmp15 ;
+  struct tree_node *mem16 ;
+  struct tree_node *mem17 ;
+  struct tree_node *tmp18 ;
+  struct tree_node *mem19 ;
+
+  {
+  {
+  TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+  if ((unsigned int )mem6 == (unsigned int )((void *)0)) {
+#line 40
+    return ((struct tree_node *)((void *)0));
+  }
+  }
+#line 40
+  TREE_SPLAY(head, elm);
+  TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+  tmp = (int )node_cmp(elm, mem7);
+#line 40
+  if (tmp == (int )0) {
+    {
+    TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& mem8->links.spe_left),
+                sizeof(struct tree_node *));
+#line 40
+    if ((unsigned int )mem9 == (unsigned int )((void *)0)) {
+      TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& mem11->links.spe_right),
+                  sizeof(struct tree_node *));
+#line 40
+      tmp10 = mem12;
+#line 40
+      TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp10), sizeof(struct tree_node *));
+    } else {
+      TxLoadSized(self, (intptr_t *)(& mem13), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem14), (intptr_t *)(& mem13->links.spe_right),
+                  sizeof(struct tree_node *));
+#line 40
+      __tmp = mem14;
+      TxLoadSized(self, (intptr_t *)(& mem16), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem17), (intptr_t *)(& mem16->links.spe_left),
+                  sizeof(struct tree_node *));
+#line 40
+      tmp15 = mem17;
+#line 40
+      TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp15), sizeof(struct tree_node *));
+#line 40
+      TREE_SPLAY(head, elm);
+      TxLoadSized(self, (intptr_t *)(& mem19), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+      tmp18 = __tmp;
+#line 40
+      TxStoreSized(self, (intptr_t *)(& mem19->links.spe_right), (intptr_t *)(& tmp18),
+                   sizeof(struct tree_node *));
+    }
+    }
+#line 40
+    return ((struct tree_node *)elm);
+  }
+#line 40
+  return ((struct tree_node *)((void *)0));
+}
+}
+#line 40 "test4.c"
+static struct tree_node *TREE_SPLAY_REMOVE(struct TREE *head , struct tree_node *elm ) 
+{ profile_t *prof ;
+  void *(*rawfunc)(void) ;
+  void *(*stmfunc)(Thread * ) ;
+  int ro ;
+  int cnt ;
+  thread_t *self ;
+  nest_t *nest ;
+  nest_t *nested ;
+  __intptr_t tmp ;
+  unsigned long tries ;
+  sigjmp_buf buf ;
+  struct timeval start ;
+  void *tmp___0 ;
+  void *tmp___1 ;
+  __intptr_t tmp___2 ;
+  int tmp___3 ;
+  unsigned long volatile   _x ;
+  __intptr_t tmp___4 ;
+  int tmp___5 ;
+  struct tree_node *tmp20 ;
+
+  {
+#line 15 "alx.h"
+  prof = & _l1_prof;
+#line 16
+  rawfunc = (void *(*)(void))0;
+#line 17
+  stmfunc = (void *(*)(Thread * ))0;
+#line 18
+  ro = 0;
+#line 19
+  cnt = default_spins;
+#line 24
+  tries = 0UL;
+#line 28
+  tmp___0 = pthread_getspecific(_al_key);
+#line 28
+  self = (thread_t *)tmp___0;
+#line 28
+  if (! self) {
+#line 28
+    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
+  }
+#line 29
+  nest = self->prof_list.slh_first;
+#line 29
+  while (nest) {
+#line 30
+    if ((unsigned int )nest->prof == (unsigned int )prof) {
+#line 30
+      break;
+    }
+#line 29
+    nest = nest->next.sle_next;
+  }
+#line 32
+  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
+#line 33
+    tmp___1 = malloc(sizeof(*nest));
+#line 33
+    nest = (nest_t *)tmp___1;
+#line 33
+    if (! nest) {
+#line 33
+      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
+    }
+#line 34
+    nest->prof = prof;
+#line 35
+    nest->level = 0L;
+#line 36
+    while (1) {
+#line 36
+      nest->next.sle_next = self->prof_list.slh_first;
+#line 36
+      self->prof_list.slh_first = nest;
+#line 36
+      break;
+    }
+  }
+#line 38
+  nested = self->prof_list.slh_first;
+#line 38
+  while (nested) {
 #line 39
-      if (elm->links.rbe_color == 0L) {
-        _L___5: /* CIL Label */ 
+    if (0L < nested->level) {
 #line 39
-        if (! ((unsigned int )elm != (unsigned int )head->rbh_root)) {
-#line 39
-          break;
+      break;
+    }
+#line 38
+    nested = nested->next.sle_next;
+  }
+#line 41
+  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+    goto _L;
+  } else {
+#line 41
+    if (nest->level == 0L) {
+#line 41
+      tmp___5 = transactMode(prof);
+#line 41
+      if (tmp___5) {
+        _L: /* CIL Label */ 
+#line 42
+        if (! (0L <= nest->level)) {
+#line 42
+          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
+        }
+#line 43
+        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
+#line 44
+          tmp20 = _stm_TREE_SPLAY_REMOVE(self->stmThread, head, elm);
+        } else {
+#line 46
+          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 47
+          while (1) {
+#line 47
+            tmp = (int )prof->lockHeld;
+#line 47
+            if (! ((long )tmp == -1L)) {
+#line 47
+              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
+                                tmp + 1);
+#line 47
+              if (! (tmp___2 != tmp)) {
+#line 47
+                break;
+              }
+            }
+#line 49
+            cnt --;
+#line 49
+            if (cnt <= 0) {
+#line 49
+              busy();
+#line 49
+              cnt = default_spins;
+            }
+          }
+#line 51
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 52
+          tmp___3 = sigsetjmp((long *)(buf), 1);
+#line 52
+          if (tmp___3) {
+#line 52
+            nest->level = 0L;
+          }
+#line 53
+          timer_start(& start);
+#line 54
+          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
+#line 55
+          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
+#line 56
+          TxStart(self->stmThread, & buf, & ro);
+#line 57
+          tmp20 = _stm_TREE_SPLAY_REMOVE(self->stmThread, head, elm);
+#line 58
+          TxCommit(self->stmThread);
+#line 59
+          while (1) {
+#line 59
+            _x = prof->triesCommit;
+#line 59
+            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
+#line 59
+              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
+            }
+#line 59
+            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
+#line 59
+            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
+#line 59
+              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
+            }
+#line 59
+            prof->triesCommit = _x;
+#line 59
+            break;
+          }
+#line 60
+          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
+#line 61
+          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 62
+          timer_stop(& start, & self->timeSTM);
         }
       } else {
-#line 39
+        goto _L___0;
+      }
+    } else {
+      _L___0: /* CIL Label */ 
+#line 65
+      if (! (nest->level <= 0L)) {
+#line 65
+        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
+      }
+#line 66
+      if (nest->level < 0L) {
+#line 67
+        tmp20 = _raw_TREE_SPLAY_REMOVE(head, elm);
+      } else {
+#line 69
+        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 70
+        while (1) {
+#line 70
+          if (! (prof->lockHeld != (long volatile   )0)) {
+#line 70
+            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
+#line 70
+            if (! (tmp___4 != 0)) {
+#line 70
+              break;
+            }
+          }
+#line 72
+          cnt --;
+#line 72
+          if (cnt <= 0) {
+#line 72
+            busy();
+#line 72
+            cnt = default_spins;
+          }
+        }
+#line 74
+        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
+#line 75
+        timer_start(& start);
+#line 76
+        nest->level = -1L;
+#line 77
+        tmp20 = _raw_TREE_SPLAY_REMOVE(head, elm);
+#line 78
+        nest->level = 0L;
+#line 79
+        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
+#line 80
+        timer_stop(& start, & self->timeRaw);
+      }
+    }
+  }
+#line 83
+  return (tmp20);
+}
+}
+#line 40 "test4.c"
+void _raw_TREE_SPLAY(struct TREE *head , struct tree_node *elm ) 
+{ struct tree_node ____node ;
+  struct tree_node *__node ;
+  struct tree_node *__left ;
+  struct tree_node *__right ;
+  struct tree_node *__tmp ;
+  int __comp ;
+  int tmp ;
+  int tmp___0 ;
+  int tmp___1 ;
+
+  {
+#line 40
+  __node = & ____node;
+#line 40
+  __node->links.spe_right = (struct tree_node *)((void *)0);
+#line 40
+  __node->links.spe_left = __node->links.spe_right;
+#line 40
+  __right = __node;
+#line 40
+  __left = __right;
+#line 40
+  while (1) {
+#line 40
+    tmp___1 = (int )node_cmp(elm, head->sph_root);
+#line 40
+    __comp = (int )tmp___1;
+#line 40
+    if (! (__comp != 0)) {
+#line 40
+      break;
+    }
+#line 40
+    if (__comp < 0) {
+#line 40
+      __tmp = (head->sph_root)->links.spe_left;
+#line 40
+      if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
         break;
       }
-    }
-#line 39
-    if ((unsigned int )parent->links.rbe_left == (unsigned int )elm) {
-#line 39
-      tmp = parent->links.rbe_right;
-#line 39
-      if (tmp->links.rbe_color == 1L) {
-#line 39
+#line 40
+      tmp = (int )node_cmp(elm, __tmp);
+#line 40
+      if (tmp < (int )0) {
+#line 40
         while (1) {
-#line 39
-          tmp->links.rbe_color = 0L;
-#line 39
-          parent->links.rbe_color = 1L;
-#line 39
+#line 40
+          (head->sph_root)->links.spe_left = __tmp->links.spe_right;
+#line 40
+          __tmp->links.spe_right = head->sph_root;
+#line 40
+          head->sph_root = __tmp;
+#line 40
           break;
         }
-#line 39
-        while (1) {
-#line 39
-          tmp = parent->links.rbe_right;
-#line 39
-          parent->links.rbe_right = tmp->links.rbe_left;
-#line 39
-          if ((unsigned int )parent->links.rbe_right != (unsigned int )((void *)0)) {
-#line 39
-            (tmp->links.rbe_left)->links.rbe_parent = parent;
-          }
-#line 39
-          tmp->links.rbe_parent = parent->links.rbe_parent;
-#line 39
-          if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-            if ((unsigned int )parent == (unsigned int )(parent->links.rbe_parent)->links.rbe_left) {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_left = tmp;
-            } else {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_right = tmp;
-            }
-          } else {
-#line 39
-            head->rbh_root = tmp;
-          }
-#line 39
-          tmp->links.rbe_left = parent;
-#line 39
-          parent->links.rbe_parent = tmp;
-#line 39
-          if (tmp->links.rbe_parent) {
-
-          }
-#line 39
+#line 40
+        if ((unsigned int )(head->sph_root)->links.spe_left == (unsigned int )((void *)0)) {
+#line 40
           break;
         }
-#line 39
-        tmp = parent->links.rbe_right;
       }
-#line 39
-      if ((unsigned int )tmp->links.rbe_left == (unsigned int )((void *)0)) {
-        goto _L___1;
-      } else {
-#line 39
-        if ((tmp->links.rbe_left)->links.rbe_color == 0L) {
-          _L___1: /* CIL Label */ 
-#line 39
-          if ((unsigned int )tmp->links.rbe_right == (unsigned int )((void *)0)) {
-#line 39
-            tmp->links.rbe_color = 1L;
-#line 39
-            elm = parent;
-#line 39
-            parent = elm->links.rbe_parent;
-          } else {
-#line 39
-            if ((tmp->links.rbe_right)->links.rbe_color == 0L) {
-#line 39
-              tmp->links.rbe_color = 1L;
-#line 39
-              elm = parent;
-#line 39
-              parent = elm->links.rbe_parent;
-            } else {
-              goto _L___0;
-            }
-          }
-        } else {
-          _L___0: /* CIL Label */ 
-#line 39
-          if ((unsigned int )tmp->links.rbe_right == (unsigned int )((void *)0)) {
-            goto _L;
-          } else {
-#line 39
-            if ((tmp->links.rbe_right)->links.rbe_color == 0L) {
-              _L: /* CIL Label */ 
-#line 39
-              oleft = tmp->links.rbe_left;
-#line 39
-              if ((unsigned int )oleft != (unsigned int )((void *)0)) {
-#line 39
-                oleft->links.rbe_color = 0L;
-              }
-#line 39
-              tmp->links.rbe_color = 1L;
-#line 39
-              while (1) {
-#line 39
-                oleft = tmp->links.rbe_left;
-#line 39
-                tmp->links.rbe_left = oleft->links.rbe_right;
-#line 39
-                if ((unsigned int )tmp->links.rbe_left != (unsigned int )((void *)0)) {
-#line 39
-                  (oleft->links.rbe_right)->links.rbe_parent = tmp;
-                }
-#line 39
-                oleft->links.rbe_parent = tmp->links.rbe_parent;
-#line 39
-                if ((unsigned int )oleft->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-                  if ((unsigned int )tmp == (unsigned int )(tmp->links.rbe_parent)->links.rbe_left) {
-#line 39
-                    (tmp->links.rbe_parent)->links.rbe_left = oleft;
-                  } else {
-#line 39
-                    (tmp->links.rbe_parent)->links.rbe_right = oleft;
-                  }
-                } else {
-#line 39
-                  head->rbh_root = oleft;
-                }
-#line 39
-                oleft->links.rbe_right = tmp;
-#line 39
-                tmp->links.rbe_parent = oleft;
-#line 39
-                if (oleft->links.rbe_parent) {
-
-                }
-#line 39
-                break;
-              }
-#line 39
-              tmp = parent->links.rbe_right;
-            }
-          }
-#line 39
-          tmp->links.rbe_color = parent->links.rbe_color;
-#line 39
-          parent->links.rbe_color = 0L;
-#line 39
-          if (tmp->links.rbe_right) {
-#line 39
-            (tmp->links.rbe_right)->links.rbe_color = 0L;
-          }
-#line 39
-          while (1) {
-#line 39
-            tmp = parent->links.rbe_right;
-#line 39
-            parent->links.rbe_right = tmp->links.rbe_left;
-#line 39
-            if ((unsigned int )parent->links.rbe_right != (unsigned int )((void *)0)) {
-#line 39
-              (tmp->links.rbe_left)->links.rbe_parent = parent;
-            }
-#line 39
-            tmp->links.rbe_parent = parent->links.rbe_parent;
-#line 39
-            if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-              if ((unsigned int )parent == (unsigned int )(parent->links.rbe_parent)->links.rbe_left) {
-#line 39
-                (parent->links.rbe_parent)->links.rbe_left = tmp;
-              } else {
-#line 39
-                (parent->links.rbe_parent)->links.rbe_right = tmp;
-              }
-            } else {
-#line 39
-              head->rbh_root = tmp;
-            }
-#line 39
-            tmp->links.rbe_left = parent;
-#line 39
-            parent->links.rbe_parent = tmp;
-#line 39
-            if (tmp->links.rbe_parent) {
-
-            }
-#line 39
-            break;
-          }
-#line 39
-          elm = head->rbh_root;
-#line 39
-          break;
-        }
+#line 40
+      while (1) {
+#line 40
+        __right->links.spe_left = head->sph_root;
+#line 40
+        __right = head->sph_root;
+#line 40
+        head->sph_root = (head->sph_root)->links.spe_left;
+#line 40
+        break;
       }
     } else {
-#line 39
-      tmp = parent->links.rbe_left;
-#line 39
-      if (tmp->links.rbe_color == 1L) {
-#line 39
-        while (1) {
-#line 39
-          tmp->links.rbe_color = 0L;
-#line 39
-          parent->links.rbe_color = 1L;
-#line 39
+#line 40
+      if (__comp > 0) {
+#line 40
+        __tmp = (head->sph_root)->links.spe_right;
+#line 40
+        if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
           break;
         }
-#line 39
-        while (1) {
-#line 39
-          tmp = parent->links.rbe_left;
-#line 39
-          parent->links.rbe_left = tmp->links.rbe_right;
-#line 39
-          if ((unsigned int )parent->links.rbe_left != (unsigned int )((void *)0)) {
-#line 39
-            (tmp->links.rbe_right)->links.rbe_parent = parent;
-          }
-#line 39
-          tmp->links.rbe_parent = parent->links.rbe_parent;
-#line 39
-          if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-            if ((unsigned int )parent == (unsigned int )(parent->links.rbe_parent)->links.rbe_left) {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_left = tmp;
-            } else {
-#line 39
-              (parent->links.rbe_parent)->links.rbe_right = tmp;
-            }
-          } else {
-#line 39
-            head->rbh_root = tmp;
-          }
-#line 39
-          tmp->links.rbe_right = parent;
-#line 39
-          parent->links.rbe_parent = tmp;
-#line 39
-          if (tmp->links.rbe_parent) {
-
-          }
-#line 39
-          break;
-        }
-#line 39
-        tmp = parent->links.rbe_left;
-      }
-#line 39
-      if ((unsigned int )tmp->links.rbe_left == (unsigned int )((void *)0)) {
-        goto _L___4;
-      } else {
-#line 39
-        if ((tmp->links.rbe_left)->links.rbe_color == 0L) {
-          _L___4: /* CIL Label */ 
-#line 39
-          if ((unsigned int )tmp->links.rbe_right == (unsigned int )((void *)0)) {
-#line 39
-            tmp->links.rbe_color = 1L;
-#line 39
-            elm = parent;
-#line 39
-            parent = elm->links.rbe_parent;
-          } else {
-#line 39
-            if ((tmp->links.rbe_right)->links.rbe_color == 0L) {
-#line 39
-              tmp->links.rbe_color = 1L;
-#line 39
-              elm = parent;
-#line 39
-              parent = elm->links.rbe_parent;
-            } else {
-              goto _L___3;
-            }
-          }
-        } else {
-          _L___3: /* CIL Label */ 
-#line 39
-          if ((unsigned int )tmp->links.rbe_left == (unsigned int )((void *)0)) {
-            goto _L___2;
-          } else {
-#line 39
-            if ((tmp->links.rbe_left)->links.rbe_color == 0L) {
-              _L___2: /* CIL Label */ 
-#line 39
-              oright = tmp->links.rbe_right;
-#line 39
-              if ((unsigned int )oright != (unsigned int )((void *)0)) {
-#line 39
-                oright->links.rbe_color = 0L;
-              }
-#line 39
-              tmp->links.rbe_color = 1L;
-#line 39
-              while (1) {
-#line 39
-                oright = tmp->links.rbe_right;
-#line 39
-                tmp->links.rbe_right = oright->links.rbe_left;
-#line 39
-                if ((unsigned int )tmp->links.rbe_right != (unsigned int )((void *)0)) {
-#line 39
-                  (oright->links.rbe_left)->links.rbe_parent = tmp;
-                }
-#line 39
-                oright->links.rbe_parent = tmp->links.rbe_parent;
-#line 39
-                if ((unsigned int )oright->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-                  if ((unsigned int )tmp == (unsigned int )(tmp->links.rbe_parent)->links.rbe_left) {
-#line 39
-                    (tmp->links.rbe_parent)->links.rbe_left = oright;
-                  } else {
-#line 39
-                    (tmp->links.rbe_parent)->links.rbe_right = oright;
-                  }
-                } else {
-#line 39
-                  head->rbh_root = oright;
-                }
-#line 39
-                oright->links.rbe_left = tmp;
-#line 39
-                tmp->links.rbe_parent = oright;
-#line 39
-                if (oright->links.rbe_parent) {
-
-                }
-#line 39
-                break;
-              }
-#line 39
-              tmp = parent->links.rbe_left;
-            }
-          }
-#line 39
-          tmp->links.rbe_color = parent->links.rbe_color;
-#line 39
-          parent->links.rbe_color = 0L;
-#line 39
-          if (tmp->links.rbe_left) {
-#line 39
-            (tmp->links.rbe_left)->links.rbe_color = 0L;
-          }
-#line 39
+#line 40
+        tmp___0 = (int )node_cmp(elm, __tmp);
+#line 40
+        if (tmp___0 > (int )0) {
+#line 40
           while (1) {
-#line 39
-            tmp = parent->links.rbe_left;
-#line 39
-            parent->links.rbe_left = tmp->links.rbe_right;
-#line 39
-            if ((unsigned int )parent->links.rbe_left != (unsigned int )((void *)0)) {
-#line 39
-              (tmp->links.rbe_right)->links.rbe_parent = parent;
-            }
-#line 39
-            tmp->links.rbe_parent = parent->links.rbe_parent;
-#line 39
-            if ((unsigned int )tmp->links.rbe_parent != (unsigned int )((void *)0)) {
-#line 39
-              if ((unsigned int )parent == (unsigned int )(parent->links.rbe_parent)->links.rbe_left) {
-#line 39
-                (parent->links.rbe_parent)->links.rbe_left = tmp;
-              } else {
-#line 39
-                (parent->links.rbe_parent)->links.rbe_right = tmp;
-              }
-            } else {
-#line 39
-              head->rbh_root = tmp;
-            }
-#line 39
-            tmp->links.rbe_right = parent;
-#line 39
-            parent->links.rbe_parent = tmp;
-#line 39
-            if (tmp->links.rbe_parent) {
-
-            }
-#line 39
+#line 40
+            (head->sph_root)->links.spe_right = __tmp->links.spe_left;
+#line 40
+            __tmp->links.spe_left = head->sph_root;
+#line 40
+            head->sph_root = __tmp;
+#line 40
             break;
           }
-#line 39
-          elm = head->rbh_root;
-#line 39
+#line 40
+          if ((unsigned int )(head->sph_root)->links.spe_right == (unsigned int )((void *)0)) {
+#line 40
+            break;
+          }
+        }
+#line 40
+        while (1) {
+#line 40
+          __left->links.spe_right = head->sph_root;
+#line 40
+          __left = head->sph_root;
+#line 40
+          head->sph_root = (head->sph_root)->links.spe_right;
+#line 40
           break;
         }
       }
     }
   }
-#line 39
-  if (elm) {
-#line 39
-    elm->links.rbe_color = 0L;
+#line 40
+  while (1) {
+#line 40
+    __left->links.spe_right = (head->sph_root)->links.spe_left;
+#line 40
+    __right->links.spe_left = (head->sph_root)->links.spe_right;
+#line 40
+    (head->sph_root)->links.spe_left = __node->links.spe_right;
+#line 40
+    (head->sph_root)->links.spe_right = __node->links.spe_left;
+#line 40
+    break;
   }
-#line 39
+#line 40
   return;
 }
 }
-#line 39 "test3.c"
-void _stm_TREE_RB_REMOVE_COLOR(Thread *self , struct TREE *head , struct tree_node *parent ,
-                               struct tree_node *elm ) 
-{ struct tree_node *tmp ;
-  struct tree_node *oleft ;
-  struct tree_node *oright ;
-  long mem8 ;
-  struct tree_node *mem9 ;
-  struct tree_node *mem10 ;
-  struct tree_node *mem11 ;
-  long mem12 ;
-  long tmp13 ;
-  long tmp14 ;
+#line 40 "test4.c"
+void _stm_TREE_SPLAY(Thread *self , struct TREE *head , struct tree_node *elm ) 
+{ struct tree_node ____node ;
+  struct tree_node *__node ;
+  struct tree_node *__left ;
+  struct tree_node *__right ;
+  struct tree_node *__tmp ;
+  int __comp ;
+  int tmp ;
+  int tmp___0 ;
+  int tmp___1 ;
+  struct tree_node *tmp13 ;
+  struct tree_node *tmp14 ;
   struct tree_node *mem15 ;
-  struct tree_node *tmp16 ;
+  struct tree_node *mem16 ;
   struct tree_node *mem17 ;
   struct tree_node *mem18 ;
   struct tree_node *tmp19 ;
   struct tree_node *mem20 ;
-  struct tree_node *tmp21 ;
-  struct tree_node *mem22 ;
+  struct tree_node *mem21 ;
+  struct tree_node *tmp22 ;
   struct tree_node *mem23 ;
-  struct tree_node *mem24 ;
+  struct tree_node *tmp24 ;
   struct tree_node *mem25 ;
-  struct tree_node *tmp26 ;
-  struct tree_node *mem27 ;
-  struct tree_node *tmp28 ;
+  struct tree_node *mem26 ;
+  struct tree_node *tmp27 ;
+  struct tree_node *mem28 ;
   struct tree_node *mem29 ;
   struct tree_node *tmp30 ;
-  struct tree_node *tmp31 ;
-  struct tree_node *tmp32 ;
+  struct tree_node *mem31 ;
+  struct tree_node *mem32 ;
   struct tree_node *mem33 ;
   struct tree_node *mem34 ;
-  struct tree_node *mem35 ;
+  struct tree_node *tmp35 ;
   struct tree_node *mem36 ;
-  long mem37 ;
-  struct tree_node *mem38 ;
-  long tmp39 ;
-  struct tree_node *mem40 ;
+  struct tree_node *mem37 ;
+  struct tree_node *tmp38 ;
+  struct tree_node *mem39 ;
+  struct tree_node *tmp40 ;
   struct tree_node *mem41 ;
-  long mem42 ;
-  long tmp43 ;
+  struct tree_node *mem42 ;
+  struct tree_node *tmp43 ;
   struct tree_node *mem44 ;
   struct tree_node *mem45 ;
-  struct tree_node *mem46 ;
-  long mem47 ;
+  struct tree_node *tmp46 ;
+  struct tree_node *mem47 ;
   struct tree_node *mem48 ;
-  long tmp49 ;
-  long tmp50 ;
+  struct tree_node *tmp49 ;
+  struct tree_node *mem50 ;
   struct tree_node *mem51 ;
   struct tree_node *tmp52 ;
   struct tree_node *mem53 ;
   struct tree_node *mem54 ;
   struct tree_node *tmp55 ;
   struct tree_node *mem56 ;
-  struct tree_node *tmp57 ;
-  struct tree_node *mem58 ;
+  struct tree_node *mem57 ;
+  struct tree_node *tmp58 ;
   struct tree_node *mem59 ;
   struct tree_node *mem60 ;
-  struct tree_node *mem61 ;
-  struct tree_node *tmp62 ;
-  struct tree_node *mem63 ;
-  struct tree_node *tmp64 ;
-  struct tree_node *mem65 ;
-  struct tree_node *tmp66 ;
-  struct tree_node *tmp67 ;
-  struct tree_node *tmp68 ;
-  struct tree_node *mem69 ;
-  struct tree_node *mem70 ;
-  long tmp71 ;
-  long mem72 ;
-  long tmp73 ;
-  struct tree_node *mem74 ;
-  long tmp75 ;
-  struct tree_node *mem76 ;
-  struct tree_node *mem77 ;
-  struct tree_node *tmp78 ;
-  struct tree_node *mem79 ;
-  struct tree_node *mem80 ;
-  struct tree_node *tmp81 ;
-  struct tree_node *mem82 ;
-  struct tree_node *tmp83 ;
-  struct tree_node *mem84 ;
-  struct tree_node *mem85 ;
-  struct tree_node *mem86 ;
-  struct tree_node *mem87 ;
-  struct tree_node *tmp88 ;
-  struct tree_node *mem89 ;
-  struct tree_node *tmp90 ;
-  struct tree_node *mem91 ;
-  struct tree_node *tmp92 ;
-  struct tree_node *tmp93 ;
-  struct tree_node *tmp94 ;
-  struct tree_node *mem95 ;
-  struct tree_node *mem96 ;
-  struct tree_node *mem97 ;
-  long mem98 ;
-  long tmp99 ;
-  long tmp100 ;
-  struct tree_node *mem101 ;
-  struct tree_node *tmp102 ;
-  struct tree_node *mem103 ;
-  struct tree_node *mem104 ;
-  struct tree_node *tmp105 ;
-  struct tree_node *mem106 ;
-  struct tree_node *tmp107 ;
-  struct tree_node *mem108 ;
-  struct tree_node *mem109 ;
-  struct tree_node *mem110 ;
-  struct tree_node *mem111 ;
-  struct tree_node *tmp112 ;
-  struct tree_node *mem113 ;
-  struct tree_node *tmp114 ;
-  struct tree_node *mem115 ;
-  struct tree_node *tmp116 ;
-  struct tree_node *tmp117 ;
-  struct tree_node *tmp118 ;
-  struct tree_node *mem119 ;
-  struct tree_node *mem120 ;
-  struct tree_node *mem121 ;
-  struct tree_node *mem122 ;
-  long mem123 ;
-  struct tree_node *mem124 ;
-  long tmp125 ;
-  struct tree_node *mem126 ;
-  struct tree_node *mem127 ;
-  long mem128 ;
-  long tmp129 ;
-  struct tree_node *mem130 ;
-  struct tree_node *mem131 ;
-  struct tree_node *mem132 ;
-  long mem133 ;
-  struct tree_node *mem134 ;
-  long tmp135 ;
-  long tmp136 ;
-  struct tree_node *mem137 ;
-  struct tree_node *tmp138 ;
-  struct tree_node *mem139 ;
-  struct tree_node *mem140 ;
-  struct tree_node *tmp141 ;
-  struct tree_node *mem142 ;
-  struct tree_node *tmp143 ;
-  struct tree_node *mem144 ;
-  struct tree_node *mem145 ;
-  struct tree_node *mem146 ;
-  struct tree_node *mem147 ;
-  struct tree_node *tmp148 ;
-  struct tree_node *mem149 ;
-  struct tree_node *tmp150 ;
-  struct tree_node *mem151 ;
-  struct tree_node *tmp152 ;
-  struct tree_node *tmp153 ;
-  struct tree_node *tmp154 ;
-  struct tree_node *mem155 ;
-  struct tree_node *mem156 ;
-  long tmp157 ;
-  long mem158 ;
-  long tmp159 ;
-  struct tree_node *mem160 ;
-  long tmp161 ;
-  struct tree_node *mem162 ;
-  struct tree_node *mem163 ;
-  struct tree_node *tmp164 ;
-  struct tree_node *mem165 ;
-  struct tree_node *mem166 ;
-  struct tree_node *tmp167 ;
-  struct tree_node *mem168 ;
-  struct tree_node *tmp169 ;
-  struct tree_node *mem170 ;
-  struct tree_node *mem171 ;
-  struct tree_node *mem172 ;
-  struct tree_node *mem173 ;
-  struct tree_node *tmp174 ;
-  struct tree_node *mem175 ;
-  struct tree_node *tmp176 ;
-  struct tree_node *mem177 ;
-  struct tree_node *tmp178 ;
-  struct tree_node *tmp179 ;
-  struct tree_node *tmp180 ;
-  struct tree_node *mem181 ;
-  struct tree_node *mem182 ;
-  long tmp183 ;
 
   {
-#line 39
+#line 40
+  __node = & ____node;
+#line 40
+  tmp13 = (struct tree_node *)((void *)0);
+#line 40
+  TxStoreSized(self, (intptr_t *)(& __node->links.spe_right), (intptr_t *)(& tmp13),
+               sizeof(struct tree_node *));
+  TxLoadSized(self, (intptr_t *)(& mem15), (intptr_t *)(& __node->links.spe_right),
+              sizeof(struct tree_node *));
+#line 40
+  tmp14 = mem15;
+#line 40
+  TxStoreSized(self, (intptr_t *)(& __node->links.spe_left), (intptr_t *)(& tmp14),
+               sizeof(struct tree_node *));
+#line 40
+  __right = __node;
+#line 40
+  __left = __right;
+#line 40
   while (1) {
-#line 39
-    if ((unsigned int )elm == (unsigned int )((void *)0)) {
-      goto _L___5;
-    } else {
-      {
-      TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& elm->links.rbe_color),
-                  sizeof(long ));
-#line 39
-      if (mem8 == 0L) {
-        _L___5: /* CIL Label */ 
-        {
-        TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& head->rbh_root), sizeof(struct tree_node *));
-#line 39
-        if (! ((unsigned int )elm != (unsigned int )mem9)) {
-#line 39
-          break;
-        }
-        }
-      } else {
-#line 39
+    TxLoadSized(self, (intptr_t *)(& mem16), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+    tmp___1 = (int )node_cmp(elm, mem16);
+#line 40
+    __comp = (int )tmp___1;
+#line 40
+    if (! (__comp != 0)) {
+#line 40
+      break;
+    }
+#line 40
+    if (__comp < 0) {
+      TxLoadSized(self, (intptr_t *)(& mem17), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem18), (intptr_t *)(& mem17->links.spe_left),
+                  sizeof(struct tree_node *));
+#line 40
+      __tmp = mem18;
+#line 40
+      if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
         break;
       }
-      }
-    }
-    {
-    TxLoadSized(self, (intptr_t *)(& mem10), (intptr_t *)(& parent->links.rbe_left),
-                sizeof(struct tree_node *));
-#line 39
-    if ((unsigned int )mem10 == (unsigned int )elm) {
-      TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& parent->links.rbe_right),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp = mem11;
-      {
-      TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& tmp->links.rbe_color),
-                  sizeof(long ));
-#line 39
-      if (mem12 == 1L) {
-#line 39
+#line 40
+      tmp = (int )node_cmp(elm, __tmp);
+#line 40
+      if (tmp < (int )0) {
+#line 40
         while (1) {
-#line 39
-          tmp13 = 0L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp13),
-                       sizeof(long ));
-#line 39
-          tmp14 = 1L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp14),
-                       sizeof(long ));
-#line 39
+          TxLoadSized(self, (intptr_t *)(& mem20), (intptr_t *)(& __tmp->links.spe_right),
+                      sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem21), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp19 = mem20;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& mem21->links.spe_left), (intptr_t *)(& tmp19),
+                       sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem23), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp22 = mem23;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& __tmp->links.spe_right), (intptr_t *)(& tmp22),
+                       sizeof(struct tree_node *));
+#line 40
+          tmp24 = __tmp;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp24),
+                       sizeof(struct tree_node *));
+#line 40
           break;
         }
-#line 39
-        while (1) {
-          TxLoadSized(self, (intptr_t *)(& mem15), (intptr_t *)(& parent->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp = mem15;
-          TxLoadSized(self, (intptr_t *)(& mem17), (intptr_t *)(& tmp->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp16 = mem17;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_right), (intptr_t *)(& tmp16),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem18), (intptr_t *)(& parent->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem18 != (unsigned int )((void *)0)) {
-            TxLoadSized(self, (intptr_t *)(& mem20), (intptr_t *)(& tmp->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp19 = parent;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem20->links.rbe_parent), (intptr_t *)(& tmp19),
-                         sizeof(struct tree_node *));
-          }
-          }
-          TxLoadSized(self, (intptr_t *)(& mem22), (intptr_t *)(& parent->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp21 = mem22;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp21),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem23), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem23 != (unsigned int )((void *)0)) {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem24), (intptr_t *)(& parent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem25), (intptr_t *)(& mem24->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )parent == (unsigned int )mem25) {
-              TxLoadSized(self, (intptr_t *)(& mem27), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp26 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem27->links.rbe_left), (intptr_t *)(& tmp26),
-                           sizeof(struct tree_node *));
-            } else {
-              TxLoadSized(self, (intptr_t *)(& mem29), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp28 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem29->links.rbe_right), (intptr_t *)(& tmp28),
-                           sizeof(struct tree_node *));
-            }
-            }
-          } else {
-#line 39
-            tmp30 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp30),
-                         sizeof(struct tree_node *));
-          }
-          }
-#line 39
-          tmp31 = parent;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_left), (intptr_t *)(& tmp31),
-                       sizeof(struct tree_node *));
-#line 39
-          tmp32 = tmp;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_parent), (intptr_t *)(& tmp32),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem33), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if (mem33) {
-
-          }
-          }
-#line 39
-          break;
-        }
-        TxLoadSized(self, (intptr_t *)(& mem34), (intptr_t *)(& parent->links.rbe_right),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp = mem34;
-      }
-      }
-      {
-      TxLoadSized(self, (intptr_t *)(& mem35), (intptr_t *)(& tmp->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      if ((unsigned int )mem35 == (unsigned int )((void *)0)) {
-        goto _L___1;
-      } else {
         {
-        TxLoadSized(self, (intptr_t *)(& mem36), (intptr_t *)(& tmp->links.rbe_left),
+        TxLoadSized(self, (intptr_t *)(& mem25), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem26), (intptr_t *)(& mem25->links.spe_left),
                     sizeof(struct tree_node *));
-        TxLoadSized(self, (intptr_t *)(& mem37), (intptr_t *)(& mem36->links.rbe_color),
-                    sizeof(long ));
-#line 39
-        if (mem37 == 0L) {
-          _L___1: /* CIL Label */ 
-          {
-          TxLoadSized(self, (intptr_t *)(& mem38), (intptr_t *)(& tmp->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem38 == (unsigned int )((void *)0)) {
-#line 39
-            tmp39 = 1L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp39),
-                         sizeof(long ));
-#line 39
-            elm = parent;
-            TxLoadSized(self, (intptr_t *)(& mem40), (intptr_t *)(& elm->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            parent = mem40;
-          } else {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem41), (intptr_t *)(& tmp->links.rbe_right),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem42), (intptr_t *)(& mem41->links.rbe_color),
-                        sizeof(long ));
-#line 39
-            if (mem42 == 0L) {
-#line 39
-              tmp43 = 1L;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp43),
-                           sizeof(long ));
-#line 39
-              elm = parent;
-              TxLoadSized(self, (intptr_t *)(& mem44), (intptr_t *)(& elm->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              parent = mem44;
-            } else {
-              goto _L___0;
-            }
-            }
-          }
-          }
-        } else {
-          _L___0: /* CIL Label */ 
-          {
-          TxLoadSized(self, (intptr_t *)(& mem45), (intptr_t *)(& tmp->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem45 == (unsigned int )((void *)0)) {
-            goto _L;
-          } else {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem46), (intptr_t *)(& tmp->links.rbe_right),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem47), (intptr_t *)(& mem46->links.rbe_color),
-                        sizeof(long ));
-#line 39
-            if (mem47 == 0L) {
-              _L: /* CIL Label */ 
-              TxLoadSized(self, (intptr_t *)(& mem48), (intptr_t *)(& tmp->links.rbe_left),
-                          sizeof(struct tree_node *));
-#line 39
-              oleft = mem48;
-#line 39
-              if ((unsigned int )oleft != (unsigned int )((void *)0)) {
-#line 39
-                tmp49 = 0L;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& oleft->links.rbe_color), (intptr_t *)(& tmp49),
-                             sizeof(long ));
-              }
-#line 39
-              tmp50 = 1L;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp50),
-                           sizeof(long ));
-#line 39
-              while (1) {
-                TxLoadSized(self, (intptr_t *)(& mem51), (intptr_t *)(& tmp->links.rbe_left),
-                            sizeof(struct tree_node *));
-#line 39
-                oleft = mem51;
-                TxLoadSized(self, (intptr_t *)(& mem53), (intptr_t *)(& oleft->links.rbe_right),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp52 = mem53;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_left), (intptr_t *)(& tmp52),
-                             sizeof(struct tree_node *));
-                {
-                TxLoadSized(self, (intptr_t *)(& mem54), (intptr_t *)(& tmp->links.rbe_left),
-                            sizeof(struct tree_node *));
-#line 39
-                if ((unsigned int )mem54 != (unsigned int )((void *)0)) {
-                  TxLoadSized(self, (intptr_t *)(& mem56), (intptr_t *)(& oleft->links.rbe_right),
-                              sizeof(struct tree_node *));
-#line 39
-                  tmp55 = tmp;
-#line 39
-                  TxStoreSized(self, (intptr_t *)(& mem56->links.rbe_parent), (intptr_t *)(& tmp55),
-                               sizeof(struct tree_node *));
-                }
-                }
-                TxLoadSized(self, (intptr_t *)(& mem58), (intptr_t *)(& tmp->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp57 = mem58;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& oleft->links.rbe_parent), (intptr_t *)(& tmp57),
-                             sizeof(struct tree_node *));
-                {
-                TxLoadSized(self, (intptr_t *)(& mem59), (intptr_t *)(& oleft->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                if ((unsigned int )mem59 != (unsigned int )((void *)0)) {
-                  {
-                  TxLoadSized(self, (intptr_t *)(& mem60), (intptr_t *)(& tmp->links.rbe_parent),
-                              sizeof(struct tree_node *));
-                  TxLoadSized(self, (intptr_t *)(& mem61), (intptr_t *)(& mem60->links.rbe_left),
-                              sizeof(struct tree_node *));
-#line 39
-                  if ((unsigned int )tmp == (unsigned int )mem61) {
-                    TxLoadSized(self, (intptr_t *)(& mem63), (intptr_t *)(& tmp->links.rbe_parent),
-                                sizeof(struct tree_node *));
-#line 39
-                    tmp62 = oleft;
-#line 39
-                    TxStoreSized(self, (intptr_t *)(& mem63->links.rbe_left), (intptr_t *)(& tmp62),
-                                 sizeof(struct tree_node *));
-                  } else {
-                    TxLoadSized(self, (intptr_t *)(& mem65), (intptr_t *)(& tmp->links.rbe_parent),
-                                sizeof(struct tree_node *));
-#line 39
-                    tmp64 = oleft;
-#line 39
-                    TxStoreSized(self, (intptr_t *)(& mem65->links.rbe_right), (intptr_t *)(& tmp64),
-                                 sizeof(struct tree_node *));
-                  }
-                  }
-                } else {
-#line 39
-                  tmp66 = oleft;
-#line 39
-                  TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp66),
-                               sizeof(struct tree_node *));
-                }
-                }
-#line 39
-                tmp67 = tmp;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& oleft->links.rbe_right), (intptr_t *)(& tmp67),
-                             sizeof(struct tree_node *));
-#line 39
-                tmp68 = oleft;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp68),
-                             sizeof(struct tree_node *));
-                {
-                TxLoadSized(self, (intptr_t *)(& mem69), (intptr_t *)(& oleft->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                if (mem69) {
-
-                }
-                }
-#line 39
-                break;
-              }
-              TxLoadSized(self, (intptr_t *)(& mem70), (intptr_t *)(& parent->links.rbe_right),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp = mem70;
-            }
-            }
-          }
-          }
-          TxLoadSized(self, (intptr_t *)(& mem72), (intptr_t *)(& parent->links.rbe_color),
-                      sizeof(long ));
-#line 39
-          tmp71 = mem72;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp71),
-                       sizeof(long ));
-#line 39
-          tmp73 = 0L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp73),
-                       sizeof(long ));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem74), (intptr_t *)(& tmp->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          if (mem74) {
-            TxLoadSized(self, (intptr_t *)(& mem76), (intptr_t *)(& tmp->links.rbe_right),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp75 = 0L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem76->links.rbe_color), (intptr_t *)(& tmp75),
-                         sizeof(long ));
-          }
-          }
-#line 39
-          while (1) {
-            TxLoadSized(self, (intptr_t *)(& mem77), (intptr_t *)(& parent->links.rbe_right),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp = mem77;
-            TxLoadSized(self, (intptr_t *)(& mem79), (intptr_t *)(& tmp->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp78 = mem79;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& parent->links.rbe_right), (intptr_t *)(& tmp78),
-                         sizeof(struct tree_node *));
-            {
-            TxLoadSized(self, (intptr_t *)(& mem80), (intptr_t *)(& parent->links.rbe_right),
-                        sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )mem80 != (unsigned int )((void *)0)) {
-              TxLoadSized(self, (intptr_t *)(& mem82), (intptr_t *)(& tmp->links.rbe_left),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp81 = parent;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem82->links.rbe_parent), (intptr_t *)(& tmp81),
-                           sizeof(struct tree_node *));
-            }
-            }
-            TxLoadSized(self, (intptr_t *)(& mem84), (intptr_t *)(& parent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp83 = mem84;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp83),
-                         sizeof(struct tree_node *));
-            {
-            TxLoadSized(self, (intptr_t *)(& mem85), (intptr_t *)(& tmp->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )mem85 != (unsigned int )((void *)0)) {
-              {
-              TxLoadSized(self, (intptr_t *)(& mem86), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-              TxLoadSized(self, (intptr_t *)(& mem87), (intptr_t *)(& mem86->links.rbe_left),
-                          sizeof(struct tree_node *));
-#line 39
-              if ((unsigned int )parent == (unsigned int )mem87) {
-                TxLoadSized(self, (intptr_t *)(& mem89), (intptr_t *)(& parent->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp88 = tmp;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& mem89->links.rbe_left), (intptr_t *)(& tmp88),
-                             sizeof(struct tree_node *));
-              } else {
-                TxLoadSized(self, (intptr_t *)(& mem91), (intptr_t *)(& parent->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp90 = tmp;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& mem91->links.rbe_right), (intptr_t *)(& tmp90),
-                             sizeof(struct tree_node *));
-              }
-              }
-            } else {
-#line 39
-              tmp92 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp92),
-                           sizeof(struct tree_node *));
-            }
-            }
-#line 39
-            tmp93 = parent;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_left), (intptr_t *)(& tmp93),
-                         sizeof(struct tree_node *));
-#line 39
-            tmp94 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& parent->links.rbe_parent), (intptr_t *)(& tmp94),
-                         sizeof(struct tree_node *));
-            {
-            TxLoadSized(self, (intptr_t *)(& mem95), (intptr_t *)(& tmp->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            if (mem95) {
-
-            }
-            }
-#line 39
-            break;
-          }
-          TxLoadSized(self, (intptr_t *)(& mem96), (intptr_t *)(& head->rbh_root),
-                      sizeof(struct tree_node *));
-#line 39
-          elm = mem96;
-#line 39
+#line 40
+        if ((unsigned int )mem26 == (unsigned int )((void *)0)) {
+#line 40
           break;
         }
         }
       }
+#line 40
+      while (1) {
+        TxLoadSized(self, (intptr_t *)(& mem28), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+        tmp27 = mem28;
+#line 40
+        TxStoreSized(self, (intptr_t *)(& __right->links.spe_left), (intptr_t *)(& tmp27),
+                     sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem29), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+        __right = mem29;
+        TxLoadSized(self, (intptr_t *)(& mem31), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem32), (intptr_t *)(& mem31->links.spe_left),
+                    sizeof(struct tree_node *));
+#line 40
+        tmp30 = mem32;
+#line 40
+        TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp30),
+                     sizeof(struct tree_node *));
+#line 40
+        break;
       }
     } else {
-      TxLoadSized(self, (intptr_t *)(& mem97), (intptr_t *)(& parent->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp = mem97;
-      {
-      TxLoadSized(self, (intptr_t *)(& mem98), (intptr_t *)(& tmp->links.rbe_color),
-                  sizeof(long ));
-#line 39
-      if (mem98 == 1L) {
-#line 39
-        while (1) {
-#line 39
-          tmp99 = 0L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp99),
-                       sizeof(long ));
-#line 39
-          tmp100 = 1L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp100),
-                       sizeof(long ));
-#line 39
+#line 40
+      if (__comp > 0) {
+        TxLoadSized(self, (intptr_t *)(& mem33), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem34), (intptr_t *)(& mem33->links.spe_right),
+                    sizeof(struct tree_node *));
+#line 40
+        __tmp = mem34;
+#line 40
+        if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
           break;
         }
-#line 39
-        while (1) {
-          TxLoadSized(self, (intptr_t *)(& mem101), (intptr_t *)(& parent->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp = mem101;
-          TxLoadSized(self, (intptr_t *)(& mem103), (intptr_t *)(& tmp->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp102 = mem103;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_left), (intptr_t *)(& tmp102),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem104), (intptr_t *)(& parent->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem104 != (unsigned int )((void *)0)) {
-            TxLoadSized(self, (intptr_t *)(& mem106), (intptr_t *)(& tmp->links.rbe_right),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp105 = parent;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem106->links.rbe_parent), (intptr_t *)(& tmp105),
-                         sizeof(struct tree_node *));
-          }
-          }
-          TxLoadSized(self, (intptr_t *)(& mem108), (intptr_t *)(& parent->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp107 = mem108;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp107),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem109), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem109 != (unsigned int )((void *)0)) {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem110), (intptr_t *)(& parent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem111), (intptr_t *)(& mem110->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )parent == (unsigned int )mem111) {
-              TxLoadSized(self, (intptr_t *)(& mem113), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp112 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem113->links.rbe_left), (intptr_t *)(& tmp112),
-                           sizeof(struct tree_node *));
-            } else {
-              TxLoadSized(self, (intptr_t *)(& mem115), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp114 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem115->links.rbe_right), (intptr_t *)(& tmp114),
-                           sizeof(struct tree_node *));
-            }
-            }
-          } else {
-#line 39
-            tmp116 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp116),
-                         sizeof(struct tree_node *));
-          }
-          }
-#line 39
-          tmp117 = parent;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_right), (intptr_t *)(& tmp117),
-                       sizeof(struct tree_node *));
-#line 39
-          tmp118 = tmp;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_parent), (intptr_t *)(& tmp118),
-                       sizeof(struct tree_node *));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem119), (intptr_t *)(& tmp->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          if (mem119) {
-
-          }
-          }
-#line 39
-          break;
-        }
-        TxLoadSized(self, (intptr_t *)(& mem120), (intptr_t *)(& parent->links.rbe_left),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp = mem120;
-      }
-      }
-      {
-      TxLoadSized(self, (intptr_t *)(& mem121), (intptr_t *)(& tmp->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      if ((unsigned int )mem121 == (unsigned int )((void *)0)) {
-        goto _L___4;
-      } else {
-        {
-        TxLoadSized(self, (intptr_t *)(& mem122), (intptr_t *)(& tmp->links.rbe_left),
-                    sizeof(struct tree_node *));
-        TxLoadSized(self, (intptr_t *)(& mem123), (intptr_t *)(& mem122->links.rbe_color),
-                    sizeof(long ));
-#line 39
-        if (mem123 == 0L) {
-          _L___4: /* CIL Label */ 
-          {
-          TxLoadSized(self, (intptr_t *)(& mem124), (intptr_t *)(& tmp->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem124 == (unsigned int )((void *)0)) {
-#line 39
-            tmp125 = 1L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp125),
-                         sizeof(long ));
-#line 39
-            elm = parent;
-            TxLoadSized(self, (intptr_t *)(& mem126), (intptr_t *)(& elm->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            parent = mem126;
-          } else {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem127), (intptr_t *)(& tmp->links.rbe_right),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem128), (intptr_t *)(& mem127->links.rbe_color),
-                        sizeof(long ));
-#line 39
-            if (mem128 == 0L) {
-#line 39
-              tmp129 = 1L;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp129),
-                           sizeof(long ));
-#line 39
-              elm = parent;
-              TxLoadSized(self, (intptr_t *)(& mem130), (intptr_t *)(& elm->links.rbe_parent),
-                          sizeof(struct tree_node *));
-#line 39
-              parent = mem130;
-            } else {
-              goto _L___3;
-            }
-            }
-          }
-          }
-        } else {
-          _L___3: /* CIL Label */ 
-          {
-          TxLoadSized(self, (intptr_t *)(& mem131), (intptr_t *)(& tmp->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          if ((unsigned int )mem131 == (unsigned int )((void *)0)) {
-            goto _L___2;
-          } else {
-            {
-            TxLoadSized(self, (intptr_t *)(& mem132), (intptr_t *)(& tmp->links.rbe_left),
-                        sizeof(struct tree_node *));
-            TxLoadSized(self, (intptr_t *)(& mem133), (intptr_t *)(& mem132->links.rbe_color),
-                        sizeof(long ));
-#line 39
-            if (mem133 == 0L) {
-              _L___2: /* CIL Label */ 
-              TxLoadSized(self, (intptr_t *)(& mem134), (intptr_t *)(& tmp->links.rbe_right),
-                          sizeof(struct tree_node *));
-#line 39
-              oright = mem134;
-#line 39
-              if ((unsigned int )oright != (unsigned int )((void *)0)) {
-#line 39
-                tmp135 = 0L;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& oright->links.rbe_color), (intptr_t *)(& tmp135),
-                             sizeof(long ));
-              }
-#line 39
-              tmp136 = 1L;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp136),
-                           sizeof(long ));
-#line 39
-              while (1) {
-                TxLoadSized(self, (intptr_t *)(& mem137), (intptr_t *)(& tmp->links.rbe_right),
-                            sizeof(struct tree_node *));
-#line 39
-                oright = mem137;
-                TxLoadSized(self, (intptr_t *)(& mem139), (intptr_t *)(& oright->links.rbe_left),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp138 = mem139;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_right), (intptr_t *)(& tmp138),
-                             sizeof(struct tree_node *));
-                {
-                TxLoadSized(self, (intptr_t *)(& mem140), (intptr_t *)(& tmp->links.rbe_right),
-                            sizeof(struct tree_node *));
-#line 39
-                if ((unsigned int )mem140 != (unsigned int )((void *)0)) {
-                  TxLoadSized(self, (intptr_t *)(& mem142), (intptr_t *)(& oright->links.rbe_left),
-                              sizeof(struct tree_node *));
-#line 39
-                  tmp141 = tmp;
-#line 39
-                  TxStoreSized(self, (intptr_t *)(& mem142->links.rbe_parent), (intptr_t *)(& tmp141),
-                               sizeof(struct tree_node *));
-                }
-                }
-                TxLoadSized(self, (intptr_t *)(& mem144), (intptr_t *)(& tmp->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp143 = mem144;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& oright->links.rbe_parent), (intptr_t *)(& tmp143),
-                             sizeof(struct tree_node *));
-                {
-                TxLoadSized(self, (intptr_t *)(& mem145), (intptr_t *)(& oright->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                if ((unsigned int )mem145 != (unsigned int )((void *)0)) {
-                  {
-                  TxLoadSized(self, (intptr_t *)(& mem146), (intptr_t *)(& tmp->links.rbe_parent),
-                              sizeof(struct tree_node *));
-                  TxLoadSized(self, (intptr_t *)(& mem147), (intptr_t *)(& mem146->links.rbe_left),
-                              sizeof(struct tree_node *));
-#line 39
-                  if ((unsigned int )tmp == (unsigned int )mem147) {
-                    TxLoadSized(self, (intptr_t *)(& mem149), (intptr_t *)(& tmp->links.rbe_parent),
-                                sizeof(struct tree_node *));
-#line 39
-                    tmp148 = oright;
-#line 39
-                    TxStoreSized(self, (intptr_t *)(& mem149->links.rbe_left), (intptr_t *)(& tmp148),
-                                 sizeof(struct tree_node *));
-                  } else {
-                    TxLoadSized(self, (intptr_t *)(& mem151), (intptr_t *)(& tmp->links.rbe_parent),
-                                sizeof(struct tree_node *));
-#line 39
-                    tmp150 = oright;
-#line 39
-                    TxStoreSized(self, (intptr_t *)(& mem151->links.rbe_right), (intptr_t *)(& tmp150),
-                                 sizeof(struct tree_node *));
-                  }
-                  }
-                } else {
-#line 39
-                  tmp152 = oright;
-#line 39
-                  TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp152),
-                               sizeof(struct tree_node *));
-                }
-                }
-#line 39
-                tmp153 = tmp;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& oright->links.rbe_left), (intptr_t *)(& tmp153),
-                             sizeof(struct tree_node *));
-#line 39
-                tmp154 = oright;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp154),
-                             sizeof(struct tree_node *));
-                {
-                TxLoadSized(self, (intptr_t *)(& mem155), (intptr_t *)(& oright->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                if (mem155) {
-
-                }
-                }
-#line 39
-                break;
-              }
-              TxLoadSized(self, (intptr_t *)(& mem156), (intptr_t *)(& parent->links.rbe_left),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp = mem156;
-            }
-            }
-          }
-          }
-          TxLoadSized(self, (intptr_t *)(& mem158), (intptr_t *)(& parent->links.rbe_color),
-                      sizeof(long ));
-#line 39
-          tmp157 = mem158;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_color), (intptr_t *)(& tmp157),
-                       sizeof(long ));
-#line 39
-          tmp159 = 0L;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_color), (intptr_t *)(& tmp159),
-                       sizeof(long ));
-          {
-          TxLoadSized(self, (intptr_t *)(& mem160), (intptr_t *)(& tmp->links.rbe_left),
-                      sizeof(struct tree_node *));
-#line 39
-          if (mem160) {
-            TxLoadSized(self, (intptr_t *)(& mem162), (intptr_t *)(& tmp->links.rbe_left),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp161 = 0L;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& mem162->links.rbe_color), (intptr_t *)(& tmp161),
-                         sizeof(long ));
-          }
-          }
-#line 39
+#line 40
+        tmp___0 = (int )node_cmp(elm, __tmp);
+#line 40
+        if (tmp___0 > (int )0) {
+#line 40
           while (1) {
-            TxLoadSized(self, (intptr_t *)(& mem163), (intptr_t *)(& parent->links.rbe_left),
+            TxLoadSized(self, (intptr_t *)(& mem36), (intptr_t *)(& __tmp->links.spe_left),
                         sizeof(struct tree_node *));
-#line 39
-            tmp = mem163;
-            TxLoadSized(self, (intptr_t *)(& mem165), (intptr_t *)(& tmp->links.rbe_right),
+            TxLoadSized(self, (intptr_t *)(& mem37), (intptr_t *)(& head->sph_root),
                         sizeof(struct tree_node *));
-#line 39
-            tmp164 = mem165;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& parent->links.rbe_left), (intptr_t *)(& tmp164),
+#line 40
+            tmp35 = mem36;
+#line 40
+            TxStoreSized(self, (intptr_t *)(& mem37->links.spe_right), (intptr_t *)(& tmp35),
                          sizeof(struct tree_node *));
-            {
-            TxLoadSized(self, (intptr_t *)(& mem166), (intptr_t *)(& parent->links.rbe_left),
+            TxLoadSized(self, (intptr_t *)(& mem39), (intptr_t *)(& head->sph_root),
                         sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )mem166 != (unsigned int )((void *)0)) {
-              TxLoadSized(self, (intptr_t *)(& mem168), (intptr_t *)(& tmp->links.rbe_right),
-                          sizeof(struct tree_node *));
-#line 39
-              tmp167 = parent;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& mem168->links.rbe_parent), (intptr_t *)(& tmp167),
-                           sizeof(struct tree_node *));
-            }
-            }
-            TxLoadSized(self, (intptr_t *)(& mem170), (intptr_t *)(& parent->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            tmp169 = mem170;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_parent), (intptr_t *)(& tmp169),
+#line 40
+            tmp38 = mem39;
+#line 40
+            TxStoreSized(self, (intptr_t *)(& __tmp->links.spe_left), (intptr_t *)(& tmp38),
                          sizeof(struct tree_node *));
-            {
-            TxLoadSized(self, (intptr_t *)(& mem171), (intptr_t *)(& tmp->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            if ((unsigned int )mem171 != (unsigned int )((void *)0)) {
-              {
-              TxLoadSized(self, (intptr_t *)(& mem172), (intptr_t *)(& parent->links.rbe_parent),
-                          sizeof(struct tree_node *));
-              TxLoadSized(self, (intptr_t *)(& mem173), (intptr_t *)(& mem172->links.rbe_left),
-                          sizeof(struct tree_node *));
-#line 39
-              if ((unsigned int )parent == (unsigned int )mem173) {
-                TxLoadSized(self, (intptr_t *)(& mem175), (intptr_t *)(& parent->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp174 = tmp;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& mem175->links.rbe_left), (intptr_t *)(& tmp174),
-                             sizeof(struct tree_node *));
-              } else {
-                TxLoadSized(self, (intptr_t *)(& mem177), (intptr_t *)(& parent->links.rbe_parent),
-                            sizeof(struct tree_node *));
-#line 39
-                tmp176 = tmp;
-#line 39
-                TxStoreSized(self, (intptr_t *)(& mem177->links.rbe_right), (intptr_t *)(& tmp176),
-                             sizeof(struct tree_node *));
-              }
-              }
-            } else {
-#line 39
-              tmp178 = tmp;
-#line 39
-              TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp178),
-                           sizeof(struct tree_node *));
-            }
-            }
-#line 39
-            tmp179 = parent;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& tmp->links.rbe_right), (intptr_t *)(& tmp179),
+#line 40
+            tmp40 = __tmp;
+#line 40
+            TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp40),
                          sizeof(struct tree_node *));
-#line 39
-            tmp180 = tmp;
-#line 39
-            TxStoreSized(self, (intptr_t *)(& parent->links.rbe_parent), (intptr_t *)(& tmp180),
-                         sizeof(struct tree_node *));
-            {
-            TxLoadSized(self, (intptr_t *)(& mem181), (intptr_t *)(& tmp->links.rbe_parent),
-                        sizeof(struct tree_node *));
-#line 39
-            if (mem181) {
-
-            }
-            }
-#line 39
+#line 40
             break;
           }
-          TxLoadSized(self, (intptr_t *)(& mem182), (intptr_t *)(& head->rbh_root),
+          {
+          TxLoadSized(self, (intptr_t *)(& mem41), (intptr_t *)(& head->sph_root),
                       sizeof(struct tree_node *));
-#line 39
-          elm = mem182;
-#line 39
+          TxLoadSized(self, (intptr_t *)(& mem42), (intptr_t *)(& mem41->links.spe_right),
+                      sizeof(struct tree_node *));
+#line 40
+          if ((unsigned int )mem42 == (unsigned int )((void *)0)) {
+#line 40
+            break;
+          }
+          }
+        }
+#line 40
+        while (1) {
+          TxLoadSized(self, (intptr_t *)(& mem44), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp43 = mem44;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& __left->links.spe_right), (intptr_t *)(& tmp43),
+                       sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem45), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          __left = mem45;
+          TxLoadSized(self, (intptr_t *)(& mem47), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem48), (intptr_t *)(& mem47->links.spe_right),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp46 = mem48;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp46),
+                       sizeof(struct tree_node *));
+#line 40
           break;
         }
-        }
-      }
       }
     }
-    }
   }
-#line 39
-  if (elm) {
-#line 39
-    tmp183 = 0L;
-#line 39
-    TxStoreSized(self, (intptr_t *)(& elm->links.rbe_color), (intptr_t *)(& tmp183),
-                 sizeof(long ));
+#line 40
+  while (1) {
+    TxLoadSized(self, (intptr_t *)(& mem50), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem51), (intptr_t *)(& mem50->links.spe_left),
+                sizeof(struct tree_node *));
+#line 40
+    tmp49 = mem51;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& __left->links.spe_right), (intptr_t *)(& tmp49),
+                 sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem53), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem54), (intptr_t *)(& mem53->links.spe_right),
+                sizeof(struct tree_node *));
+#line 40
+    tmp52 = mem54;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& __right->links.spe_left), (intptr_t *)(& tmp52),
+                 sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem56), (intptr_t *)(& __node->links.spe_right),
+                sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem57), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+    tmp55 = mem56;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& mem57->links.spe_left), (intptr_t *)(& tmp55),
+                 sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem59), (intptr_t *)(& __node->links.spe_left),
+                sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem60), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+    tmp58 = mem59;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& mem60->links.spe_right), (intptr_t *)(& tmp58),
+                 sizeof(struct tree_node *));
+#line 40
+    break;
   }
-#line 39
+#line 40
   return;
 }
 }
-#line 39 "test3.c"
-static void TREE_RB_REMOVE_COLOR(struct TREE *head , struct tree_node *parent , struct tree_node *elm ) 
+#line 40 "test4.c"
+static void TREE_SPLAY(struct TREE *head , struct tree_node *elm ) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
   void *(*stmfunc)(Thread * ) ;
@@ -5296,7 +4704,7 @@ static void TREE_RB_REMOVE_COLOR(struct TREE *head , struct tree_node *parent , 
 #line 43
         if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 44
-          _stm_TREE_RB_REMOVE_COLOR(self->stmThread, head, parent, elm);
+          _stm_TREE_SPLAY(self->stmThread, head, elm);
         } else {
 #line 46
           fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -5343,7 +4751,7 @@ static void TREE_RB_REMOVE_COLOR(struct TREE *head , struct tree_node *parent , 
 #line 56
           TxStart(self->stmThread, & buf, & ro);
 #line 57
-          _stm_TREE_RB_REMOVE_COLOR(self->stmThread, head, parent, elm);
+          _stm_TREE_SPLAY(self->stmThread, head, elm);
 #line 58
           TxCommit(self->stmThread);
 #line 59
@@ -5387,7 +4795,7 @@ static void TREE_RB_REMOVE_COLOR(struct TREE *head , struct tree_node *parent , 
 #line 66
       if (nest->level < 0L) {
 #line 67
-        _raw_TREE_RB_REMOVE_COLOR(head, parent, elm);
+        _raw_TREE_SPLAY(head, elm);
       } else {
 #line 69
         fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -5420,7 +4828,7 @@ static void TREE_RB_REMOVE_COLOR(struct TREE *head , struct tree_node *parent , 
 #line 76
         nest->level = -1L;
 #line 77
-        _raw_TREE_RB_REMOVE_COLOR(head, parent, elm);
+        _raw_TREE_SPLAY(head, elm);
 #line 78
         nest->level = 0L;
 #line 79
@@ -5434,1586 +4842,399 @@ static void TREE_RB_REMOVE_COLOR(struct TREE *head , struct tree_node *parent , 
   return;
 }
 }
-#line 39 "test3.c"
-struct tree_node *_raw_TREE_RB_REMOVE(struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *child ;
-  struct tree_node *parent ;
-  struct tree_node *old ;
-  long color ;
-  struct tree_node *left ;
+#line 40 "test4.c"
+void _raw_TREE_SPLAY_MINMAX(struct TREE *head , int __comp ) 
+{ struct tree_node ____node ;
+  struct tree_node *__node ;
+  struct tree_node *__left ;
+  struct tree_node *__right ;
+  struct tree_node *__tmp ;
 
   {
-#line 39
-  old = elm;
-#line 39
-  if ((unsigned int )elm->links.rbe_left == (unsigned int )((void *)0)) {
-#line 39
-    child = elm->links.rbe_right;
-  } else {
-#line 39
-    if ((unsigned int )elm->links.rbe_right == (unsigned int )((void *)0)) {
-#line 39
-      child = elm->links.rbe_left;
-    } else {
-#line 39
-      elm = elm->links.rbe_right;
-#line 39
-      while (1) {
-#line 39
-        left = elm->links.rbe_left;
-#line 39
-        if (! ((unsigned int )left != (unsigned int )((void *)0))) {
-#line 39
+#line 40
+  __node = & ____node;
+#line 40
+  __node->links.spe_right = (struct tree_node *)((void *)0);
+#line 40
+  __node->links.spe_left = __node->links.spe_right;
+#line 40
+  __right = __node;
+#line 40
+  __left = __right;
+#line 40
+  while (1) {
+#line 40
+    if (__comp < 0) {
+#line 40
+      __tmp = (head->sph_root)->links.spe_left;
+#line 40
+      if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
+        break;
+      }
+#line 40
+      if (__comp < 0) {
+#line 40
+        while (1) {
+#line 40
+          (head->sph_root)->links.spe_left = __tmp->links.spe_right;
+#line 40
+          __tmp->links.spe_right = head->sph_root;
+#line 40
+          head->sph_root = __tmp;
+#line 40
           break;
         }
-#line 39
-        elm = left;
-      }
-#line 39
-      child = elm->links.rbe_right;
-#line 39
-      parent = elm->links.rbe_parent;
-#line 39
-      color = elm->links.rbe_color;
-#line 39
-      if (child) {
-#line 39
-        child->links.rbe_parent = parent;
-      }
-#line 39
-      if (parent) {
-#line 39
-        if ((unsigned int )parent->links.rbe_left == (unsigned int )elm) {
-#line 39
-          parent->links.rbe_left = child;
-        } else {
-#line 39
-          parent->links.rbe_right = child;
+#line 40
+        if ((unsigned int )(head->sph_root)->links.spe_left == (unsigned int )((void *)0)) {
+#line 40
+          break;
         }
-      } else {
-#line 39
-        head->rbh_root = child;
       }
-#line 39
-      if ((unsigned int )elm->links.rbe_parent == (unsigned int )old) {
-#line 39
-        parent = elm;
+#line 40
+      while (1) {
+#line 40
+        __right->links.spe_left = head->sph_root;
+#line 40
+        __right = head->sph_root;
+#line 40
+        head->sph_root = (head->sph_root)->links.spe_left;
+#line 40
+        break;
       }
-#line 39
-      elm->links = old->links;
-#line 39
-      if (old->links.rbe_parent) {
-#line 39
-        if ((unsigned int )(old->links.rbe_parent)->links.rbe_left == (unsigned int )old) {
-#line 39
-          (old->links.rbe_parent)->links.rbe_left = elm;
-        } else {
-#line 39
-          (old->links.rbe_parent)->links.rbe_right = elm;
+    } else {
+#line 40
+      if (__comp > 0) {
+#line 40
+        __tmp = (head->sph_root)->links.spe_right;
+#line 40
+        if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
+          break;
         }
-      } else {
-#line 39
-        head->rbh_root = elm;
-      }
-#line 39
-      (old->links.rbe_left)->links.rbe_parent = elm;
-#line 39
-      if (old->links.rbe_right) {
-#line 39
-        (old->links.rbe_right)->links.rbe_parent = elm;
-      }
-#line 39
-      if (parent) {
-#line 39
-        left = parent;
-#line 39
-        while (1) {
-#line 39
-          left = left->links.rbe_parent;
-#line 39
-          if (! ((unsigned int )left != (unsigned int )((void *)0))) {
-#line 39
+#line 40
+        if (__comp > 0) {
+#line 40
+          while (1) {
+#line 40
+            (head->sph_root)->links.spe_right = __tmp->links.spe_left;
+#line 40
+            __tmp->links.spe_left = head->sph_root;
+#line 40
+            head->sph_root = __tmp;
+#line 40
+            break;
+          }
+#line 40
+          if ((unsigned int )(head->sph_root)->links.spe_right == (unsigned int )((void *)0)) {
+#line 40
             break;
           }
         }
+#line 40
+        while (1) {
+#line 40
+          __left->links.spe_right = head->sph_root;
+#line 40
+          __left = head->sph_root;
+#line 40
+          head->sph_root = (head->sph_root)->links.spe_right;
+#line 40
+          break;
+        }
       }
-      goto color;
     }
   }
-#line 39
-  parent = elm->links.rbe_parent;
-#line 39
-  color = elm->links.rbe_color;
-#line 39
-  if (child) {
-#line 39
-    child->links.rbe_parent = parent;
+#line 40
+  while (1) {
+#line 40
+    __left->links.spe_right = (head->sph_root)->links.spe_left;
+#line 40
+    __right->links.spe_left = (head->sph_root)->links.spe_right;
+#line 40
+    (head->sph_root)->links.spe_left = __node->links.spe_right;
+#line 40
+    (head->sph_root)->links.spe_right = __node->links.spe_left;
+#line 40
+    break;
   }
-#line 39
-  if (parent) {
-#line 39
-    if ((unsigned int )parent->links.rbe_left == (unsigned int )elm) {
-#line 39
-      parent->links.rbe_left = child;
-    } else {
-#line 39
-      parent->links.rbe_right = child;
-    }
-  } else {
-#line 39
-    head->rbh_root = child;
-  }
-  color: 
-#line 39
-  if (color == 0L) {
-#line 39
-    TREE_RB_REMOVE_COLOR(head, parent, child);
-  }
-#line 39
-  return ((struct tree_node *)old);
+#line 40
+  return;
 }
 }
-#line 39 "test3.c"
-struct tree_node *_stm_TREE_RB_REMOVE(Thread *self , struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *child ;
-  struct tree_node *parent ;
-  struct tree_node *old ;
-  long color ;
-  struct tree_node *left ;
-  struct tree_node *mem9 ;
-  struct tree_node *mem10 ;
+#line 40 "test4.c"
+void _stm_TREE_SPLAY_MINMAX(Thread *self , struct TREE *head , int __comp ) 
+{ struct tree_node ____node ;
+  struct tree_node *__node ;
+  struct tree_node *__left ;
+  struct tree_node *__right ;
+  struct tree_node *__tmp ;
+  struct tree_node *tmp9 ;
+  struct tree_node *tmp10 ;
   struct tree_node *mem11 ;
   struct tree_node *mem12 ;
   struct tree_node *mem13 ;
-  struct tree_node *mem14 ;
+  struct tree_node *tmp14 ;
   struct tree_node *mem15 ;
   struct tree_node *mem16 ;
-  long mem17 ;
-  struct tree_node *tmp18 ;
-  struct tree_node *mem19 ;
-  struct tree_node *tmp20 ;
-  struct tree_node *tmp21 ;
+  struct tree_node *tmp17 ;
+  struct tree_node *mem18 ;
+  struct tree_node *tmp19 ;
+  struct tree_node *mem20 ;
+  struct tree_node *mem21 ;
   struct tree_node *tmp22 ;
   struct tree_node *mem23 ;
-  struct __anonstruct_links_10 tmp24 ;
-  struct __anonstruct_links_10 mem25 ;
+  struct tree_node *mem24 ;
+  struct tree_node *tmp25 ;
   struct tree_node *mem26 ;
   struct tree_node *mem27 ;
   struct tree_node *mem28 ;
-  struct tree_node *tmp29 ;
-  struct tree_node *mem30 ;
-  struct tree_node *tmp31 ;
+  struct tree_node *mem29 ;
+  struct tree_node *tmp30 ;
+  struct tree_node *mem31 ;
   struct tree_node *mem32 ;
   struct tree_node *tmp33 ;
-  struct tree_node *tmp34 ;
-  struct tree_node *mem35 ;
+  struct tree_node *mem34 ;
+  struct tree_node *tmp35 ;
   struct tree_node *mem36 ;
-  struct tree_node *tmp37 ;
-  struct tree_node *mem38 ;
+  struct tree_node *mem37 ;
+  struct tree_node *tmp38 ;
   struct tree_node *mem39 ;
   struct tree_node *mem40 ;
-  long mem41 ;
-  struct tree_node *tmp42 ;
+  struct tree_node *tmp41 ;
+  struct tree_node *mem42 ;
   struct tree_node *mem43 ;
   struct tree_node *tmp44 ;
-  struct tree_node *tmp45 ;
-  struct tree_node *tmp46 ;
+  struct tree_node *mem45 ;
+  struct tree_node *mem46 ;
+  struct tree_node *tmp47 ;
+  struct tree_node *mem48 ;
+  struct tree_node *mem49 ;
+  struct tree_node *tmp50 ;
+  struct tree_node *mem51 ;
+  struct tree_node *mem52 ;
+  struct tree_node *tmp53 ;
+  struct tree_node *mem54 ;
+  struct tree_node *mem55 ;
 
   {
-#line 39
-  old = elm;
-  {
-  TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& elm->links.rbe_left), sizeof(struct tree_node *));
-#line 39
-  if ((unsigned int )mem9 == (unsigned int )((void *)0)) {
-    TxLoadSized(self, (intptr_t *)(& mem10), (intptr_t *)(& elm->links.rbe_right),
-                sizeof(struct tree_node *));
-#line 39
-    child = mem10;
-  } else {
-    {
-    TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& elm->links.rbe_right),
-                sizeof(struct tree_node *));
-#line 39
-    if ((unsigned int )mem11 == (unsigned int )((void *)0)) {
-      TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& elm->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      child = mem12;
-    } else {
-      TxLoadSized(self, (intptr_t *)(& mem13), (intptr_t *)(& elm->links.rbe_right),
-                  sizeof(struct tree_node *));
-#line 39
-      elm = mem13;
-#line 39
-      while (1) {
-        TxLoadSized(self, (intptr_t *)(& mem14), (intptr_t *)(& elm->links.rbe_left),
-                    sizeof(struct tree_node *));
-#line 39
-        left = mem14;
-#line 39
-        if (! ((unsigned int )left != (unsigned int )((void *)0))) {
-#line 39
-          break;
-        }
-#line 39
-        elm = left;
-      }
-      TxLoadSized(self, (intptr_t *)(& mem15), (intptr_t *)(& elm->links.rbe_right),
-                  sizeof(struct tree_node *));
-#line 39
-      child = mem15;
-      TxLoadSized(self, (intptr_t *)(& mem16), (intptr_t *)(& elm->links.rbe_parent),
-                  sizeof(struct tree_node *));
-#line 39
-      parent = mem16;
-      TxLoadSized(self, (intptr_t *)(& mem17), (intptr_t *)(& elm->links.rbe_color),
-                  sizeof(long ));
-#line 39
-      color = mem17;
-#line 39
-      if (child) {
-#line 39
-        tmp18 = parent;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& child->links.rbe_parent), (intptr_t *)(& tmp18),
-                     sizeof(struct tree_node *));
-      }
-#line 39
-      if (parent) {
-        {
-        TxLoadSized(self, (intptr_t *)(& mem19), (intptr_t *)(& parent->links.rbe_left),
-                    sizeof(struct tree_node *));
-#line 39
-        if ((unsigned int )mem19 == (unsigned int )elm) {
-#line 39
-          tmp20 = child;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_left), (intptr_t *)(& tmp20),
-                       sizeof(struct tree_node *));
-        } else {
-#line 39
-          tmp21 = child;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& parent->links.rbe_right), (intptr_t *)(& tmp21),
-                       sizeof(struct tree_node *));
-        }
-        }
-      } else {
-#line 39
-        tmp22 = child;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp22),
-                     sizeof(struct tree_node *));
-      }
-      {
-      TxLoadSized(self, (intptr_t *)(& mem23), (intptr_t *)(& elm->links.rbe_parent),
-                  sizeof(struct tree_node *));
-#line 39
-      if ((unsigned int )mem23 == (unsigned int )old) {
-#line 39
-        parent = elm;
-      }
-      }
-      TxLoadSized(self, (intptr_t *)(& mem25), (intptr_t *)(& old->links), sizeof(struct __anonstruct_links_10 ));
-#line 39
-      tmp24 = mem25;
-#line 39
-      TxStoreSized(self, (intptr_t *)(& elm->links), (intptr_t *)(& tmp24), sizeof(struct __anonstruct_links_10 ));
-      {
-      TxLoadSized(self, (intptr_t *)(& mem26), (intptr_t *)(& old->links.rbe_parent),
-                  sizeof(struct tree_node *));
-#line 39
-      if (mem26) {
-        {
-        TxLoadSized(self, (intptr_t *)(& mem27), (intptr_t *)(& old->links.rbe_parent),
-                    sizeof(struct tree_node *));
-        TxLoadSized(self, (intptr_t *)(& mem28), (intptr_t *)(& mem27->links.rbe_left),
-                    sizeof(struct tree_node *));
-#line 39
-        if ((unsigned int )mem28 == (unsigned int )old) {
-          TxLoadSized(self, (intptr_t *)(& mem30), (intptr_t *)(& old->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp29 = elm;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& mem30->links.rbe_left), (intptr_t *)(& tmp29),
-                       sizeof(struct tree_node *));
-        } else {
-          TxLoadSized(self, (intptr_t *)(& mem32), (intptr_t *)(& old->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          tmp31 = elm;
-#line 39
-          TxStoreSized(self, (intptr_t *)(& mem32->links.rbe_right), (intptr_t *)(& tmp31),
-                       sizeof(struct tree_node *));
-        }
-        }
-      } else {
-#line 39
-        tmp33 = elm;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp33),
-                     sizeof(struct tree_node *));
-      }
-      }
-      TxLoadSized(self, (intptr_t *)(& mem35), (intptr_t *)(& old->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp34 = elm;
-#line 39
-      TxStoreSized(self, (intptr_t *)(& mem35->links.rbe_parent), (intptr_t *)(& tmp34),
-                   sizeof(struct tree_node *));
-      {
-      TxLoadSized(self, (intptr_t *)(& mem36), (intptr_t *)(& old->links.rbe_right),
-                  sizeof(struct tree_node *));
-#line 39
-      if (mem36) {
-        TxLoadSized(self, (intptr_t *)(& mem38), (intptr_t *)(& old->links.rbe_right),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp37 = elm;
-#line 39
-        TxStoreSized(self, (intptr_t *)(& mem38->links.rbe_parent), (intptr_t *)(& tmp37),
-                     sizeof(struct tree_node *));
-      }
-      }
-#line 39
-      if (parent) {
-#line 39
-        left = parent;
-#line 39
-        while (1) {
-          TxLoadSized(self, (intptr_t *)(& mem39), (intptr_t *)(& left->links.rbe_parent),
-                      sizeof(struct tree_node *));
-#line 39
-          left = mem39;
-#line 39
-          if (! ((unsigned int )left != (unsigned int )((void *)0))) {
-#line 39
-            break;
-          }
-        }
-      }
-      goto color;
-    }
-    }
-  }
-  }
-  TxLoadSized(self, (intptr_t *)(& mem40), (intptr_t *)(& elm->links.rbe_parent),
+#line 40
+  __node = & ____node;
+#line 40
+  tmp9 = (struct tree_node *)((void *)0);
+#line 40
+  TxStoreSized(self, (intptr_t *)(& __node->links.spe_right), (intptr_t *)(& tmp9),
+               sizeof(struct tree_node *));
+  TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& __node->links.spe_right),
               sizeof(struct tree_node *));
-#line 39
-  parent = mem40;
-  TxLoadSized(self, (intptr_t *)(& mem41), (intptr_t *)(& elm->links.rbe_color), sizeof(long ));
-#line 39
-  color = mem41;
-#line 39
-  if (child) {
-#line 39
-    tmp42 = parent;
-#line 39
-    TxStoreSized(self, (intptr_t *)(& child->links.rbe_parent), (intptr_t *)(& tmp42),
-                 sizeof(struct tree_node *));
-  }
-#line 39
-  if (parent) {
-    {
-    TxLoadSized(self, (intptr_t *)(& mem43), (intptr_t *)(& parent->links.rbe_left),
-                sizeof(struct tree_node *));
-#line 39
-    if ((unsigned int )mem43 == (unsigned int )elm) {
-#line 39
-      tmp44 = child;
-#line 39
-      TxStoreSized(self, (intptr_t *)(& parent->links.rbe_left), (intptr_t *)(& tmp44),
-                   sizeof(struct tree_node *));
-    } else {
-#line 39
-      tmp45 = child;
-#line 39
-      TxStoreSized(self, (intptr_t *)(& parent->links.rbe_right), (intptr_t *)(& tmp45),
-                   sizeof(struct tree_node *));
-    }
-    }
-  } else {
-#line 39
-    tmp46 = child;
-#line 39
-    TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp46), sizeof(struct tree_node *));
-  }
-  color: 
-#line 39
-  if (color == 0L) {
-#line 39
-    TREE_RB_REMOVE_COLOR(head, parent, child);
-  }
-#line 39
-  return ((struct tree_node *)old);
-}
-}
-#line 39 "test3.c"
-static struct tree_node *TREE_RB_REMOVE(struct TREE *head , struct tree_node *elm ) 
-{ profile_t *prof ;
-  void *(*rawfunc)(void) ;
-  void *(*stmfunc)(Thread * ) ;
-  int ro ;
-  int cnt ;
-  thread_t *self ;
-  nest_t *nest ;
-  nest_t *nested ;
-  __intptr_t tmp ;
-  unsigned long tries ;
-  sigjmp_buf buf ;
-  struct timeval start ;
-  void *tmp___0 ;
-  void *tmp___1 ;
-  __intptr_t tmp___2 ;
-  int tmp___3 ;
-  unsigned long volatile   _x ;
-  __intptr_t tmp___4 ;
-  int tmp___5 ;
-  struct tree_node *tmp20 ;
-
-  {
-#line 15 "alx.h"
-  prof = & _l1_prof;
-#line 16
-  rawfunc = (void *(*)(void))0;
-#line 17
-  stmfunc = (void *(*)(Thread * ))0;
-#line 18
-  ro = 0;
-#line 19
-  cnt = default_spins;
-#line 24
-  tries = 0UL;
-#line 28
-  tmp___0 = pthread_getspecific(_al_key);
-#line 28
-  self = (thread_t *)tmp___0;
-#line 28
-  if (! self) {
-#line 28
-    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 29
-  nest = self->prof_list.slh_first;
-#line 29
-  while (nest) {
-#line 30
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 30
-      break;
-    }
-#line 29
-    nest = nest->next.sle_next;
-  }
-#line 32
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
-#line 33
-    tmp___1 = malloc(sizeof(*nest));
-#line 33
-    nest = (nest_t *)tmp___1;
-#line 33
-    if (! nest) {
-#line 33
-      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
-    }
-#line 34
-    nest->prof = prof;
-#line 35
-    nest->level = 0L;
-#line 36
-    while (1) {
-#line 36
-      nest->next.sle_next = self->prof_list.slh_first;
-#line 36
-      self->prof_list.slh_first = nest;
-#line 36
-      break;
-    }
-  }
-#line 38
-  nested = self->prof_list.slh_first;
-#line 38
-  while (nested) {
-#line 39
-    if (0L < nested->level) {
-#line 39
-      break;
-    }
-#line 38
-    nested = nested->next.sle_next;
-  }
-#line 41
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L;
-  } else {
-#line 41
-    if (nest->level == 0L) {
-#line 41
-      tmp___5 = transactMode(prof);
-#line 41
-      if (tmp___5) {
-        _L: /* CIL Label */ 
-#line 42
-        if (! (0L <= nest->level)) {
-#line 42
-          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
-        }
-#line 43
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-#line 44
-          tmp20 = _stm_TREE_RB_REMOVE(self->stmThread, head, elm);
-        } else {
-#line 46
-          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 47
-          while (1) {
-#line 47
-            tmp = (int )prof->lockHeld;
-#line 47
-            if (! ((long )tmp == -1L)) {
-#line 47
-              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
-                                tmp + 1);
-#line 47
-              if (! (tmp___2 != tmp)) {
-#line 47
-                break;
-              }
-            }
-#line 49
-            cnt --;
-#line 49
-            if (cnt <= 0) {
-#line 49
-              busy();
-#line 49
-              cnt = default_spins;
-            }
-          }
-#line 51
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 52
-          tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 52
-          if (tmp___3) {
-#line 52
-            nest->level = 0L;
-          }
-#line 53
-          timer_start(& start);
-#line 54
-          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
-#line 55
-          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
-#line 56
-          TxStart(self->stmThread, & buf, & ro);
-#line 57
-          tmp20 = _stm_TREE_RB_REMOVE(self->stmThread, head, elm);
-#line 58
-          TxCommit(self->stmThread);
-#line 59
-          while (1) {
-#line 59
-            _x = prof->triesCommit;
-#line 59
-            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
-#line 59
-              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
-            }
-#line 59
-            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
-#line 59
-            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
-#line 59
-              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
-            }
-#line 59
-            prof->triesCommit = _x;
-#line 59
-            break;
-          }
-#line 60
-          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
-#line 61
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 62
-          timer_stop(& start, & self->timeSTM);
-        }
-      } else {
-        goto _L___0;
-      }
-    } else {
-      _L___0: /* CIL Label */ 
-#line 65
-      if (! (nest->level <= 0L)) {
-#line 65
-        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
-      }
-#line 66
-      if (nest->level < 0L) {
-#line 67
-        tmp20 = _raw_TREE_RB_REMOVE(head, elm);
-      } else {
-#line 69
-        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 70
-        while (1) {
-#line 70
-          if (! (prof->lockHeld != (long volatile   )0)) {
-#line 70
-            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
-#line 70
-            if (! (tmp___4 != 0)) {
-#line 70
-              break;
-            }
-          }
-#line 72
-          cnt --;
-#line 72
-          if (cnt <= 0) {
-#line 72
-            busy();
-#line 72
-            cnt = default_spins;
-          }
-        }
-#line 74
-        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 75
-        timer_start(& start);
-#line 76
-        nest->level = -1L;
-#line 77
-        tmp20 = _raw_TREE_RB_REMOVE(head, elm);
-#line 78
-        nest->level = 0L;
-#line 79
-        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 80
-        timer_stop(& start, & self->timeRaw);
-      }
-    }
-  }
-#line 83
-  return (tmp20);
-}
-}
-#line 39 "test3.c"
-struct tree_node *_raw_TREE_RB_INSERT(struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *tmp ;
-  struct tree_node *parent ;
-  int comp ;
-  int tmp___0 ;
-
-  {
-#line 39
-  parent = (struct tree_node *)((void *)0);
-#line 39
-  comp = 0;
-#line 39
-  tmp = head->rbh_root;
-#line 39
-  while (tmp) {
-#line 39
-    parent = tmp;
-#line 39
-    tmp___0 = (int )node_cmp(elm, parent);
-#line 39
-    comp = (int )tmp___0;
-#line 39
-    if (comp < 0) {
-#line 39
-      tmp = tmp->links.rbe_left;
-    } else {
-#line 39
-      if (comp > 0) {
-#line 39
-        tmp = tmp->links.rbe_right;
-      } else {
-#line 39
-        return ((struct tree_node *)tmp);
-      }
-    }
-  }
-#line 39
+#line 40
+  tmp10 = mem11;
+#line 40
+  TxStoreSized(self, (intptr_t *)(& __node->links.spe_left), (intptr_t *)(& tmp10),
+               sizeof(struct tree_node *));
+#line 40
+  __right = __node;
+#line 40
+  __left = __right;
+#line 40
   while (1) {
-#line 39
-    elm->links.rbe_parent = parent;
-#line 39
-    elm->links.rbe_right = (struct tree_node *)((void *)0);
-#line 39
-    elm->links.rbe_left = elm->links.rbe_right;
-#line 39
-    elm->links.rbe_color = 1L;
-#line 39
-    break;
-  }
-#line 39
-  if ((unsigned int )parent != (unsigned int )((void *)0)) {
-#line 39
-    if (comp < 0) {
-#line 39
-      parent->links.rbe_left = elm;
-    } else {
-#line 39
-      parent->links.rbe_right = elm;
-    }
-  } else {
-#line 39
-    head->rbh_root = elm;
-  }
-#line 39
-  TREE_RB_INSERT_COLOR(head, elm);
-#line 39
-  return ((struct tree_node *)((void *)0));
-}
-}
-#line 39 "test3.c"
-struct tree_node *_stm_TREE_RB_INSERT(Thread *self , struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *tmp ;
-  struct tree_node *parent ;
-  int comp ;
-  int tmp___0 ;
-  struct tree_node *mem8 ;
-  struct tree_node *mem9 ;
-  struct tree_node *mem10 ;
-  struct tree_node *tmp11 ;
-  struct tree_node *tmp12 ;
-  struct tree_node *tmp13 ;
-  struct tree_node *mem14 ;
-  long tmp15 ;
-  struct tree_node *tmp16 ;
-  struct tree_node *tmp17 ;
-  struct tree_node *tmp18 ;
-
-  {
-#line 39
-  parent = (struct tree_node *)((void *)0);
-#line 39
-  comp = 0;
-  TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& head->rbh_root), sizeof(struct tree_node *));
-#line 39
-  tmp = mem8;
-#line 39
-  while (tmp) {
-#line 39
-    parent = tmp;
-#line 39
-    tmp___0 = (int )node_cmp(elm, parent);
-#line 39
-    comp = (int )tmp___0;
-#line 39
-    if (comp < 0) {
-      TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& tmp->links.rbe_left),
+#line 40
+    if (__comp < 0) {
+      TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+      TxLoadSized(self, (intptr_t *)(& mem13), (intptr_t *)(& mem12->links.spe_left),
                   sizeof(struct tree_node *));
-#line 39
-      tmp = mem9;
-    } else {
-#line 39
-      if (comp > 0) {
-        TxLoadSized(self, (intptr_t *)(& mem10), (intptr_t *)(& tmp->links.rbe_right),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp = mem10;
-      } else {
-#line 39
-        return ((struct tree_node *)tmp);
-      }
-    }
-  }
-#line 39
-  while (1) {
-#line 39
-    tmp11 = parent;
-#line 39
-    TxStoreSized(self, (intptr_t *)(& elm->links.rbe_parent), (intptr_t *)(& tmp11),
-                 sizeof(struct tree_node *));
-#line 39
-    tmp12 = (struct tree_node *)((void *)0);
-#line 39
-    TxStoreSized(self, (intptr_t *)(& elm->links.rbe_right), (intptr_t *)(& tmp12),
-                 sizeof(struct tree_node *));
-    TxLoadSized(self, (intptr_t *)(& mem14), (intptr_t *)(& elm->links.rbe_right),
-                sizeof(struct tree_node *));
-#line 39
-    tmp13 = mem14;
-#line 39
-    TxStoreSized(self, (intptr_t *)(& elm->links.rbe_left), (intptr_t *)(& tmp13),
-                 sizeof(struct tree_node *));
-#line 39
-    tmp15 = 1L;
-#line 39
-    TxStoreSized(self, (intptr_t *)(& elm->links.rbe_color), (intptr_t *)(& tmp15),
-                 sizeof(long ));
-#line 39
-    break;
-  }
-#line 39
-  if ((unsigned int )parent != (unsigned int )((void *)0)) {
-#line 39
-    if (comp < 0) {
-#line 39
-      tmp16 = elm;
-#line 39
-      TxStoreSized(self, (intptr_t *)(& parent->links.rbe_left), (intptr_t *)(& tmp16),
-                   sizeof(struct tree_node *));
-    } else {
-#line 39
-      tmp17 = elm;
-#line 39
-      TxStoreSized(self, (intptr_t *)(& parent->links.rbe_right), (intptr_t *)(& tmp17),
-                   sizeof(struct tree_node *));
-    }
-  } else {
-#line 39
-    tmp18 = elm;
-#line 39
-    TxStoreSized(self, (intptr_t *)(& head->rbh_root), (intptr_t *)(& tmp18), sizeof(struct tree_node *));
-  }
-#line 39
-  TREE_RB_INSERT_COLOR(head, elm);
-#line 39
-  return ((struct tree_node *)((void *)0));
-}
-}
-#line 39 "test3.c"
-static struct tree_node *TREE_RB_INSERT(struct TREE *head , struct tree_node *elm ) 
-{ profile_t *prof ;
-  void *(*rawfunc)(void) ;
-  void *(*stmfunc)(Thread * ) ;
-  int ro ;
-  int cnt ;
-  thread_t *self ;
-  nest_t *nest ;
-  nest_t *nested ;
-  __intptr_t tmp ;
-  unsigned long tries ;
-  sigjmp_buf buf ;
-  struct timeval start ;
-  void *tmp___0 ;
-  void *tmp___1 ;
-  __intptr_t tmp___2 ;
-  int tmp___3 ;
-  unsigned long volatile   _x ;
-  __intptr_t tmp___4 ;
-  int tmp___5 ;
-  struct tree_node *tmp20 ;
-
-  {
-#line 15 "alx.h"
-  prof = & _l1_prof;
-#line 16
-  rawfunc = (void *(*)(void))0;
-#line 17
-  stmfunc = (void *(*)(Thread * ))0;
-#line 18
-  ro = 0;
-#line 19
-  cnt = default_spins;
-#line 24
-  tries = 0UL;
-#line 28
-  tmp___0 = pthread_getspecific(_al_key);
-#line 28
-  self = (thread_t *)tmp___0;
-#line 28
-  if (! self) {
-#line 28
-    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 29
-  nest = self->prof_list.slh_first;
-#line 29
-  while (nest) {
-#line 30
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 30
-      break;
-    }
-#line 29
-    nest = nest->next.sle_next;
-  }
-#line 32
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
-#line 33
-    tmp___1 = malloc(sizeof(*nest));
-#line 33
-    nest = (nest_t *)tmp___1;
-#line 33
-    if (! nest) {
-#line 33
-      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
-    }
-#line 34
-    nest->prof = prof;
-#line 35
-    nest->level = 0L;
-#line 36
-    while (1) {
-#line 36
-      nest->next.sle_next = self->prof_list.slh_first;
-#line 36
-      self->prof_list.slh_first = nest;
-#line 36
-      break;
-    }
-  }
-#line 38
-  nested = self->prof_list.slh_first;
-#line 38
-  while (nested) {
-#line 39
-    if (0L < nested->level) {
-#line 39
-      break;
-    }
-#line 38
-    nested = nested->next.sle_next;
-  }
-#line 41
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L;
-  } else {
-#line 41
-    if (nest->level == 0L) {
-#line 41
-      tmp___5 = transactMode(prof);
-#line 41
-      if (tmp___5) {
-        _L: /* CIL Label */ 
-#line 42
-        if (! (0L <= nest->level)) {
-#line 42
-          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
-        }
-#line 43
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-#line 44
-          tmp20 = _stm_TREE_RB_INSERT(self->stmThread, head, elm);
-        } else {
-#line 46
-          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 47
-          while (1) {
-#line 47
-            tmp = (int )prof->lockHeld;
-#line 47
-            if (! ((long )tmp == -1L)) {
-#line 47
-              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
-                                tmp + 1);
-#line 47
-              if (! (tmp___2 != tmp)) {
-#line 47
-                break;
-              }
-            }
-#line 49
-            cnt --;
-#line 49
-            if (cnt <= 0) {
-#line 49
-              busy();
-#line 49
-              cnt = default_spins;
-            }
-          }
-#line 51
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 52
-          tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 52
-          if (tmp___3) {
-#line 52
-            nest->level = 0L;
-          }
-#line 53
-          timer_start(& start);
-#line 54
-          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
-#line 55
-          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
-#line 56
-          TxStart(self->stmThread, & buf, & ro);
-#line 57
-          tmp20 = _stm_TREE_RB_INSERT(self->stmThread, head, elm);
-#line 58
-          TxCommit(self->stmThread);
-#line 59
-          while (1) {
-#line 59
-            _x = prof->triesCommit;
-#line 59
-            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
-#line 59
-              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
-            }
-#line 59
-            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
-#line 59
-            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
-#line 59
-              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
-            }
-#line 59
-            prof->triesCommit = _x;
-#line 59
-            break;
-          }
-#line 60
-          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
-#line 61
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 62
-          timer_stop(& start, & self->timeSTM);
-        }
-      } else {
-        goto _L___0;
-      }
-    } else {
-      _L___0: /* CIL Label */ 
-#line 65
-      if (! (nest->level <= 0L)) {
-#line 65
-        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
-      }
-#line 66
-      if (nest->level < 0L) {
-#line 67
-        tmp20 = _raw_TREE_RB_INSERT(head, elm);
-      } else {
-#line 69
-        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 70
-        while (1) {
-#line 70
-          if (! (prof->lockHeld != (long volatile   )0)) {
-#line 70
-            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
-#line 70
-            if (! (tmp___4 != 0)) {
-#line 70
-              break;
-            }
-          }
-#line 72
-          cnt --;
-#line 72
-          if (cnt <= 0) {
-#line 72
-            busy();
-#line 72
-            cnt = default_spins;
-          }
-        }
-#line 74
-        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 75
-        timer_start(& start);
-#line 76
-        nest->level = -1L;
-#line 77
-        tmp20 = _raw_TREE_RB_INSERT(head, elm);
-#line 78
-        nest->level = 0L;
-#line 79
-        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 80
-        timer_stop(& start, & self->timeRaw);
-      }
-    }
-  }
-#line 83
-  return (tmp20);
-}
-}
-#line 39 "test3.c"
-struct tree_node *_raw_TREE_RB_FIND(struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *tmp ;
-  int comp ;
-  int tmp___0 ;
-
-  {
-#line 39
-  tmp = head->rbh_root;
-#line 39
-  while (tmp) {
-#line 39
-    tmp___0 = (int )node_cmp(elm, tmp);
-#line 39
-    comp = (int )tmp___0;
-#line 39
-    if (comp < 0) {
-#line 39
-      tmp = tmp->links.rbe_left;
-    } else {
-#line 39
-      if (comp > 0) {
-#line 39
-        tmp = tmp->links.rbe_right;
-      } else {
-#line 39
-        return ((struct tree_node *)tmp);
-      }
-    }
-  }
-#line 39
-  return ((struct tree_node *)((void *)0));
-}
-}
-#line 39 "test3.c"
-struct tree_node *_stm_TREE_RB_FIND(Thread *self , struct TREE *head , struct tree_node *elm ) 
-{ struct tree_node *tmp ;
-  int comp ;
-  int tmp___0 ;
-  struct tree_node *mem7 ;
-  struct tree_node *mem8 ;
-  struct tree_node *mem9 ;
-
-  {
-  TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& head->rbh_root), sizeof(struct tree_node *));
-#line 39
-  tmp = mem7;
-#line 39
-  while (tmp) {
-#line 39
-    tmp___0 = (int )node_cmp(elm, tmp);
-#line 39
-    comp = (int )tmp___0;
-#line 39
-    if (comp < 0) {
-      TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& tmp->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp = mem8;
-    } else {
-#line 39
-      if (comp > 0) {
-        TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& tmp->links.rbe_right),
-                    sizeof(struct tree_node *));
-#line 39
-        tmp = mem9;
-      } else {
-#line 39
-        return ((struct tree_node *)tmp);
-      }
-    }
-  }
-#line 39
-  return ((struct tree_node *)((void *)0));
-}
-}
-#line 39 "test3.c"
-static struct tree_node *TREE_RB_FIND(struct TREE *head , struct tree_node *elm ) 
-{ profile_t *prof ;
-  void *(*rawfunc)(void) ;
-  void *(*stmfunc)(Thread * ) ;
-  int ro ;
-  int cnt ;
-  thread_t *self ;
-  nest_t *nest ;
-  nest_t *nested ;
-  __intptr_t tmp ;
-  unsigned long tries ;
-  sigjmp_buf buf ;
-  struct timeval start ;
-  void *tmp___0 ;
-  void *tmp___1 ;
-  __intptr_t tmp___2 ;
-  int tmp___3 ;
-  unsigned long volatile   _x ;
-  __intptr_t tmp___4 ;
-  int tmp___5 ;
-  struct tree_node *tmp20 ;
-
-  {
-#line 15 "alx.h"
-  prof = & _l1_prof;
-#line 16
-  rawfunc = (void *(*)(void))0;
-#line 17
-  stmfunc = (void *(*)(Thread * ))0;
-#line 18
-  ro = 0;
-#line 19
-  cnt = default_spins;
-#line 24
-  tries = 0UL;
-#line 28
-  tmp___0 = pthread_getspecific(_al_key);
-#line 28
-  self = (thread_t *)tmp___0;
-#line 28
-  if (! self) {
-#line 28
-    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 29
-  nest = self->prof_list.slh_first;
-#line 29
-  while (nest) {
-#line 30
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 30
-      break;
-    }
-#line 29
-    nest = nest->next.sle_next;
-  }
-#line 32
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
-#line 33
-    tmp___1 = malloc(sizeof(*nest));
-#line 33
-    nest = (nest_t *)tmp___1;
-#line 33
-    if (! nest) {
-#line 33
-      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
-    }
-#line 34
-    nest->prof = prof;
-#line 35
-    nest->level = 0L;
-#line 36
-    while (1) {
-#line 36
-      nest->next.sle_next = self->prof_list.slh_first;
-#line 36
-      self->prof_list.slh_first = nest;
-#line 36
-      break;
-    }
-  }
-#line 38
-  nested = self->prof_list.slh_first;
-#line 38
-  while (nested) {
-#line 39
-    if (0L < nested->level) {
-#line 39
-      break;
-    }
-#line 38
-    nested = nested->next.sle_next;
-  }
-#line 41
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L;
-  } else {
-#line 41
-    if (nest->level == 0L) {
-#line 41
-      tmp___5 = transactMode(prof);
-#line 41
-      if (tmp___5) {
-        _L: /* CIL Label */ 
-#line 42
-        if (! (0L <= nest->level)) {
-#line 42
-          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
-        }
-#line 43
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-#line 44
-          tmp20 = _stm_TREE_RB_FIND(self->stmThread, head, elm);
-        } else {
-#line 46
-          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 47
-          while (1) {
-#line 47
-            tmp = (int )prof->lockHeld;
-#line 47
-            if (! ((long )tmp == -1L)) {
-#line 47
-              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
-                                tmp + 1);
-#line 47
-              if (! (tmp___2 != tmp)) {
-#line 47
-                break;
-              }
-            }
-#line 49
-            cnt --;
-#line 49
-            if (cnt <= 0) {
-#line 49
-              busy();
-#line 49
-              cnt = default_spins;
-            }
-          }
-#line 51
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 52
-          tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 52
-          if (tmp___3) {
-#line 52
-            nest->level = 0L;
-          }
-#line 53
-          timer_start(& start);
-#line 54
-          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
-#line 55
-          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
-#line 56
-          TxStart(self->stmThread, & buf, & ro);
-#line 57
-          tmp20 = _stm_TREE_RB_FIND(self->stmThread, head, elm);
-#line 58
-          TxCommit(self->stmThread);
-#line 59
-          while (1) {
-#line 59
-            _x = prof->triesCommit;
-#line 59
-            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
-#line 59
-              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
-            }
-#line 59
-            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
-#line 59
-            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
-#line 59
-              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
-            }
-#line 59
-            prof->triesCommit = _x;
-#line 59
-            break;
-          }
-#line 60
-          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
-#line 61
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 62
-          timer_stop(& start, & self->timeSTM);
-        }
-      } else {
-        goto _L___0;
-      }
-    } else {
-      _L___0: /* CIL Label */ 
-#line 65
-      if (! (nest->level <= 0L)) {
-#line 65
-        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
-      }
-#line 66
-      if (nest->level < 0L) {
-#line 67
-        tmp20 = _raw_TREE_RB_FIND(head, elm);
-      } else {
-#line 69
-        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 70
-        while (1) {
-#line 70
-          if (! (prof->lockHeld != (long volatile   )0)) {
-#line 70
-            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
-#line 70
-            if (! (tmp___4 != 0)) {
-#line 70
-              break;
-            }
-          }
-#line 72
-          cnt --;
-#line 72
-          if (cnt <= 0) {
-#line 72
-            busy();
-#line 72
-            cnt = default_spins;
-          }
-        }
-#line 74
-        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 75
-        timer_start(& start);
-#line 76
-        nest->level = -1L;
-#line 77
-        tmp20 = _raw_TREE_RB_FIND(head, elm);
-#line 78
-        nest->level = 0L;
-#line 79
-        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 80
-        timer_stop(& start, & self->timeRaw);
-      }
-    }
-  }
-#line 83
-  return (tmp20);
-}
-}
-#line 39 "test3.c"
-struct tree_node *_raw_TREE_RB_NEXT(struct tree_node *elm ) 
-{ 
-
-  {
-#line 39
-  if (elm->links.rbe_right) {
-#line 39
-    elm = elm->links.rbe_right;
-#line 39
-    while (elm->links.rbe_left) {
-#line 39
-      elm = elm->links.rbe_left;
-    }
-  } else {
-#line 39
-    if (elm->links.rbe_parent) {
-#line 39
-      if ((unsigned int )elm == (unsigned int )(elm->links.rbe_parent)->links.rbe_left) {
-#line 39
-        elm = elm->links.rbe_parent;
-      } else {
-        goto _L;
-      }
-    } else {
-      _L: /* CIL Label */ 
-#line 39
-      while (1) {
-#line 39
-        if (elm->links.rbe_parent) {
-#line 39
-          if (! ((unsigned int )elm == (unsigned int )(elm->links.rbe_parent)->links.rbe_right)) {
-#line 39
-            break;
-          }
-        } else {
-#line 39
-          break;
-        }
-#line 39
-        elm = elm->links.rbe_parent;
-      }
-#line 39
-      elm = elm->links.rbe_parent;
-    }
-  }
-#line 39
-  return ((struct tree_node *)elm);
-}
-}
-#line 39 "test3.c"
-struct tree_node *_stm_TREE_RB_NEXT(Thread *self , struct tree_node *elm ) 
-{ struct tree_node *mem3 ;
-  struct tree_node *mem4 ;
-  struct tree_node *mem5 ;
-  struct tree_node *mem6 ;
-  struct tree_node *mem7 ;
-  struct tree_node *mem8 ;
-  struct tree_node *mem9 ;
-  struct tree_node *mem10 ;
-  struct tree_node *mem11 ;
-  struct tree_node *mem12 ;
-  struct tree_node *mem13 ;
-  struct tree_node *mem14 ;
-  struct tree_node *mem15 ;
-
-  {
-  {
-  TxLoadSized(self, (intptr_t *)(& mem3), (intptr_t *)(& elm->links.rbe_right), sizeof(struct tree_node *));
-#line 39
-  if (mem3) {
-    TxLoadSized(self, (intptr_t *)(& mem4), (intptr_t *)(& elm->links.rbe_right),
-                sizeof(struct tree_node *));
-#line 39
-    elm = mem4;
-#line 39
-    while (1) {
-      {
-      TxLoadSized(self, (intptr_t *)(& mem5), (intptr_t *)(& elm->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      if (! mem5) {
-#line 39
+#line 40
+      __tmp = mem13;
+#line 40
+      if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
         break;
       }
-      }
-      TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& elm->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      elm = mem6;
-    }
-  } else {
-    {
-    TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& elm->links.rbe_parent),
-                sizeof(struct tree_node *));
-#line 39
-    if (mem7) {
-      {
-      TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& elm->links.rbe_parent),
-                  sizeof(struct tree_node *));
-      TxLoadSized(self, (intptr_t *)(& mem9), (intptr_t *)(& mem8->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      if ((unsigned int )elm == (unsigned int )mem9) {
-        TxLoadSized(self, (intptr_t *)(& mem10), (intptr_t *)(& elm->links.rbe_parent),
-                    sizeof(struct tree_node *));
-#line 39
-        elm = mem10;
-      } else {
-        goto _L;
-      }
-      }
-    } else {
-      _L: /* CIL Label */ 
-#line 39
-      while (1) {
+#line 40
+      if (__comp < 0) {
+#line 40
+        while (1) {
+          TxLoadSized(self, (intptr_t *)(& mem15), (intptr_t *)(& __tmp->links.spe_right),
+                      sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem16), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp14 = mem15;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& mem16->links.spe_left), (intptr_t *)(& tmp14),
+                       sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem18), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp17 = mem18;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& __tmp->links.spe_right), (intptr_t *)(& tmp17),
+                       sizeof(struct tree_node *));
+#line 40
+          tmp19 = __tmp;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp19),
+                       sizeof(struct tree_node *));
+#line 40
+          break;
+        }
         {
-        TxLoadSized(self, (intptr_t *)(& mem11), (intptr_t *)(& elm->links.rbe_parent),
+        TxLoadSized(self, (intptr_t *)(& mem20), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem21), (intptr_t *)(& mem20->links.spe_left),
                     sizeof(struct tree_node *));
-#line 39
-        if (mem11) {
-          {
-          TxLoadSized(self, (intptr_t *)(& mem12), (intptr_t *)(& elm->links.rbe_parent),
-                      sizeof(struct tree_node *));
-          TxLoadSized(self, (intptr_t *)(& mem13), (intptr_t *)(& mem12->links.rbe_right),
-                      sizeof(struct tree_node *));
-#line 39
-          if (! ((unsigned int )elm == (unsigned int )mem13)) {
-#line 39
-            break;
-          }
-          }
-        } else {
-#line 39
+#line 40
+        if ((unsigned int )mem21 == (unsigned int )((void *)0)) {
+#line 40
           break;
         }
         }
-        TxLoadSized(self, (intptr_t *)(& mem14), (intptr_t *)(& elm->links.rbe_parent),
+      }
+#line 40
+      while (1) {
+        TxLoadSized(self, (intptr_t *)(& mem23), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+        tmp22 = mem23;
+#line 40
+        TxStoreSized(self, (intptr_t *)(& __right->links.spe_left), (intptr_t *)(& tmp22),
+                     sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem24), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+        __right = mem24;
+        TxLoadSized(self, (intptr_t *)(& mem26), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem27), (intptr_t *)(& mem26->links.spe_left),
                     sizeof(struct tree_node *));
-#line 39
-        elm = mem14;
+#line 40
+        tmp25 = mem27;
+#line 40
+        TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp25),
+                     sizeof(struct tree_node *));
+#line 40
+        break;
       }
-      TxLoadSized(self, (intptr_t *)(& mem15), (intptr_t *)(& elm->links.rbe_parent),
-                  sizeof(struct tree_node *));
-#line 39
-      elm = mem15;
-    }
+    } else {
+#line 40
+      if (__comp > 0) {
+        TxLoadSized(self, (intptr_t *)(& mem28), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+        TxLoadSized(self, (intptr_t *)(& mem29), (intptr_t *)(& mem28->links.spe_right),
+                    sizeof(struct tree_node *));
+#line 40
+        __tmp = mem29;
+#line 40
+        if ((unsigned int )__tmp == (unsigned int )((void *)0)) {
+#line 40
+          break;
+        }
+#line 40
+        if (__comp > 0) {
+#line 40
+          while (1) {
+            TxLoadSized(self, (intptr_t *)(& mem31), (intptr_t *)(& __tmp->links.spe_left),
+                        sizeof(struct tree_node *));
+            TxLoadSized(self, (intptr_t *)(& mem32), (intptr_t *)(& head->sph_root),
+                        sizeof(struct tree_node *));
+#line 40
+            tmp30 = mem31;
+#line 40
+            TxStoreSized(self, (intptr_t *)(& mem32->links.spe_right), (intptr_t *)(& tmp30),
+                         sizeof(struct tree_node *));
+            TxLoadSized(self, (intptr_t *)(& mem34), (intptr_t *)(& head->sph_root),
+                        sizeof(struct tree_node *));
+#line 40
+            tmp33 = mem34;
+#line 40
+            TxStoreSized(self, (intptr_t *)(& __tmp->links.spe_left), (intptr_t *)(& tmp33),
+                         sizeof(struct tree_node *));
+#line 40
+            tmp35 = __tmp;
+#line 40
+            TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp35),
+                         sizeof(struct tree_node *));
+#line 40
+            break;
+          }
+          {
+          TxLoadSized(self, (intptr_t *)(& mem36), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem37), (intptr_t *)(& mem36->links.spe_right),
+                      sizeof(struct tree_node *));
+#line 40
+          if ((unsigned int )mem37 == (unsigned int )((void *)0)) {
+#line 40
+            break;
+          }
+          }
+        }
+#line 40
+        while (1) {
+          TxLoadSized(self, (intptr_t *)(& mem39), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp38 = mem39;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& __left->links.spe_right), (intptr_t *)(& tmp38),
+                       sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem40), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+#line 40
+          __left = mem40;
+          TxLoadSized(self, (intptr_t *)(& mem42), (intptr_t *)(& head->sph_root),
+                      sizeof(struct tree_node *));
+          TxLoadSized(self, (intptr_t *)(& mem43), (intptr_t *)(& mem42->links.spe_right),
+                      sizeof(struct tree_node *));
+#line 40
+          tmp41 = mem43;
+#line 40
+          TxStoreSized(self, (intptr_t *)(& head->sph_root), (intptr_t *)(& tmp41),
+                       sizeof(struct tree_node *));
+#line 40
+          break;
+        }
+      }
     }
   }
+#line 40
+  while (1) {
+    TxLoadSized(self, (intptr_t *)(& mem45), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem46), (intptr_t *)(& mem45->links.spe_left),
+                sizeof(struct tree_node *));
+#line 40
+    tmp44 = mem46;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& __left->links.spe_right), (intptr_t *)(& tmp44),
+                 sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem48), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem49), (intptr_t *)(& mem48->links.spe_right),
+                sizeof(struct tree_node *));
+#line 40
+    tmp47 = mem49;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& __right->links.spe_left), (intptr_t *)(& tmp47),
+                 sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem51), (intptr_t *)(& __node->links.spe_right),
+                sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem52), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+    tmp50 = mem51;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& mem52->links.spe_left), (intptr_t *)(& tmp50),
+                 sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem54), (intptr_t *)(& __node->links.spe_left),
+                sizeof(struct tree_node *));
+    TxLoadSized(self, (intptr_t *)(& mem55), (intptr_t *)(& head->sph_root), sizeof(struct tree_node *));
+#line 40
+    tmp53 = mem54;
+#line 40
+    TxStoreSized(self, (intptr_t *)(& mem55->links.spe_right), (intptr_t *)(& tmp53),
+                 sizeof(struct tree_node *));
+#line 40
+    break;
   }
-#line 39
-  return ((struct tree_node *)elm);
+#line 40
+  return;
 }
 }
-#line 39 "test3.c"
-static struct tree_node *TREE_RB_NEXT(struct tree_node *elm ) 
+#line 40 "test4.c"
+static void TREE_SPLAY_MINMAX(struct TREE *head , int __comp ) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
   void *(*stmfunc)(Thread * ) ;
@@ -7033,7 +5254,6 @@ static struct tree_node *TREE_RB_NEXT(struct tree_node *elm )
   unsigned long volatile   _x ;
   __intptr_t tmp___4 ;
   int tmp___5 ;
-  struct tree_node *tmp20 ;
 
   {
 #line 15 "alx.h"
@@ -7125,7 +5345,7 @@ static struct tree_node *TREE_RB_NEXT(struct tree_node *elm )
 #line 43
         if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
 #line 44
-          tmp20 = _stm_TREE_RB_NEXT(self->stmThread, elm);
+          _stm_TREE_SPLAY_MINMAX(self->stmThread, head, __comp);
         } else {
 #line 46
           fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -7172,7 +5392,7 @@ static struct tree_node *TREE_RB_NEXT(struct tree_node *elm )
 #line 56
           TxStart(self->stmThread, & buf, & ro);
 #line 57
-          tmp20 = _stm_TREE_RB_NEXT(self->stmThread, elm);
+          _stm_TREE_SPLAY_MINMAX(self->stmThread, head, __comp);
 #line 58
           TxCommit(self->stmThread);
 #line 59
@@ -7216,7 +5436,7 @@ static struct tree_node *TREE_RB_NEXT(struct tree_node *elm )
 #line 66
       if (nest->level < 0L) {
 #line 67
-        tmp20 = _raw_TREE_RB_NEXT(elm);
+        _raw_TREE_SPLAY_MINMAX(head, __comp);
       } else {
 #line 69
         fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
@@ -7249,7 +5469,7 @@ static struct tree_node *TREE_RB_NEXT(struct tree_node *elm )
 #line 76
         nest->level = -1L;
 #line 77
-        tmp20 = _raw_TREE_RB_NEXT(elm);
+        _raw_TREE_SPLAY_MINMAX(head, __comp);
 #line 78
         nest->level = 0L;
 #line 79
@@ -7260,348 +5480,35 @@ static struct tree_node *TREE_RB_NEXT(struct tree_node *elm )
     }
   }
 #line 83
-  return (tmp20);
+  return;
 }
 }
-#line 39 "test3.c"
-struct tree_node *_raw_TREE_RB_MINMAX(struct TREE *head , int val ) 
-{ struct tree_node *tmp ;
-  struct tree_node *parent ;
-
-  {
-#line 39
-  tmp = head->rbh_root;
-#line 39
-  parent = (struct tree_node *)((void *)0);
-#line 39
-  while (tmp) {
-#line 39
-    parent = tmp;
-#line 39
-    if (val < 0) {
-#line 39
-      tmp = tmp->links.rbe_left;
-    } else {
-#line 39
-      tmp = tmp->links.rbe_right;
-    }
-  }
-#line 39
-  return ((struct tree_node *)parent);
-}
-}
-#line 39 "test3.c"
-struct tree_node *_stm_TREE_RB_MINMAX(Thread *self , struct TREE *head , int val ) 
-{ struct tree_node *tmp ;
-  struct tree_node *parent ;
-  struct tree_node *mem6 ;
-  struct tree_node *mem7 ;
-  struct tree_node *mem8 ;
-
-  {
-  TxLoadSized(self, (intptr_t *)(& mem6), (intptr_t *)(& head->rbh_root), sizeof(struct tree_node *));
-#line 39
-  tmp = mem6;
-#line 39
-  parent = (struct tree_node *)((void *)0);
-#line 39
-  while (tmp) {
-#line 39
-    parent = tmp;
-#line 39
-    if (val < 0) {
-      TxLoadSized(self, (intptr_t *)(& mem7), (intptr_t *)(& tmp->links.rbe_left),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp = mem7;
-    } else {
-      TxLoadSized(self, (intptr_t *)(& mem8), (intptr_t *)(& tmp->links.rbe_right),
-                  sizeof(struct tree_node *));
-#line 39
-      tmp = mem8;
-    }
-  }
-#line 39
-  return ((struct tree_node *)parent);
-}
-}
-#line 39 "test3.c"
-static struct tree_node *TREE_RB_MINMAX(struct TREE *head , int val ) 
-{ profile_t *prof ;
-  void *(*rawfunc)(void) ;
-  void *(*stmfunc)(Thread * ) ;
-  int ro ;
-  int cnt ;
-  thread_t *self ;
-  nest_t *nest ;
-  nest_t *nested ;
-  __intptr_t tmp ;
-  unsigned long tries ;
-  sigjmp_buf buf ;
-  struct timeval start ;
-  void *tmp___0 ;
-  void *tmp___1 ;
-  __intptr_t tmp___2 ;
-  int tmp___3 ;
-  unsigned long volatile   _x ;
-  __intptr_t tmp___4 ;
-  int tmp___5 ;
-  struct tree_node *tmp20 ;
-
-  {
-#line 15 "alx.h"
-  prof = & _l1_prof;
-#line 16
-  rawfunc = (void *(*)(void))0;
-#line 17
-  stmfunc = (void *(*)(Thread * ))0;
-#line 18
-  ro = 0;
-#line 19
-  cnt = default_spins;
-#line 24
-  tries = 0UL;
-#line 28
-  tmp___0 = pthread_getspecific(_al_key);
-#line 28
-  self = (thread_t *)tmp___0;
-#line 28
-  if (! self) {
-#line 28
-    __assert13("alx.h", 28, "_al_template", "(self = pthread_getspecific(_al_key))");
-  }
-#line 29
-  nest = self->prof_list.slh_first;
-#line 29
-  while (nest) {
-#line 30
-    if ((unsigned int )nest->prof == (unsigned int )prof) {
-#line 30
-      break;
-    }
-#line 29
-    nest = nest->next.sle_next;
-  }
-#line 32
-  if ((unsigned int )nest == (unsigned int )((nest_t *)0)) {
-#line 33
-    tmp___1 = malloc(sizeof(*nest));
-#line 33
-    nest = (nest_t *)tmp___1;
-#line 33
-    if (! nest) {
-#line 33
-      __assert13("alx.h", 33, "_al_template", "nest = malloc(sizeof(*nest))");
-    }
-#line 34
-    nest->prof = prof;
-#line 35
-    nest->level = 0L;
-#line 36
-    while (1) {
-#line 36
-      nest->next.sle_next = self->prof_list.slh_first;
-#line 36
-      self->prof_list.slh_first = nest;
-#line 36
-      break;
-    }
-  }
-#line 38
-  nested = self->prof_list.slh_first;
-#line 38
-  while (nested) {
-#line 39
-    if (0L < nested->level) {
-#line 39
-      break;
-    }
-#line 38
-    nested = nested->next.sle_next;
-  }
-#line 41
-  if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-    goto _L;
-  } else {
-#line 41
-    if (nest->level == 0L) {
-#line 41
-      tmp___5 = transactMode(prof);
-#line 41
-      if (tmp___5) {
-        _L: /* CIL Label */ 
-#line 42
-        if (! (0L <= nest->level)) {
-#line 42
-          __assert13("alx.h", 42, "_al_template", "0 <= nest->level");
-        }
-#line 43
-        if ((unsigned int )nested != (unsigned int )((nest_t *)0)) {
-#line 44
-          tmp20 = _stm_TREE_RB_MINMAX(self->stmThread, head, val);
-        } else {
-#line 46
-          fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 47
-          while (1) {
-#line 47
-            tmp = (int )prof->lockHeld;
-#line 47
-            if (! ((long )tmp == -1L)) {
-#line 47
-              tmp___2 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), tmp,
-                                tmp + 1);
-#line 47
-              if (! (tmp___2 != tmp)) {
-#line 47
-                break;
-              }
-            }
-#line 49
-            cnt --;
-#line 49
-            if (cnt <= 0) {
-#line 49
-              busy();
-#line 49
-              cnt = default_spins;
-            }
-          }
-#line 51
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 52
-          tmp___3 = sigsetjmp((long *)(buf), 1);
-#line 52
-          if (tmp___3) {
-#line 52
-            nest->level = 0L;
-          }
-#line 53
-          timer_start(& start);
-#line 54
-          nest->level = (long )((int volatile   )nest->level + (int volatile   )1);
-#line 55
-          tries = (unsigned long )((int volatile   )tries + (int volatile   )1);
-#line 56
-          TxStart(self->stmThread, & buf, & ro);
-#line 57
-          tmp20 = _stm_TREE_RB_MINMAX(self->stmThread, head, val);
-#line 58
-          TxCommit(self->stmThread);
-#line 59
-          while (1) {
-#line 59
-            _x = prof->triesCommit;
-#line 59
-            if ((unsigned long )(_x >> 16) + tries > 65535UL) {
-#line 59
-              _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) >> 1) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) >> 1));
-            }
-#line 59
-            _x = (unsigned long volatile   )((((unsigned long )(_x >> 16) + tries) << 16) | ((unsigned long )(_x & (unsigned long volatile   )65535) + 1UL));
-#line 59
-            if (! ((unsigned long )(_x & (unsigned long volatile   )65535) <= (unsigned long )(_x >> 16))) {
-#line 59
-              __assert13("alx.h", 59, "_al_template", "low(_x) <= high(_x)");
-            }
-#line 59
-            prof->triesCommit = _x;
-#line 59
-            break;
-          }
-#line 60
-          nest->level = (long )((int volatile   )nest->level - (int volatile   )1);
-#line 61
-          fetch_and_sub1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 62
-          timer_stop(& start, & self->timeSTM);
-        }
-      } else {
-        goto _L___0;
-      }
-    } else {
-      _L___0: /* CIL Label */ 
-#line 65
-      if (! (nest->level <= 0L)) {
-#line 65
-        __assert13("alx.h", 65, "_al_template", "nest->level <= 0");
-      }
-#line 66
-      if (nest->level < 0L) {
-#line 67
-        tmp20 = _raw_TREE_RB_MINMAX(head, val);
-      } else {
-#line 69
-        fetch_and_add1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 70
-        while (1) {
-#line 70
-          if (! (prof->lockHeld != (long volatile   )0)) {
-#line 70
-            tmp___4 = cmpxchg((__intptr_t volatile   *)(& prof->lockHeld), 0, (int )(~ 0L));
-#line 70
-            if (! (tmp___4 != 0)) {
-#line 70
-              break;
-            }
-          }
-#line 72
-          cnt --;
-#line 72
-          if (cnt <= 0) {
-#line 72
-            busy();
-#line 72
-            cnt = default_spins;
-          }
-        }
-#line 74
-        fetch_and_sub1((__intptr_t volatile   *)(& prof->threadsWaiting));
-#line 75
-        timer_start(& start);
-#line 76
-        nest->level = -1L;
-#line 77
-        tmp20 = _raw_TREE_RB_MINMAX(head, val);
-#line 78
-        nest->level = 0L;
-#line 79
-        fetch_and_add1((__intptr_t volatile   *)(& prof->lockHeld));
-#line 80
-        timer_stop(& start, & self->timeRaw);
-      }
-    }
-  }
-#line 83
-  return (tmp20);
-}
-}
-#line 41 "test3.c"
+#line 42 "test4.c"
 void _raw_add(long n ) 
 { struct tree_node *r ;
   void *tmp ;
 
   {
-#line 47
-  tmp = tmalloc_reserve(sizeof(*r));
-#line 47
-  r = (struct tree_node *)tmp;
-#line 47
-  if (! r) {
-#line 47
-    __assert13("test3.c", 47, "add", "(r = (struct tree_node*)malloc(sizeof(*r)))");
-  }
 #line 48
-  r->key = n;
+  tmp = tmalloc_reserve(sizeof(*r));
+#line 48
+  r = (struct tree_node *)tmp;
+#line 48
+  if (! r) {
+#line 48
+    __assert13("test4.c", 48, "add", "(r = (struct tree_node*)malloc(sizeof(*r)))");
+  }
 #line 49
-  r->val = n + 1L;
+  r->key = n;
 #line 50
-  TREE_RB_INSERT(& tab, r);
+  r->val = n + 1L;
 #line 51
+  TREE_SPLAY_INSERT(& tab, r);
+#line 52
   return;
 }
 }
-#line 41 "test3.c"
+#line 42 "test4.c"
 void _stm_add(Thread *self , long n ) 
 { struct tree_node *r ;
   void *tmp ;
@@ -7609,30 +5516,30 @@ void _stm_add(Thread *self , long n )
   long tmp6 ;
 
   {
-#line 47
+#line 48
   tmp = TxAlloc(self, sizeof(*r));
-#line 47
+#line 48
   r = (struct tree_node *)tmp;
-#line 47
+#line 48
   if (! r) {
-#line 47
-    __assert13("test3.c", 47, "add", "(r = (struct tree_node*)malloc(sizeof(*r)))");
+#line 48
+    __assert13("test4.c", 48, "add", "(r = (struct tree_node*)malloc(sizeof(*r)))");
   }
-#line 48
+#line 49
   tmp5 = n;
-#line 48
+#line 49
   TxStoreSized(self, (intptr_t *)(& r->key), (intptr_t *)(& tmp5), sizeof(long ));
-#line 49
-  tmp6 = n + 1L;
-#line 49
-  TxStoreSized(self, (intptr_t *)(& r->val), (intptr_t *)(& tmp6), sizeof(long ));
 #line 50
-  TREE_RB_INSERT(& tab, r);
+  tmp6 = n + 1L;
+#line 50
+  TxStoreSized(self, (intptr_t *)(& r->val), (intptr_t *)(& tmp6), sizeof(long ));
 #line 51
+  TREE_SPLAY_INSERT(& tab, r);
+#line 52
   return;
 }
 }
-#line 41 "test3.c"
+#line 42 "test4.c"
 static void add(long n ) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
@@ -7882,7 +5789,7 @@ static void add(long n )
   return;
 }
 }
-#line 54 "test3.c"
+#line 55 "test4.c"
 struct tree_node *_raw_del(long n ) 
 { struct tree_node find ;
   struct tree_node *r ;
@@ -7890,25 +5797,25 @@ struct tree_node *_raw_del(long n )
   struct tree_node *tmp___0 ;
 
   {
-#line 61
+#line 62
   find.key = n;
-#line 62
-  tmp___0 = (struct tree_node *)TREE_RB_FIND(& tab, & find);
-#line 62
+#line 63
+  tmp___0 = (struct tree_node *)TREE_SPLAY_FIND(& tab, & find);
+#line 63
   r = (struct tree_node *)tmp___0;
-#line 62
+#line 63
   if (r) {
-#line 63
-    tmp = (struct tree_node *)TREE_RB_REMOVE(& tab, r);
-#line 63
+#line 64
+    tmp = TREE_SPLAY_REMOVE(& tab, r);
+#line 64
     return (tmp);
   } else {
-#line 65
+#line 66
     return ((struct tree_node *)0);
   }
 }
 }
-#line 54 "test3.c"
+#line 55 "test4.c"
 struct tree_node *_stm_del(Thread *self , long n ) 
 { struct tree_node find ;
   struct tree_node *r ;
@@ -7916,25 +5823,25 @@ struct tree_node *_stm_del(Thread *self , long n )
   struct tree_node *tmp___0 ;
 
   {
-#line 61
+#line 62
   find.key = n;
-#line 62
-  tmp___0 = (struct tree_node *)TREE_RB_FIND(& tab, & find);
-#line 62
+#line 63
+  tmp___0 = (struct tree_node *)TREE_SPLAY_FIND(& tab, & find);
+#line 63
   r = (struct tree_node *)tmp___0;
-#line 62
+#line 63
   if (r) {
-#line 63
-    tmp = (struct tree_node *)TREE_RB_REMOVE(& tab, r);
-#line 63
+#line 64
+    tmp = TREE_SPLAY_REMOVE(& tab, r);
+#line 64
     return (tmp);
   } else {
-#line 65
+#line 66
     return ((struct tree_node *)0);
   }
 }
 }
-#line 54 "test3.c"
+#line 55 "test4.c"
 static struct tree_node *del(long n ) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
@@ -8185,35 +6092,35 @@ static struct tree_node *del(long n )
   return (tmp20);
 }
 }
-#line 68 "test3.c"
+#line 69 "test4.c"
 struct tree_node *_raw_lookup(long n ) 
 { struct tree_node find ;
   struct tree_node *tmp ;
 
   {
-#line 74
+#line 75
   find.key = n;
-#line 75
-  tmp = (struct tree_node *)TREE_RB_FIND(& tab, & find);
-#line 75
-  return ((struct tree_node *)tmp);
+#line 76
+  tmp = (struct tree_node *)TREE_SPLAY_FIND(& tab, & find);
+#line 76
+  return (tmp);
 }
 }
-#line 68 "test3.c"
+#line 69 "test4.c"
 struct tree_node *_stm_lookup(Thread *self , long n ) 
 { struct tree_node find ;
   struct tree_node *tmp ;
 
   {
-#line 74
+#line 75
   find.key = n;
-#line 75
-  tmp = (struct tree_node *)TREE_RB_FIND(& tab, & find);
-#line 75
-  return ((struct tree_node *)tmp);
+#line 76
+  tmp = (struct tree_node *)TREE_SPLAY_FIND(& tab, & find);
+#line 76
+  return (tmp);
 }
 }
-#line 68 "test3.c"
+#line 69 "test4.c"
 static struct tree_node *lookup(long n ) 
 { profile_t *prof ;
   void *(*rawfunc)(void) ;
@@ -8244,7 +6151,7 @@ static struct tree_node *lookup(long n )
 #line 17
   stmfunc = (void *(*)(Thread * ))0;
 #line 18
-  ro = 1;
+  ro = 0;
 #line 19
   cnt = default_spins;
 #line 24
@@ -8464,7 +6371,7 @@ static struct tree_node *lookup(long n )
   return (tmp20);
 }
 }
-#line 78 "test3.c"
+#line 79 "test4.c"
 void *task(void *arg ) 
 { long n ;
   long t ;
@@ -8472,47 +6379,47 @@ void *task(void *arg )
   long tmp___0 ;
 
   {
-#line 81
+#line 82
   n = (long )((int )arg);
-#line 84
+#line 85
   while (1) {
-#line 84
+#line 85
     tmp___0 = n;
-#line 84
+#line 85
     n --;
-#line 84
+#line 85
     if (! tmp___0) {
-#line 84
+#line 85
       break;
     }
-#line 85
-    tmp = random();
-#line 85
-    t = tmp % 1000L;
 #line 86
+    tmp = random();
+#line 86
+    t = tmp % 1000L;
+#line 87
     switch ((int )(n % 4L)) {
     case 0: 
-#line 87
+#line 88
     add(t);
-#line 87
+#line 88
     break;
     case 1: 
-#line 88
+#line 89
     del(t);
-#line 88
+#line 89
     break;
     default: 
-#line 89
+#line 90
     lookup(t);
-#line 89
+#line 90
     break;
     }
   }
-#line 92
+#line 93
   return ((void *)0);
 }
 }
-#line 95 "test3.c"
+#line 96 "test4.c"
 void *validate(void *arg ) 
 { int flag ;
   struct tree_node *p ;
@@ -8521,52 +6428,59 @@ void *validate(void *arg )
   long c ;
   struct tree_node *tmp ;
   struct tree_node *tmp___0 ;
+  struct tree_node *tmp___1 ;
 
   {
-#line 98
+#line 99
   flag = (int )arg;
-#line 100
+#line 101
   a = 0L;
-#line 100
+#line 101
   b = 0L;
-#line 100
+#line 101
   c = 0L;
-#line 102
+#line 103
   setAdaptMode(-1);
-#line 103
-  tmp = (struct tree_node *)TREE_RB_MINMAX(& tab, -1);
-#line 103
-  p = (struct tree_node *)tmp;
-#line 103
-  while ((unsigned int )p != (unsigned int )((void *)0)) {
 #line 104
-    b = p->key;
-#line 105
-    if (! (a <= b)) {
-#line 105
-      printf((char const   * __restrict  )"*** Oops, %ld <= %ld\n", a, b);
-    }
-#line 106
-    a = b;
-#line 106
-    c ++;
-#line 107
-    if (flag) {
-#line 107
-      printf((char const   * __restrict  )"%ld\n", a);
-    }
-#line 103
-    tmp___0 = (struct tree_node *)TREE_RB_NEXT(p);
-#line 103
+  if ((unsigned int )tab.sph_root == (unsigned int )((void *)0)) {
+#line 104
+    p = (struct tree_node *)((void *)0);
+  } else {
+#line 104
+    tmp___0 = (struct tree_node *)TREE_SPLAY_MIN_MAX(& tab, -1);
+#line 104
     p = (struct tree_node *)tmp___0;
   }
-#line 109
-  printf((char const   * __restrict  )"number of elements=%ld\n", c);
+#line 104
+  while ((unsigned int )p != (unsigned int )((struct tree_node *)0)) {
+#line 105
+    b = p->key;
+#line 106
+    if (! (a <= b)) {
+#line 106
+      printf((char const   * __restrict  )"*** Oops, %ld <= %ld\n", a, b);
+    }
+#line 107
+    a = b;
+#line 107
+    c ++;
+#line 108
+    if (flag) {
+#line 108
+      printf((char const   * __restrict  )"%ld\n", a);
+    }
+#line 104
+    tmp___1 = (struct tree_node *)TREE_SPLAY_NEXT(& tab, p);
+#line 104
+    p = (struct tree_node *)tmp___1;
+  }
 #line 110
+  printf((char const   * __restrict  )"number of elements=%ld\n", c);
+#line 111
   return ((void *)0);
 }
 }
-#line 113 "test3.c"
+#line 114 "test4.c"
 int main(int argc , char **argv ) 
 { int p ;
   int n ;
@@ -8577,91 +6491,91 @@ int main(int argc , char **argv )
   double tmp ;
 
   {
-#line 116
+#line 117
   p = 2;
-#line 116
+#line 117
   n = 100;
-#line 120
+#line 121
   while (1) {
-#line 120
+#line 121
     ch = getopt(argc, (char * const  *)argv, "p:n:atlx:");
-#line 120
+#line 121
     if (! (ch != -1)) {
-#line 120
+#line 121
       break;
     }
-#line 121
+#line 122
     switch (ch) {
     case 110: 
-#line 122
+#line 123
     n = atoi((char const   *)optarg);
-#line 122
+#line 123
     break;
     case 112: 
-#line 123
+#line 124
     p = atoi((char const   *)optarg);
-#line 123
+#line 124
     break;
     case 97: 
-#line 124
+#line 125
     setAdaptMode(0);
-#line 124
+#line 125
     break;
     case 108: 
-#line 125
+#line 126
     setAdaptMode(-1);
-#line 125
+#line 126
     break;
     case 116: 
-#line 126
+#line 127
     setAdaptMode(1);
-#line 126
+#line 127
     break;
     case 120: 
-#line 127
+#line 128
     tmp = atof((char const   *)optarg);
-#line 127
+#line 128
     setTransactOvhd(tmp);
-#line 127
+#line 128
     break;
     case 104: 
     default: 
-#line 129
+#line 130
     help();
     }
   }
-#line 132
-  argc -= optind;
 #line 133
+  argc -= optind;
+#line 134
   argv += optind;
-#line 135
+#line 136
   if (256 <= p) {
-#line 135
+#line 136
     p = 256;
   }
-#line 136
+#line 137
   i = 0;
-#line 136
+#line 137
   while (i < p) {
-#line 136
+#line 137
     al_pthread_create(& t[i], (pthread_attr_t const   *)0, & task, (void *)n);
-#line 136
-    i ++;
-  }
-#line 137
-  i = 0;
-#line 137
-  while (i < p) {
-#line 137
-    pthread_join(t[i], & r);
 #line 137
     i ++;
   }
 #line 138
-  al_pthread_create(t, (pthread_attr_t const   *)0, & validate, (void *)0);
+  i = 0;
+#line 138
+  while (i < p) {
+#line 138
+    pthread_join(t[i], & r);
+#line 138
+    i ++;
+  }
 #line 139
-  pthread_join(t[0], & r);
+  al_pthread_create(t, (pthread_attr_t const   *)0, & validate, (void *)0);
 #line 140
+  pthread_join(t[0], & r);
+#line 141
   return (0);
 }
 }

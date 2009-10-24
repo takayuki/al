@@ -12,7 +12,7 @@
 #define wmb() __asm__ __volatile__ ("" : : : "memory")
 #endif /* __i386__ */
 #ifdef __sparc__
-#define membar_safe(type)				\
+#define membar(type)					\
   do { __asm__ __volatile__("ba,pt    %%xcc,1f\n\t"	\
 			    "membar   " type "\n"	\
 			    "1:\n"			\
@@ -27,17 +27,10 @@ intptr_t cmpxchg(volatile intptr_t*,intptr_t,intptr_t);
 intptr_t fetch_and_add1(volatile intptr_t*);
 intptr_t fetch_and_sub1(volatile intptr_t*);
 
-#define CAS(var,old,new)	cmpxchg(&(var),(old),(new))
-#define INC(var)		fetch_and_add1(&(var))
-#define DEC(var)		fetch_and_sub1(&(var))
-#if 0
-#define inc(var)                (((volatile intptr_t)var)++)
-#define dec(var)                (((volatile intptr_t)var)--)
-#else
-#define inc(var)                INC(var)
-#define dec(var)                DEC(var)
-#endif
-#define load(var)               (var)
-#define store(var,val)          ((var)=(val))
+#define CAS(var,old,new)  cmpxchg(&(var),(old),(new))
+#define INC(var)          fetch_and_add1(&(var))
+#define DEC(var)          fetch_and_sub1(&(var))
+#define inc(var)          (((volatile intptr_t)var)++)
+#define dec(var)          (((volatile intptr_t)var)--)
 
 #endif
