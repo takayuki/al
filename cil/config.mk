@@ -1,6 +1,6 @@
 # A bunch of variables  -*- Mode: makefile -*-
-export ARCHOS=sparc_SOLARIS
+export ARCHOS=x86_NETBSD
 export HAS_MSVC=no
-export CILHOME=/home/takayuki/devel/gamma/al-0.10/cil
+export CILHOME=/home/takayuki/assignment/project/al-0.12/cil
 export DEFAULT_COMPILER=_GNUCC
 export _GNUCC=1

@@ -1,0 +1,49 @@
+srcdir = @srcdir@
+prefix = @prefix@
+top_srcdir = @top_srcdir@
+
+CC = @CC@
+CPPFLAGS = @DEFS@ -I. -I$(top_srcdir)/stamp/lib -I$(top_srcdir) \
+  -DLIST_NO_DUPLICATES -DMAP_USE_RBTREE @CPPFLAGS@
+CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
+LDFLAGS = -L$(top_srcdir)/stamp/lib -L$(top_srcdir)/tl2 \
+  @PTHREAD_CFLAGS@ @LDFLAGS@
+LIBS = -lstamp -ltl2 @PTHREAD_LIBS@ @LIBS@
+GNUMAKE = @GNUMAKE@
+INSTALL = @INSTALL@
+CILLY = $(top_srcdir)/cil/bin/cilly
+CILLYFLAGS = --keepunused --doatomic --save-temps #--check
+
+OBJS = al.o port.o client.o customer.o manager.o reservation.o
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+all: vacation
+
+vacation: vacation.o $(OBJS)
+	$(CC) $(LDFLAGS) -o vacation vacation.o $(OBJS) $(LIBS)
+
+vacation.o: vacation.c
+
+client.o: client.c $(top_srcdir)/alx.h client.h action.h manager.h \
+	  reservation.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+customer.o: customer.c $(top_srcdir)/alx.h customer.h reservation.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+manager.o: manager.c $(top_srcdir)/alx.h manager.h customer.h reservation.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+reservation.o: reservation.c reservation.h  $(top_srcdir)/alx.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+al.o: $(top_srcdir)/al.c $(top_srcdir)/al.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+port.o: $(top_srcdir)/port.c $(top_srcdir)/port.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+clean:
+	rm -f vacation
+	rm -f *.cil.c *.cil.i *.i *.o gmon.out core *.core *~
+
+distclean: clean
+	rm -f Makefile .depend

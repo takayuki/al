@@ -4,6 +4,7 @@
 #include <config.h>
 #endif
 #include <assert.h>
+#include <stdio.h>
 #include <sys/time.h>
 #include "al.h"
 
@@ -20,15 +21,23 @@ _al_template(void)
   unsigned long tries;
   unsigned long prev,next;
   sigjmp_buf buf;
+#ifndef ENABLE_TIMER
+#define timer_start(x)
+#define timer_stop(w,x,y,z)
+#else
 #ifdef HAVE_GETHRTIME
   hrtime_t start;
 #else
   struct timeval start;
 #endif
+#endif
 
   self = pthread_getspecific(_al_key);
-  if (self == 0)
+  if (self == 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
     abort();
+  }
   nestedTransact = 0;
   if (!SLIST_EMPTY(&self->lock_list)) {
     nest = SLIST_FIRST(&self->lock_list);
@@ -47,7 +56,11 @@ _al_template(void)
       goto reuse;
   }
   nest = malloc(sizeof(*nest));
-  if (nest == 0) abort();
+  if (nest == 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
+    abort();
+  }
   nest->lock = _lock;
   nest->level = 0;
   SLIST_INSERT_HEAD(&self->lock_list,nest,next);
@@ -61,7 +74,7 @@ _al_template(void)
     assert(nest->level == 0);
     switch (getLockScheme()) {
     case 2:
-      if (enterCritical_2(_lock)) {
+      do {
         if (sigsetjmp(buf,1)) nest->level = 0;
         timer_start(&start);
 	inc(nest->level);
@@ -71,13 +84,10 @@ _al_template(void)
 	dec(nest->level);
         exitCritical_2(_lock);
         timer_stop(&start,&self->timeSTM,_lock,0);
-      } else {
-        abort();
-      }
+      } while (0);
       break;
     case 1:
       if (enterCritical_1(_lock)) {
-write(1,".",1);
 	tries = 0;
 	if (sigsetjmp(buf,1)) nest->level = 0;
 	timer_start(&start);

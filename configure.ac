@@ -1,4 +1,4 @@
-AC_INIT([CIS 609 Final Project],[0.11],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.12],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -14,8 +14,10 @@ AC_ARG_ENABLE([pg],[AS_HELP_STRING([--enable-pg],[generate code to profile])],
               [CFLAGS="-pg $CFLAGS"; LDFLAGS="$LDFLAGS -pg"])
 AC_PROG_CC([gcc])
 AC_PROG_INSTALL
-AX_CFLAGS_GCC_OPTION([-Winline])
+AC_CHECK_PROG([AR],[ar],[ar])
 AX_CFLAGS_GCC_OPTION([-O3])
+AX_CFLAGS_GCC_OPTION([-Winline])
+AX_CFLAGS_GCC_OPTION([-fno-implement-inlines])
 AX_CFLAGS_GCC_OPTION([-mcpu=v9])
 AC_CHECK_HEADERS([inttypes.h])
 AC_CHECK_HEADERS([sched.h])
@@ -67,5 +69,11 @@ AC_CONFIG_SUBDIRS([tl2])
 ac_save_configure_args=$ac_configure_args
 ac_configure_args="$ac_configure_args EXTRASRCDIRS='..' EXTRAFEATURES='atomic'"
 AC_CONFIG_SUBDIRS([cil])
+AC_CONFIG_FILES([stamp/lib/Makefile])
+AC_CONFIG_FILES([stamp/bayes/Makefile])
+AC_CONFIG_FILES([stamp/genome/Makefile])
+AC_CONFIG_FILES([stamp/kmeans/Makefile])
+AC_CONFIG_FILES([stamp/labyrinth/Makefile])
+AC_CONFIG_FILES([stamp/vacation/Makefile])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

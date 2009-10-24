@@ -1,0 +1,43 @@
+srcdir = @srcdir@
+prefix = @prefix@
+top_srcdir = @top_srcdir@
+
+CC = @CC@
+CPPFLAGS = @DEFS@ -I. -I$(top_srcdir) @CPPFLAGS@
+CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
+LDFLAGS = -L$(top_srcdir)/tl2 @PTHREAD_CFLAGS@ @LDFLAGS@
+LIBS = -ltl2 @PTHREAD_LIBS@ @LIBS@
+AR = @AR@
+GNUMAKE = @GNUMAKE@
+INSTALL = @INSTALL@
+CILLY = $(top_srcdir)/cil/bin/cilly
+CILLYFLAGS = --keepunused --doatomic --save-temps #--check
+
+OBJS = bitmap.o list.o memory.o mt19937ar.o pair.o queue.o random.o \
+  rbtree.o thread.o vector.o hash.o hashtable.o
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+all: libstamp.a
+
+libstamp.a: $(OBJS)
+	$(AR) rcs libstamp.a $(OBJS)
+
+list.o: list.c $(top_srcdir)/alx.h list.h types.h tm.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+pair.o: pair.c $(top_srcdir)/alx.h pair.h types.h tm.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+queue.o: queue.c $(top_srcdir)/alx.h queue.h random.h types.h tm.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+rbtree.o: rbtree.c $(top_srcdir)/alx.h rbtree.h memory.h tm.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+hashtable.o: hashtable.c $(top_srcdir)/alx.h list.h pair.h types.h tm.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+clean:
+	rm -f libstamp.a
+	rm -f *.cil.c *.cil.i *.i *.o gmon.out core *.core *~
+
+distclean: clean
+	rm -f Makefile .depend

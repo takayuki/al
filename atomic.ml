@@ -36,6 +36,10 @@ class collectGlobals = object
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
   | GFun(f,_) when f.svar.vname = "_al_template" ->
       (func_list := (f.svar.vname,f) :: !func_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "TxLoad" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "TxStore" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxLoadSized" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxStoreSized" ->
@@ -59,6 +63,9 @@ let alignedIntPtrSize (ts : typ list) =
   let fold = List.fold_left (fun x y -> x && y) true in
   let test t = ((bitsSizeOf t) mod (bitsSizeOf intPtrType)) = 0 in
     fold (List.map test ts)
+
+let hasIntPtrSize t =
+  bitsSizeOf t == bitsSizeOf intPtrType
 
 let castIntPtr e =
   let p = findType "intptr_t" in
@@ -112,6 +119,22 @@ class transact ((thread_self,ro) : varinfo * bool) = object
       E.s (E.error "update '%s' in read-only atomic section in %a"
                    v.vname d_loc loc)
     | Set(((Var v,_) as lv),e,loc)
+      when v.vglob &&
+           (isIntegralType (typeOfLval lv) ||
+            isPointerType (typeOfLval lv)) &&
+           hasIntPtrSize (typeOfLval lv) ->
+        let store = Lval(var (findSymbol "TxStore")) in
+        let arg = [castIntPPtr(mkAddrOf(lv));e] in
+        let inst = [Call(None,store,arg,loc)] in
+        let protect x =
+          match x with
+            Call(None,proc,arg,loc)
+            when proc == store ->
+              let arg' = [Lval(var thread_self)] @ arg in
+                Call(None,proc,arg',loc)
+          | _ -> x
+        in ChangeDoChildrenPost (inst,fun x -> List.map protect x)
+    | Set(((Var v,_) as lv),e,loc)
       when v.vglob && alignedIntPtrSize [typeOfLval lv; (typeOf e)] ->
         let t = makeTempVar !current_func ~name:"tmp" (typeOf e) in
         let store = Lval(var (findSymbol "TxStoreSized")) in
@@ -123,6 +146,23 @@ class transact ((thread_self,ro) : varinfo * bool) = object
           match x with
             Call(None,proc,arg,loc)
             when proc == store ->
+              let arg' = [Lval(var thread_self)] @ arg in
+                Call(None,proc,arg',loc)
+          | _ -> x
+        in ChangeDoChildrenPost (inst,fun x -> List.map protect x)
+    | Set((Mem (Lval(Var v',_)),_),_,_)
+      when (not v'.vglob) && isArrayType v'.vtype ->
+        DoChildren
+    | Set(((Mem _,_) as lv),e,loc)
+      when (isIntegralType (typeOfLval lv) ||
+            isPointerType (typeOfLval lv)) &&
+           hasIntPtrSize (typeOfLval lv) ->
+        let store = Lval(var (findSymbol "TxStore")) in
+        let arg = [castIntPPtr(mkAddrOf(lv));castIntPtr(e)] in
+        let inst = [Call(None,store,arg,loc)] in
+        let protect x =
+          match x with
+            Call(None,proc,arg,loc) when proc == store ->
               let arg' = [Lval(var thread_self)] @ arg in
                 Call(None,proc,arg',loc)
           | _ -> x
@@ -175,7 +215,17 @@ class transact ((thread_self,ro) : varinfo * bool) = object
       Var v,NoOffset when isFunctionType v.vtype -> SkipChildren
     | Var v,_ when v.vglob ->
         let ext = function
-          lv when alignedIntPtrSize [typeOfLval lv] ->
+          lv when (isIntegralType (typeOfLval lv) ||
+                   isPointerType (typeOfLval lv)) &&
+                  hasIntPtrSize (typeOfLval lv) ->
+            let t = makeTempVar !current_func ~name:"var" (typeOfLval lv) in
+            let load = findSymbol "TxLoad" in
+            let arg = [Lval(var thread_self);
+                       castIntPPtr(mkAddrOf(lv))] in
+            let loc = v.vdecl in
+            let inst = Call(Some (var t),Lval(var load),arg,loc) in
+              (assignment_list := inst :: !assignment_list;var t)
+        | lv when alignedIntPtrSize [typeOfLval lv] ->
             let t = makeTempVar !current_func ~name:"var" (typeOfLval lv) in
             let load = findSymbol "TxLoadSized" in
             let arg = [Lval(var thread_self);
@@ -191,7 +241,18 @@ class transact ((thread_self,ro) : varinfo * bool) = object
     | Var _,_ -> SkipChildren
     | Mem _,_ ->
         let ext = function
-          lv when alignedIntPtrSize [typeOfLval lv] ->
+          lv when isFunctionType (typeOfLval lv) ->
+            lv
+        | lv when (isIntegralType (typeOfLval lv) ||
+                   isPointerType (typeOfLval lv)) &&
+                  hasIntPtrSize (typeOfLval lv) ->
+            let t = makeTempVar !current_func ~name:"mem" (typeOfLval lv) in
+            let load = findSymbol "TxLoad" in
+            let arg = [Lval(var thread_self);
+                       castIntPPtr(mkAddrOf(lv))] in
+            let inst = Call(Some (var t),Lval(var load),arg,locUnknown) in
+              (assignment_list := inst :: !assignment_list;var t)
+        | lv when alignedIntPtrSize [typeOfLval lv] ->
             let t = makeTempVar !current_func ~name:"mem" (typeOfLval lv) in
             let load = findSymbol "TxLoadSized" in
             let arg = [Lval(var thread_self);

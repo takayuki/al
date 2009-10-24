@@ -79,6 +79,10 @@ int enterCritical_1(al_t*);
 void exitCritical_0(al_t*);
 void exitCritical_1(al_t*);
 unsigned long Random(unsigned long*);
+intptr_t LocalStore(intptr_t*,intptr_t);
+intptr_t LocalLoad(intptr_t*);
+float LocalStoreF(float*,float);
+float LocalLoadF(float*);
 void TxStoreSized(Thread*,intptr_t*,intptr_t*,size_t);
 void TxLoadSized(Thread*,intptr_t*,intptr_t*,size_t);
 #ifdef HAVE_GETHRTIME

@@ -1,0 +1,43 @@
+srcdir = @srcdir@
+prefix = @prefix@
+top_srcdir = @top_srcdir@
+
+CC = @CC@
+CPPFLAGS = @DEFS@ -I. -I$(top_srcdir)/stamp/lib -I$(top_srcdir)  \
+  -DLIST_NO_DUPLICATES -DLEARNER_TRY_REMOVE -DLEARNER_TRY_REVERSE \
+  @CPPFLAGS@
+CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
+LDFLAGS = -L$(top_srcdir)/stamp/lib -L$(top_srcdir)/tl2 \
+  @PTHREAD_CFLAGS@ @LDFLAGS@
+LIBS = -lstamp -ltl2 -lm @PTHREAD_LIBS@ @LIBS@
+GNUMAKE = @GNUMAKE@
+INSTALL = @INSTALL@
+CILLY = $(top_srcdir)/cil/bin/cilly
+CILLYFLAGS = --keepunused --doatomic --save-temps #--check
+
+OBJS = al.o port.o adtree.o data.o learner.o net.o sort.o
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+all: bayes
+
+bayes: bayes.o $(OBJS)
+	$(CC) $(LDFLAGS) -o bayes bayes.o $(OBJS) $(LIBS)
+
+learner.o: learner.c $(top_srcdir)/alx.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+net.o: net.c $(top_srcdir)/alx.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+al.o: $(top_srcdir)/al.c $(top_srcdir)/al.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+port.o: $(top_srcdir)/port.c $(top_srcdir)/port.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+clean:
+	rm -f vacation
+	rm -f *.cil.c *.cil.i *.i *.o gmon.out core *.core *~
+
+distclean: clean
+	rm -f Makefile .depend

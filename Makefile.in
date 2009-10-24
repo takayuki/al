@@ -14,7 +14,8 @@ OCAMLCFLAGS = -w Ae
 OCAMLLDFLAGS =
 GNUMAKE = @GNUMAKE@
 INSTALL = @INSTALL@
-SUBDIRS = tl2 cil
+SUBDIRS = tl2 cil stamp/lib stamp/bayes stamp/genome stamp/kmeans \
+  stamp/labyrinth stamp/vacation
 CILLY = cil/bin/cilly
 CILLYFLAGS = --keepunused --doatomic --save-temps #--check
 

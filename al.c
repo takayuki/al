@@ -297,13 +297,39 @@ Random(unsigned long* next)
   return (*next = *next * 1103515245 + 12345) % ((unsigned long)RAND_MAX + 1);
 }
 
+intptr_t
+LocalStore(intptr_t* dest,intptr_t src)
+{
+  return (*dest = src);
+}
+
+intptr_t
+LocalLoad(intptr_t* src)
+{
+  return *src;
+}
+
+float
+LocalStoreF(float* dest,float src)
+{
+  return (*dest = src);
+}
+
+float LocalLoadF(float* src)
+{
+  return *src;
+}
+
 void
 TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 {
   int n,i;
 
-  if ((size % sizeof(intptr_t)) != 0)
+  if ((size % sizeof(intptr_t)) != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
     abort();
+  }
   n = size / sizeof(intptr_t);
   for (i = 0; i < n; i++)
     TxStore(self,dest+i,*(src+i));
@@ -315,8 +341,11 @@ TxLoadSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 {
   int n,i;
 
-  if ((size % sizeof(intptr_t)) != 0)
+  if ((size % sizeof(intptr_t)) != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
     abort();
+  }
   n = size / sizeof(intptr_t);
   for (i = 0; i < n; i++)
     *(dest+i) = TxLoad(self,src+i);
@@ -346,8 +375,11 @@ timer_start(struct timeval* start)
   int status;
 
   status = gettimeofday(start,0);
-  if (status != 0)
+  if (status != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
     abort();
+  }
 }
 
 void
@@ -357,8 +389,11 @@ timer_stop(struct timeval* start,struct timeval* acc,al_t* lock,int stmMode)
   struct timeval stop;
 
   status = gettimeofday(&stop,0);
-  if (status != 0)
+  if (status != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
     abort();
+  }
   stop.tv_sec -= start->tv_sec;
   stop.tv_usec -= start->tv_usec;
   if (stop.tv_usec < 0) {
@@ -380,7 +415,9 @@ timer_stop(struct timeval* start,struct timeval* acc,al_t* lock,int stmMode)
 void
 dump_profile(al_t* lock)
 {
+#ifdef ENABLE_TIMER
   printf("%s: raw=%.3lf,stm=%.3lf\n",lock->name,timeRaw,timeSTM);
+#endif
 }
 
 static void
