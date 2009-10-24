@@ -11,8 +11,8 @@ AC_ARG_ENABLE([pg],[AS_HELP_STRING([--enable-pg],[generate code to profile])],
               [CFLAGS="-pg $CFLAGS"; LDFLAGS="$LDFLAGS -pg"])
 AC_PROG_CC([gcc])
 AX_CFLAGS_GCC_OPTION([-Wall])
-AX_CFLAGS_GCC_OPTION([-Winline])
 AX_CFLAGS_GCC_OPTION([-O3])
+AX_CFLAGS_GCC_OPTION([-Winline])
 AX_CFLAGS_GCC_OPTION([-mcpu=v9])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

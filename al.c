@@ -38,6 +38,9 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
+#ifdef HAVE_LIBCPC_H
+#include <libcpc.h>
+#endif
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif
@@ -57,11 +60,18 @@ static TLS thread_t* _al_self;
 #endif
 static pthread_key_t _al_key;
 static int adaptMode = 0;
-static int tranxOvhd = 50;
-static int tranxOvhdScale = 10;
-static double timeSTM = 0.0;
-static double timeRaw = 0.0;
-static pthread_mutex_t timeMutex = PTHREAD_MUTEX_INITIALIZER;  
+static int tranxOvhd = 250;
+static int tranxOvhdScale = 100;
+static long txLd;
+static long txSt;
+#if defined(HAVE_OBSOLETE_CPC)
+static cpc_event_t cpc;
+#elif defined(HAVE_CPC)
+static cpc_t* cpc;
+static cpc_set_t* set;
+static int ind0;
+#endif
+static pthread_mutex_t globMutex = PTHREAD_MUTEX_INITIALIZER;  
 
 thread_t*
 thread_self(void)
@@ -103,17 +113,31 @@ _dispatcher(void* _arg)
   if (self == 0)
     return (void*)EAGAIN;
   memset(self,0,sizeof(*self));
-  self->stmThread = TxNewThread();
-  if (self->stmThread == 0) {
+  self->tl2Thread = TxNewThread();
+  if (self->tl2Thread == 0) {
     free(self);
     return (void*)EAGAIN;
   }
-  TxInitThread(self->stmThread,(long)pthread_self());
+  TxInitThread(self->tl2Thread,(long)pthread_self());
   self->lock = 0;
+  self->transactMode = 0;
   self->nestLevel = 0;
   pthread_setspecific(_al_key,self);
 #ifdef TLS
   _al_self = self;
+#endif
+#if defined(HAVE_OBSOLETE_CPC)
+  if (Cpc_bind(&cpc) == -1)
+    return (void*)EAGAIN;
+#elif defined(HAVE_CPC)
+  if (Cpc_bind(cpc,set) == -1)
+    return (void*)EAGAIN;
+  if ((self->cpcAtom  = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcTrnx  = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcStrt0 = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcStrt1 = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcStop  = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcDiff  = cpc_buf_create(cpc,set)) == 0) abort();
 #endif
   return start(arg);
 }
@@ -133,6 +157,108 @@ al_pthread_create(pthread_t* thread,
   disp->arg = arg;
   return pthread_create(thread,attr,_dispatcher,disp);
 }
+
+#if defined(HAVE_OBSOLETE_CPC)
+int
+Cpc_init(void)
+{
+  int cpuver;
+  char* setting;
+
+  if (cpc_version(CPC_VER_CURRENT) != CPC_VER_CURRENT)
+    return -1;
+  if ((cpuver = cpc_getcpuver()) == -1)
+    return -1;
+
+  setting = "pic0=Cycle_cnt,pic1=Instr_cnt";
+  if (cpc_strtoevent(cpuver,setting,&cpc) != 0)
+    return -1;
+  if (cpc_access() == -1)
+    return -1;
+  cpc_count_usr_events(1);
+  cpc_count_sys_events(1);
+  return 0;
+}
+
+int
+Cpc_bind(cpc_event_t* cpc)
+{
+  return cpc_bind_event(cpc,0);
+}
+
+int
+Cpc_unbind(void)
+{
+  return cpc_rele();
+}
+
+int
+Cpc_sample(cpc_event_t* before)
+{
+  return cpc_take_sample(before);
+}
+
+int
+Cpc_diff(cpc_event_t* accum,cpc_event_t* diff,
+	 cpc_event_t* before,cpc_event_t* after)
+{
+  if (cpc_take_sample(after) == -1)
+    return -1;
+  if (diff == 0)
+    return 0;
+  cpc_event_diff(diff,after,before);
+  cpc_event_accum(accum,diff);
+  return 0;
+}
+#elif defined(HAVE_CPC)
+int
+Cpc_init(void)
+{
+  cpc = cpc_open(CPC_VER_CURRENT);
+  if (cpc == 0)
+    return -1;
+  set = cpc_set_create(cpc);
+  if (set == 0)
+    return -1;
+  ind0 = cpc_set_add_request(cpc,set,"Instr_cnt",0,
+			     CPC_COUNT_SYSTEM|CPC_COUNT_USER,0,0);
+  if (ind0 == -1)
+    return -1;
+  return 0;
+}
+
+int
+Cpc_bind(cpc_t* cpc,cpc_set_t* set)
+{
+  return cpc_bind_curlwp(cpc,set,0);
+}
+
+int
+Cpc_unbind(cpc_t* cpc,cpc_set_t* set)
+{
+  return cpc_unbind(cpc,set);
+}
+
+int
+Cpc_sample(cpc_t* cpc,cpc_set_t* set,cpc_buf_t* before)
+{
+  return cpc_set_sample(cpc,set,before);
+}
+
+int
+Cpc_diff(cpc_t* cpc,cpc_set_t* set,
+	 cpc_buf_t* accum,cpc_buf_t* diff,
+	 cpc_buf_t* before,cpc_buf_t* after)
+{
+  if (cpc_set_sample(cpc,set,after) == -1)
+    return -1;
+  if (diff == 0)
+    return 0;
+  cpc_buf_sub(cpc,diff,after,before);
+  cpc_buf_add(cpc,accum,accum,diff);
+  return 0;
+}
+#endif
 
 int
 transactMode_1(al_t* lock,int spins)
@@ -158,11 +284,10 @@ transactMode_1(al_t* lock,int spins)
   triesCommits = lock->triesCommits;
   Tries = tries(triesCommits);
   Commits = commits(triesCommits);
+  if (0 == Commits) { Commits = 1; Tries = 1; }
 
-  if (0 == Commits) {
-    Commits = 1; Tries = 1;
-  }
-  return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
+  return (((Tries%Commits)?((Tries/Commits)+1):(Tries/Commits)) * tranxOvhd)
+    < (tranxOvhdScale * thrdsContend);
 }
 
 int
@@ -172,7 +297,6 @@ transactMode_0(al_t* lock,int spins)
   unsigned long statistic;
   unsigned long thrdsInTranx;
   unsigned long thrdsContend;
-  unsigned long triesCommits;
   unsigned long Tries;
   unsigned long Commits;
 
@@ -188,11 +312,10 @@ transactMode_0(al_t* lock,int spins)
 
   Tries = tries(statistic);
   Commits = commits(statistic);
+  if (0 == Commits) { Commits = 1; Tries = 1; }
 
-  if (0 == Commits) {
-    Commits = 1; Tries = 1;
-  }
-  return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
+  return (((Tries%Commits)?((Tries/Commits)+1):(Tries/Commits)) * tranxOvhd)
+    < (tranxOvhdScale * thrdsContend);
 }
 
 void
@@ -341,7 +464,7 @@ float LocalStoreF(float* dest,float src) { return (*dest = src); }
 float LocalLoadF(float* src) { return *src; }
 
 void
-TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
+StmStSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 {
   int n,i;
 
@@ -357,7 +480,7 @@ TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 }
 
 void
-TxLoadSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
+StmLdSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 {
   int n,i;
 
@@ -372,6 +495,151 @@ TxLoadSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
   return;
 }
 
+void
+StxStart(thread_t* self,sigjmp_buf* buf,int* ro)
+{
+  self->txLd = 0;
+  self->txSt = 0;
+#if defined(HAVE_OBSOLETE_CPC)
+  memset(&self->cpcAtom,0,sizeof(cpc_event_t));
+  memset(&self->cpcTrnx,0,sizeof(cpc_event_t));
+  Cpc_sample(&self->cpcStrt0);
+  TxStart(self->tl2Thread,buf,ro);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
+#elif defined(HAVE_CPC)
+  cpc_buf_zero(cpc,self->cpcAtom);
+  cpc_buf_zero(cpc,self->cpcTrnx);
+  cpc_set_restart(cpc,set);
+  Cpc_sample(cpc,set,self->cpcStrt0);
+  TxStart(self->tl2Thread,buf,ro);
+  Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt0,self->cpcStop);
+#else
+  TxStart(self->tl2Thread,buf,ro);
+#endif
+}
+
+void
+StxCommit(thread_t* self)
+{
+#if defined(HAVE_OBSOLETE_CPC)
+  uint64_t atom;
+  uint64_t trnx;
+  int tranxOvhdNew;
+
+  Cpc_sample(&self->cpcStrt1);
+  TxCommit(self->tl2Thread);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
+  Cpc_diff(&self->cpcAtom,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
+  atom = self->cpcAtom.ce_pic[0];
+  trnx = self->cpcTrnx.ce_pic[0];
+  if (trnx < atom) {
+    tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
+    tranxOvhd = (tranxOvhd + tranxOvhdNew) / 2;
+  }
+#elif defined(HAVE_CPC)
+  uint64_t cpcAtom[1];
+  uint64_t cpcTrnx[1];
+  uint64_t atom;
+  uint64_t trnx;
+  int tranxOvhdNew;
+
+  Cpc_sample(cpc,set,self->cpcStrt1);
+  TxCommit(self->tl2Thread);
+  Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt1,self->cpcStop);
+  Cpc_diff(cpc,set,self->cpcAtom,self->cpcDiff,self->cpcStrt0,self->cpcStop);
+  cpc_buf_get(cpc,self->cpcAtom,ind0,&cpcAtom[0]);
+  cpc_buf_get(cpc,self->cpcTrnx,ind0,&cpcTrnx[0]);
+  atom = cpcAtom[0];
+  trnx = cpcTrnx[0];
+  if (trnx < atom) {
+    tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
+    tranxOvhd = (tranxOvhd + tranxOvhdNew) / 2;
+  }
+#else
+  TxCommit(self->tl2Thread);
+#endif
+}
+
+void
+StxStore(thread_t* self,intptr_t* dest,intptr_t src)
+{
+#if defined(HAVE_OBSOLETE_CPC)
+  Cpc_sample(&self->cpcStrt1);
+  TxStore(self->tl2Thread,dest,src);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
+#elif defined(HAVE_CPC)
+  Cpc_sample(cpc,set,self->cpcStrt1);
+  TxStore(self->tl2Thread,dest,src);
+  Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt1,self->cpcStop);
+#else
+  TxStore(self->tl2Thread,dest,src);
+#endif
+  self->txSt++;
+}
+
+intptr_t
+StxLoad(thread_t* self,intptr_t* src)
+{
+  intptr_t value;
+#if defined(HAVE_OBSOLETE_CPC)
+  Cpc_sample(&self->cpcStrt1);
+  value = TxLoad(self->tl2Thread,src);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
+#elif defined(HAVE_CPC)
+  Cpc_sample(cpc,set,self->cpcStrt1);
+  value = TxLoad(self->tl2Thread,src);
+  Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt1,self->cpcStop);
+#else
+  value = TxLoad(self->tl2Thread,src);
+#endif
+  self->txLd++;
+  return value;
+}
+
+void
+StxStSized(thread_t* self,intptr_t* dest,intptr_t* src,size_t size)
+{
+  int n,i;
+
+  if ((size % sizeof(intptr_t)) != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
+    abort();
+  }
+  n = size / sizeof(intptr_t);
+  for (i = 0; i < n; i++)
+    StxStore(self,dest+i,*(src+i));
+  return;
+}
+
+void
+StxLdSized(thread_t* self,intptr_t* dest,intptr_t* src,size_t size)
+{
+  int n,i;
+
+  if ((size % sizeof(intptr_t)) != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
+    abort();
+  }
+  n = size / sizeof(intptr_t);
+  for (i = 0; i < n; i++)
+    *(dest+i) = StxLoad(self,src+i);
+  return;
+}
+
+void*
+StxAlloc(thread_t* self,size_t size)
+{
+  return TxAlloc(self->tl2Thread,size);
+}
+
+void
+StxFree(thread_t* self,void* ptr)
+{
+  TxFree(self->tl2Thread,ptr);
+}
+
 #ifdef HAVE_GETHRTIME
 void
 timer_start(hrtime_t* start)
@@ -380,13 +648,13 @@ timer_start(hrtime_t* start)
 }
 
 void
-timer_stop(hrtime_t* start,hrtime_t* acc,al_t* lock,int stmMode)
+timer_stop(hrtime_t* start,hrtime_t* accum)
 {
   hrtime_t stop;
 
   stop = gethrtime();
   stop -= *start;
-  *acc += stop;
+  *accum += stop;
 }
 #else
 void
@@ -403,7 +671,7 @@ timer_start(struct timeval* start)
 }
 
 void
-timer_stop(struct timeval* start,struct timeval* acc,al_t* lock,int stmMode)
+timer_stop(struct timeval* start,struct timeval* accum)
 {
   int status;
   struct timeval stop;
@@ -423,11 +691,11 @@ timer_stop(struct timeval* start,struct timeval* acc,al_t* lock,int stmMode)
   if (!((0 <= stop.tv_sec && 0 < stop.tv_usec) ||
 	(0 < stop.tv_sec && 0 <= stop.tv_usec)))
     if (start->tv_usec%2) stop.tv_usec++;
-  acc->tv_sec += stop.tv_sec;
-  acc->tv_usec += stop.tv_usec;
-  if (1000000 <= acc->tv_usec) {
-    acc->tv_sec++;
-    acc->tv_usec -= 1000000;
+  accum->tv_sec += stop.tv_sec;
+  accum->tv_usec += stop.tv_usec;
+  if (1000000 <= accum->tv_usec) {
+    accum->tv_sec++;
+    accum->tv_usec -= 1000000;
   }
 }
 #endif
@@ -442,19 +710,17 @@ destroy_thread(void* arg)
 {
   thread_t* self = (thread_t*)arg;
 
-  pthread_mutex_lock(&timeMutex);
-#ifdef HAVE_GETHRTIME
-  timeRaw += ((double)self->timeRaw) / 1000000000.0;
-  timeSTM += ((double)self->timeSTM) / 1000000000.0;
-#else
-  timeRaw += (double)self->timeRaw.tv_sec;
-  timeRaw += ((double)self->timeRaw.tv_usec) / 1000000.0;
-  timeSTM += (double)self->timeSTM.tv_sec;
-  timeSTM += ((double)self->timeSTM.tv_usec) / 1000000.0;
+#if defined(HAVE_OBSOLETE_CPC)
+  Cpc_unbind();
+#elif defined(HAVE_CPC)
+  Cpc_unbind(cpc,set);
 #endif
-  TxFreeThread(self->stmThread);
+  pthread_mutex_lock(&globMutex);
+  txLd += self->txLd;
+  txSt += self->txSt;
+  pthread_mutex_unlock(&globMutex);
+  TxFreeThread(self->tl2Thread);
   free(arg);
-  pthread_mutex_unlock(&timeMutex);
 }
 
 __attribute__((constructor)) void
@@ -462,12 +728,18 @@ init(void)
 {
   TxOnce();
   pthread_key_create(&_al_key,destroy_thread);
+#if defined(HAVE_OBSOLETE_CPC)
+  if (Cpc_init() == -1)
+    abort();
+#elif defined(HAVE_CPC)
+  if (Cpc_init() == -1)
+    abort();
+#endif
 }
 
 __attribute__((destructor)) void
 finish(void)
 {
   printf("tranxOvhd=%d,tranxOvhdScale=%d\n",tranxOvhd,tranxOvhdScale);
-  printf("raw=%.3lf,stm=%.3lf\n",timeRaw,timeSTM);
   TxShutdown();
 }

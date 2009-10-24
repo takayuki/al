@@ -32,7 +32,7 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 #  THE POSSIBILITY OF SUCH DAMAGE.
 #
-AC_INIT([CIS 609 Final Project],[0.14],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.15],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -59,8 +59,24 @@ AX_CFLAGS_GCC_OPTION([-mcpu=v9])
 AC_CHECK_HEADERS([inttypes.h])
 AC_CHECK_HEADERS([sched.h])
 AC_CHECK_SIZEOF([intptr_t])
+AC_CHECK_FUNCS([gethrtime clock_gettime])
 AC_SEARCH_LIBS([sched_yield],[rt])
-AC_CHECK_FUNCS([gethrtime clock_gettime nrand48])
+AC_SEARCH_LIBS([cpc_version],[cpc])
+AC_CHECK_HEADERS([libcpc.h])
+AC_MSG_CHECKING([for libcpc (obsolete)])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#include <libcpc.h>
+static cpc_event_t x;
+])],[AC_DEFINE([HAVE_OBSOLETE_CPC],[1],
+               [Define to 1 if you have the obsolete libcpc interface.])
+     AC_MSG_RESULT([yes])],[AC_MSG_RESULT([no])])
+AC_MSG_CHECKING([for libcpc (new)])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#include <libcpc.h>
+static cpc_t* x;
+])],[AC_DEFINE([HAVE_CPC],[1],
+               [Define to 1 if you have the new libcpc interface.])
+     AC_MSG_RESULT([yes])],[AC_MSG_RESULT([no])])
 ACX_PTHREAD
 _ac_save_CFLAGS=$CFLAGS
 _ac_save_LDFLAGS=$LDFLAGS
@@ -72,6 +88,8 @@ AC_CHECK_FUNC([sched_yield],[AC_DEFINE([HAVE_SCHED_YIELD],[1],
               [Define to 1 if you have the POSIX sched_yield function.])])
 AC_CHECK_FUNC([pthread_yield],[AC_DEFINE([HAVE_PTHREAD_YIELD],[1],
               [Define to 1 if you have the POSIX pthread_yield function.])])
+AC_CHECK_FUNC([pthread_barrier_init],[AC_DEFINE([HAVE_PTHREAD_BARRIER],[1],
+              [Define to 1 if you have the POSIX pthread barrier functions.])])
 CFLAGS=$_ac_save_CFLAGS
 LDFLAGS=$_ac_save_LDFLAGS
 LIBS=$_ac_save_LIBS

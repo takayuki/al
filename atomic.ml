@@ -74,15 +74,27 @@ class collectGlobals = object
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxStore" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
-  | GVarDecl(v,_) when v.vname = "TxLoadSized" ->
+  | GVarDecl(v,_) when v.vname = "StmLdSized" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
-  | GVarDecl(v,_) when v.vname = "TxStoreSized" ->
+  | GVarDecl(v,_) when v.vname = "StmStSized" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "StxLoad" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "StxStore" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "StxLdSized" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "StxStSized" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "al" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxAlloc" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxFree" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "StxAlloc" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "StxFree" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "tmalloc_reserve" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
@@ -171,7 +183,7 @@ class transact ((thread_self,ro) : varinfo * bool) = object
     | Set(((Var v,_) as lv),e,loc)
       when v.vglob && alignedIntPtrSize [typeOfLval lv; (typeOf e)] ->
         let t = makeTempVar !current_func ~name:"tmp" (typeOf e) in
-        let store = Lval(var (findSymbol "TxStoreSized")) in
+        let store = Lval(var (findSymbol "StmStSized")) in
         let arg = [castIntPPtr(mkAddrOf(lv));
                    castIntPPtr(mkAddrOf(var t));
                    SizeOf(typeOf e)] in
@@ -204,7 +216,7 @@ class transact ((thread_self,ro) : varinfo * bool) = object
     | Set(((Mem _,_) as lv),e,loc)
       when alignedIntPtrSize [typeOfLval lv; (typeOf e)] ->
         let t = makeTempVar !current_func ~name:"tmp" (typeOf e) in
-        let store = Lval(var (findSymbol "TxStoreSized")) in
+        let store = Lval(var (findSymbol "StmStSized")) in
         let arg = [castIntPPtr(mkAddrOf(lv));
                    castIntPPtr(mkAddrOf(var t));
                    SizeOf(typeOf e)] in
@@ -261,7 +273,7 @@ class transact ((thread_self,ro) : varinfo * bool) = object
               (assignment_list := inst :: !assignment_list;var t)
         | lv when alignedIntPtrSize [typeOfLval lv] ->
             let t = makeTempVar !current_func ~name:"var" (typeOfLval lv) in
-            let load = findSymbol "TxLoadSized" in
+            let load = findSymbol "StmLdSized" in
             let arg = [Lval(var thread_self);
                        castIntPPtr(mkAddrOf(var t));
                        castIntPPtr(mkAddrOf(lv));
@@ -288,7 +300,7 @@ class transact ((thread_self,ro) : varinfo * bool) = object
               (assignment_list := inst :: !assignment_list;var t)
         | lv when alignedIntPtrSize [typeOfLval lv] ->
             let t = makeTempVar !current_func ~name:"mem" (typeOfLval lv) in
-            let load = findSymbol "TxLoadSized" in
+            let load = findSymbol "StmLdSized" in
             let arg = [Lval(var thread_self);
                        castIntPPtr(mkAddrOf(var t));
                        castIntPPtr(mkAddrOf(lv));
@@ -311,11 +323,43 @@ class transact ((thread_self,ro) : varinfo * bool) = object
     | _ -> DoChildren
 end
 
+class transactStatistics ((thread_self,ro) : varinfo * bool) = object
+  inherit nopCilVisitor
+
+  method vlval lv =
+    match lv with
+      Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxLoad" ->
+        ChangeTo (var (findSymbol "StxLoad"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxStore" ->
+        ChangeTo (var (findSymbol "StxStore"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "StmLdSized" ->
+        ChangeTo (var (findSymbol "StxLdSized"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "StmStSized" ->
+        ChangeTo (var (findSymbol "StxStSized"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxAlloc" ->
+        ChangeTo (var (findSymbol "StxAlloc"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxFree" ->
+        ChangeTo (var (findSymbol "StxFree"))
+    | _ -> SkipChildren
+end
+
 let compileRaw (f : fundec) =
   visitCilFunction (new locked) f
 
 let compileStm ((f,self,ro) : fundec * varinfo * bool) =
   visitCilFunction (new transact (self,ro)) f
+
+let compileStx ((f,self,ro) : fundec * varinfo * bool) =
+  begin
+    ignore(visitCilFunction (new transact (self,ro)) f);
+    visitCilFunction (new transactStatistics (self,ro)) f
+  end
 
 class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
   inherit nopCilVisitor
@@ -335,7 +379,7 @@ class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
   method vinst i =
     let prefix = "_" in
     match vs with
-      [lock;rawfunc;stmfunc] ->
+      [lock;rawfunc;stmfunc;stxfunc] ->
       (match i with
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"lock") ->
            if isPointerType lock.vtype
@@ -346,17 +390,23 @@ class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"ro") && not ro ->
            ChangeTo([Set((Var v,NoOffset),zero,loc)])
        | Call(None,Lval(Mem(Lval(Var v,NoOffset)),NoOffset),arg,loc)
+         when v.vname = (prefix^"rawfunc") ->
+           let arg' = List.map (fun v -> Lval(var v))
+                               (!current_func).sformals in
+           let ret = match ret with [v] -> Some(var v) | _ -> None in
+             ChangeTo([Call(ret,Lval(Var rawfunc,NoOffset),arg@arg',loc)])
+       | Call(None,Lval(Mem(Lval(Var v,NoOffset)),NoOffset),arg,loc)
          when v.vname = (prefix^"stmfunc") ->
            let arg' = List.map (fun v -> Lval(var v))
                                (!current_func).sformals in
            let ret = match ret with [v] -> Some(var v) | _ -> None in
              ChangeTo([Call(ret,Lval(Var stmfunc,NoOffset),arg@arg',loc)])
        | Call(None,Lval(Mem(Lval(Var v,NoOffset)),NoOffset),arg,loc)
-         when v.vname = (prefix^"rawfunc") ->
+         when v.vname = (prefix^"stxfunc") ->
            let arg' = List.map (fun v -> Lval(var v))
                                (!current_func).sformals in
            let ret = match ret with [v] -> Some(var v) | _ -> None in
-             ChangeTo([Call(ret,Lval(Var rawfunc,NoOffset),arg@arg',loc)])
+             ChangeTo([Call(ret,Lval(Var stxfunc,NoOffset),arg@arg',loc)])
        | _ -> DoChildren)
     | _ -> E.s (E.bug "invalid number of arguments")
 end
@@ -430,14 +480,18 @@ let findAtomic = function
                     let c = buildInit (f,loc,p) in
                     let d = buildAtExit (f,loc,p) in
                     (p,[GVar(p,{init=None},loc);c;d])) in
-            let r = copyFunction f ("_raw_"^base) in
-            let s = copyFunction f ("_stm_"^base) in
-            let t = TPtr(findType "Thread",[]) in
-            let v = makeFormalVar s ~where:"^" "self" t in
+            let r  = copyFunction f ("_raw_"^base) in
+            let s  = copyFunction f ("_stm_"^base) in
+            let s' = copyFunction f ("_stx_"^base) in
+            let t  = TPtr(findType "Thread",[]) in
+            let v  = makeFormalVar s ~where:"^" "self" t in
+            let t' = TPtr(findType "thread_t",[]) in
+            let v' = makeFormalVar s' ~where:"^" "self" t' in
               ignore(compileRaw r);
               ignore(compileStm (s,v,ro));
-              let f' = buildAl(f,[p;r.svar;s.svar],ro) in
-                q@[GFun(r,loc);GFun(s,loc);GFun(f',loc)]
+              ignore(compileStx (s',v',ro));
+              let f' = buildAl(f,[p;r.svar;s.svar;s'.svar],ro) in
+                q@[GFun(r,loc);GFun(s,loc);GFun(s',loc);GFun(f',loc)]
         else [g]
       | _ -> E.s (E.bug "'%a' should have function type" d_global g))
 | g -> [g]

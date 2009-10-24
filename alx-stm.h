@@ -59,8 +59,7 @@ _al_template(void)
     abort();
   }
   if (self->lock == _lock && 0 < self->nestLevel) {
-    _stmfunc(self->stmThread);
-    return;
+    _stmfunc(self->tl2Thread);
   } else if (self->lock == _lock && self->nestLevel < 0) {
     fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
             __FILE__,__LINE__,__func__);
@@ -69,9 +68,9 @@ _al_template(void)
     self->lock = _lock;
     if (sigsetjmp(buf,1)) self->nestLevel = 0;
     inc(self->nestLevel);
-    TxStart(self->stmThread,&buf,&_ro);
-    _stmfunc(self->stmThread);
-    TxCommit(self->stmThread);
+    TxStart(self->tl2Thread,&buf,&_ro);
+    _stmfunc(self->tl2Thread);
+    TxCommit(self->tl2Thread);
     dec(self->nestLevel);
   } else {
     fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",

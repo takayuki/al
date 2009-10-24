@@ -42,6 +42,9 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#ifdef HAVE_LIBCPC_H
+#include <libcpc.h>
+#endif
 #include "stm.h"
 #include "port.h"
 
@@ -79,15 +82,27 @@ typedef struct {
     (_x|_c);})
 
 typedef struct {
-  Thread* stmThread;
+  Thread* tl2Thread;
   al_t* lock;
+  long transactMode;
   long nestLevel;
-#ifdef HAVE_GETHRTIME
-  hrtime_t timeRaw;
-  hrtime_t timeSTM;
-#else
-  struct timeval timeRaw;
-  struct timeval timeSTM;
+  long txLd;
+  long txSt;
+#ifdef HAVE_OBSOLETE_CPC
+  cpc_event_t cpcAtom;
+  cpc_event_t cpcTrnx;
+  cpc_event_t cpcStrt0;
+  cpc_event_t cpcStrt1;
+  cpc_event_t cpcStop;
+  cpc_event_t cpcDiff;
+#endif
+#ifdef HAVE_CPC
+  cpc_buf_t* cpcAtom;
+  cpc_buf_t* cpcTrnx;
+  cpc_buf_t* cpcStrt0;
+  cpc_buf_t* cpcStrt1;
+  cpc_buf_t* cpcStop;
+  cpc_buf_t* cpcDiff;
 #endif
 } thread_t;
 
@@ -95,6 +110,7 @@ typedef struct {
 
 int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 #define pthread_create al_pthread_create
+
 
 thread_t* thread_self(void);
 void setAdaptMode(int);
@@ -107,14 +123,22 @@ intptr_t LocalStore(intptr_t*,intptr_t);
 intptr_t LocalLoad(intptr_t*);
 float LocalStoreF(float*,float);
 float LocalLoadF(float*);
-void TxStoreSized(Thread*,intptr_t*,intptr_t*,size_t);
-void TxLoadSized(Thread*,intptr_t*,intptr_t*,size_t);
+void StmStSized(Thread*,intptr_t*,intptr_t*,size_t);
+void StmLdSized(Thread*,intptr_t*,intptr_t*,size_t);
+void StxStart(thread_t*,sigjmp_buf*,int*);
+void StxCommit(thread_t*);
+void StxStore(thread_t*,intptr_t*,intptr_t);
+intptr_t StxLoad(thread_t*,intptr_t*);
+void StxStSized(thread_t*,intptr_t*,intptr_t*,size_t);
+void StxLdSized(thread_t*,intptr_t*,intptr_t*,size_t);
+void* StxAlloc (thread_t*,size_t);
+void StxFree(thread_t*,void*);
 #ifdef HAVE_GETHRTIME
 void timer_start(hrtime_t*);
-void timer_stop(hrtime_t*,hrtime_t*,al_t*,int);
+void timer_stop(hrtime_t*,hrtime_t*);
 #else
 void timer_start(struct timeval*);
-void timer_stop(struct timeval*,struct timeval*,al_t*,int);
+void timer_stop(struct timeval*,struct timeval*);
 #endif
 void dump_profile(al_t*);
 

@@ -90,14 +90,18 @@ static struct timeval totalElapse;
 #endif
 static int totalThreads;
 static pthread_mutex_t totalMutex = PTHREAD_MUTEX_INITIALIZER;  
+#ifdef HAVE_PTHREAD_BARRIER
 static pthread_barrier_t invokeBarrier;
+#endif
 
 void*
 invoke(void* arg)
 {
   void* ret;
 
+#ifdef HAVE_PTHREAD_BARRIER
   pthread_barrier_wait(&invokeBarrier);
+#endif
   pthread_mutex_lock(&totalMutex);
   if (totalThreads == 0) timer_start(&start);
   totalThreads++;
@@ -105,7 +109,7 @@ invoke(void* arg)
   ret = task(arg);
   pthread_mutex_lock(&totalMutex);
   totalThreads--;
-  if (totalThreads == 0) timer_stop(&start,&totalElapse,0,0);
+  if (totalThreads == 0) timer_stop(&start,&totalElapse);
   pthread_mutex_unlock(&totalMutex);
   return ret;
 }
@@ -134,7 +138,9 @@ main(int argc,char* argv[])
   argv += optind;
 
   if (256 <= thrd) thrd = 256;
+#ifdef HAVE_PTHREAD_BARRIER
   pthread_barrier_init(&invokeBarrier,0,thrd);
+#endif
   for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
   for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
   printf("cnt=%ld\n",cnt);

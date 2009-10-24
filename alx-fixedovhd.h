@@ -48,11 +48,20 @@ _al_template(void)
   al_t* _lock = 0;
   void* (*_rawfunc)(void) = 0;
   void* (*_stmfunc)(Thread*) = 0;
-  void* (*_stxfunc)(thread_t*) = 0;
   int _ro = 0;
   thread_t* self;
   volatile unsigned long tries;
   sigjmp_buf buf;
+#ifndef ENABLE_TIMER
+#define timer_start(x)
+#define timer_stop(w,x,y,z)
+#else
+#ifdef HAVE_GETHRTIME
+  hrtime_t start;
+#else
+  struct timeval start;
+#endif
+#endif
 
   self = thread_self();
   if (self == 0) {
@@ -61,43 +70,31 @@ _al_template(void)
     abort();
   }
   if (self->lock == _lock && 0 < self->nestLevel) {
-    if (self->transactMode == 1) _stmfunc(self->tl2Thread);
-    else _stxfunc(self);
+    _stmfunc(self->tl2Thread);
   } else if (self->lock == _lock && self->nestLevel < 0) {
     _rawfunc();
   } else if (self->nestLevel == 0) {
     self->lock = _lock;
     if (enterCritical_1(_lock)) {
-      if (commits(_lock->triesCommits)%0x3FF) {
-	self->transactMode = 1;
-	tries = 0;
-	if (sigsetjmp(buf,1)) self->nestLevel = 0;
-	inc(self->nestLevel);
-	inc(tries);
-	TxStart(self->tl2Thread,&buf,&_ro);
-	_stmfunc(self->tl2Thread);
-	TxCommit(self->tl2Thread);
-	dec(self->nestLevel);
-	_lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
-	exitCritical_1(_lock);
-      } else {
-	self->transactMode = 2;
-	tries = 0;
-	if (sigsetjmp(buf,1)) self->nestLevel = 0;
-	inc(self->nestLevel);
-	inc(tries);
-	StxStart(self,&buf,&_ro);
-	_stxfunc(self);
-	StxCommit(self);
-	dec(self->nestLevel);
-	_lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
-	exitCritical_1(_lock);
-      }
+      tries = 0;
+      if (sigsetjmp(buf,1)) self->nestLevel = 0;
+      timer_start(&start);
+      inc(self->nestLevel);
+      inc(tries);
+      TxStart(self->tl2Thread,&buf,&_ro);
+      _stmfunc(self->tl2Thread);
+      TxCommit(self->tl2Thread);
+      dec(self->nestLevel);
+      _lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
+      exitCritical_1(_lock);
+      timer_stop(&start,&self->timeSTM,_lock,1);
     } else {
+      timer_start(&start);
       self->nestLevel = -1;
       _rawfunc();
       self->nestLevel = 0;
       exitCritical_1(_lock);
+      timer_stop(&start,&self->timeRaw,_lock,0);
     }
   } else {
     fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
@@ -106,4 +103,8 @@ _al_template(void)
   }
   return;
 }
+#ifndef ENABLE_TIMER
+#undef timer_start
+#undef timer_stop
+#endif
 #endif

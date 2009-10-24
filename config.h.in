@@ -3,20 +3,29 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* Define to 1 if you have the new libcpc interface. */
+#undef HAVE_CPC
+
 /* Define to 1 if you have the `gethrtime' function. */
 #undef HAVE_GETHRTIME
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the <libcpc.h> header file. */
+#undef HAVE_LIBCPC_H
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the `nrand48' function. */
-#undef HAVE_NRAND48
+/* Define to 1 if you have the obsolete libcpc interface. */
+#undef HAVE_OBSOLETE_CPC
 
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
+
+/* Define to 1 if you have the POSIX pthread barrier functions. */
+#undef HAVE_PTHREAD_BARRIER
 
 /* Define to 1 if you have the POSIX pthread_yield function. */
 #undef HAVE_PTHREAD_YIELD
