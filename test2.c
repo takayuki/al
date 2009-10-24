@@ -9,7 +9,7 @@ void
 help(void)
 {
   fprintf(stderr,
-          "usage: test [-hnpx]\n"
+          "usage: test2 [-hnpx]\n"
           "  -p  number of threads (default: 2)\n"
           "  -n  number of repeats (default: 100)\n"
           "  -a  use adaptive lock (default)\n"
@@ -30,18 +30,18 @@ typedef unsigned long hash_code;
 typedef struct hash_node {
   LIST_ENTRY(hash_node) next;
   hash_code hash;
-  char* key;
-  char* value;
+  char key[16];
+  char value[16];
 } hash_node;
 
 LIST_HEAD(bucket_head,hash_node);
 
 typedef struct {
   struct bucket_head table[NBUCKETS];
-  al_t locks[1];
+  al_t locks[NBUCKETS];
 } hash_table;
 
-static hash_table* ht;
+static hash_table ht;
 static unsigned long NLOCKS = 1;
 static unsigned long LOCKMASK = 0;
 
@@ -69,7 +69,7 @@ atomic_insert(al_t* lock,hash_node* newnode)
 
   newnode->hash = hash(newnode->key);
   h = newnode->hash;
-  head = &ht->table[(h & BUCKETMASK)];
+  head = &ht.table[(h & BUCKETMASK)];
   prev = 0;
   LIST_FOREACH(node,head,next) {
     h2 = node->hash;
@@ -98,7 +98,7 @@ atomic_delete(al_t* lock,char* key)
   hash_node* result = 0;
 
   h = hash(key);
-  head = &ht->table[(h & BUCKETMASK)];
+  head = &ht.table[(h & BUCKETMASK)];
   LIST_FOREACH(node,head,next) {
     h2 = node->hash;
     if (h == h2 && strcmp(key,node->key) == 0) {
@@ -121,7 +121,7 @@ atomic_find(al_t* lock,char* key)
   hash_node* result = 0;
 
   h = hash(key);
-  head = &ht->table[(h & BUCKETMASK)];
+  head = &ht.table[(h & BUCKETMASK)];
   LIST_FOREACH(node,head,next) {
     h2 = node->hash;
     if (h == h2 && strcmp(key,node->key) == 0) {
@@ -136,19 +136,19 @@ atomic_find(al_t* lock,char* key)
 hash_node*
 insert(hash_node* node)
 {
-  return atomic_insert(&ht->locks[(hash(node->key) & LOCKMASK)],node);
+  return atomic_insert(&ht.locks[(hash(node->key) & LOCKMASK)],node);
 }
 
 hash_node*
 delete(char* key)
 {
-  return atomic_delete(&ht->locks[(hash(key) & LOCKMASK)],key);
+  return atomic_delete(&ht.locks[(hash(key) & LOCKMASK)],key);
 }
 
 hash_node*
 find(char* key)
 {
-  return atomic_find(&ht->locks[(hash(key) & LOCKMASK)],key);
+  return atomic_find(&ht.locks[(hash(key) & LOCKMASK)],key);
 }
 
 void*
@@ -160,7 +160,7 @@ validate(void* arg)
   unsigned long entries = 0;
 
   for (i = 0; i < NBUCKETS; i++) {
-    head = &ht->table[i];
+    head = &ht.table[i];
     LIST_FOREACH(node,head,next) {
       if (node->hash != hash(node->key))
 	printf("*** Oops, %s(%lx/%lx)\n",
@@ -178,27 +178,28 @@ static int iter = 100000;
 void*
 task(void* arg)
 {
-  unsigned short id = (unsigned short)arg;
+  unsigned short id = (unsigned short)(unsigned long)arg;
   long n = iter;
-  char key[20];
+  char key[16];
   hash_node* node;
   unsigned short xseed[3] = {id,id,id};
   unsigned long rand;
   
   while (n--) {
     rand = nrand48(xseed);
-    sprintf(key,"k%ld",(rand % 1000));
+    snprintf(key,sizeof(key),"k%ld",(rand % 1000));
+    rand = nrand48(xseed);
     switch(rand%4) {
     case 0:
       if ((node = malloc(sizeof(hash_node))) == 0) abort();
-      if ((node->key = strdup(key)) == 0) abort();
-      if ((node->value = strdup(node->key)) == 0) abort();
+      strcpy(node->key,key);
+      strcpy(node->value,key);
       node = insert(node);
-      if (node) { free(node->key); free(node->value); free(node); }
+      if (node) free(node);
       break;
     case 1:
       node = delete(key);
-      if (node) { free(node->key); free(node->value); free(node); }
+      if (node) free(node);
       break;
     default:
       find(key);
@@ -262,9 +263,6 @@ main(int argc,char* argv[])
   argv += optind;
 
   if (NBUCKETS < NLOCKS) { NLOCKS = NBUCKETS; LOCKMASK = NLOCKS-1; }
-  size = sizeof(hash_table) + sizeof(al_t) * (NLOCKS-1);
-  if ((ht = (hash_table*)malloc(size)) == 0) abort();
-  memset(ht,0,size);
   if (256 <= thrd) thrd = 256;
   for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
   for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
@@ -278,6 +276,5 @@ main(int argc,char* argv[])
 #endif
   printf("elapse=%.3lf,exec_per_sec=%.3lf\n",
 	 elapse,((double)(thrd*iter))/elapse);
-  free(ht);
   return 0;
 }

@@ -8,7 +8,7 @@ void
 help(void)
 {
   fprintf(stderr,
-          "usage: test [-hnpx]\n"
+          "usage: test3 [-hnpx]\n"
           "  -p  number of threads (default: 2)\n"
           "  -n  number of repeats (default: 100)\n"
           "  -a  use adaptive lock (default)\n"
@@ -82,7 +82,7 @@ static int iter = 100000;
 void*
 task(void* arg)
 {
-  unsigned short id = (unsigned short)arg;
+  unsigned short id = (unsigned short)(unsigned int)arg;
   long n = iter;
   long t;
   unsigned short xseed[3] = {id,id,id};
@@ -91,6 +91,7 @@ task(void* arg)
   while (n--) {
     rand = nrand48(xseed);
     t = rand % 1000;
+    rand = nrand48(xseed);
     switch(rand%4) {
     case 0: add(t); break;
     case 1: del(t); break;

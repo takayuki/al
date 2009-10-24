@@ -8,7 +8,7 @@ void
 help(void)
 {
   fprintf(stderr,
-          "usage: test [-hnpx]\n"
+          "usage: test0 [-hnpx]\n"
           "  -p  number of threads (default: 2)\n"
           "  -n  number of repeats (default: 1000000)\n"
           "  -a  use adaptive lock (default)\n"
@@ -16,14 +16,27 @@ help(void)
           "  -t  use transaction only\n"
           "  -s  lock scheme (default: 1)\n"
           "  -x  transactional overhead (default: 5.0)\n"
+          "  -f  power number of locks (default: 0(single lock))\n"
           "  -h  show this\n");
   exit(0);
 }
 
-__attribute__((atomic ("l1")))
+#define MAXLOCKS	1024
+
+static al_t locks[MAXLOCKS];
+static unsigned long NLOCKS = 1;
+static unsigned long LOCKMASK = 0;
+
+__attribute__((atomic))
 void
-empty(void)
+atomic_empty(al_t* lock)
 {
+}
+
+void
+empty(unsigned long key)
+{
+  atomic_empty(&locks[(key & LOCKMASK)]);
 }
 
 static int thrd = 2;
@@ -32,10 +45,12 @@ static int iter = 100000;
 void*
 task(void* arg)
 {
-  unsigned short id = (unsigned short)(unsigned int)arg;
+  unsigned short id = (unsigned short)(unsigned long)arg;
   long n = iter;
+  unsigned short xseed[3] = {id,id,id};
 
-  while (n--) empty();
+  while (n--)
+    empty(nrand48(xseed));
   return 0;
 }
 
@@ -74,7 +89,7 @@ main(int argc,char* argv[])
   void* r;
   double elapse;
 
-  while ((ch = getopt(argc,argv,"p:n:alts:x:h")) != -1) {
+  while ((ch = getopt(argc,argv,"p:n:alts:x:f:h")) != -1) {
     switch (ch) {
     case 'p': thrd = atoi(optarg); break;
     case 'n': iter = atoi(optarg); break;
@@ -83,6 +98,7 @@ main(int argc,char* argv[])
     case 't': setAdaptMode(1); break;
     case 's': setLockScheme(atoi(optarg)); break;
     case 'x': setTransactOvhd(atof(optarg)); break;
+    case 'f': NLOCKS = 1<<atoi(optarg); LOCKMASK = NLOCKS-1; break;
     case 'h':
     default: help();
     }
@@ -90,6 +106,7 @@ main(int argc,char* argv[])
   argc -= optind;
   argv += optind;
 
+  if (MAXLOCKS < NLOCKS) { NLOCKS = MAXLOCKS; LOCKMASK = NLOCKS-1; }
   if (256 <= thrd) thrd = 256;
   for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
   for (i = 0; i < thrd; i++) pthread_join(t[i],&r);

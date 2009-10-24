@@ -16,6 +16,7 @@ dnl AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-mcpu=v9])
 AC_CHECK_HEADERS([inttypes.h])
 AC_CHECK_HEADERS([sched.h])
+AC_CHECK_SIZEOF([intptr_t])
 AC_SEARCH_LIBS([sched_yield],[rt])
 AC_CHECK_FUNCS([gethrtime clock_gettime nrand48])
 ACX_PTHREAD

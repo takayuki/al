@@ -16,7 +16,7 @@ _al_template(void)
   int _ro = 0;
   thread_t* self;
   nest_t* nest;
-  nest_t* nested;
+  nest_t* nestedTransact;
   unsigned long tries;
   unsigned long prev,next;
   sigjmp_buf buf;
@@ -29,20 +29,30 @@ _al_template(void)
   self = pthread_getspecific(_al_key);
   if (self == 0)
     abort();
-  SLIST_FOREACH(nest,&self->lock_list,next) {
-    if (nest->lock == _lock) break;
+  nestedTransact = 0;
+  if (!SLIST_EMPTY(&self->lock_list)) {
+    nest = SLIST_FIRST(&self->lock_list);
+    if (nest->level == 0) {
+      if (!SLIST_NEXT(SLIST_FIRST(&self->lock_list),next)) {
+	nest->lock = _lock;
+	goto reuse;
+      }
+      SLIST_REMOVE_HEAD(&self->lock_list,next);
+      free(nest);
+      nest = SLIST_FIRST(&self->lock_list);
+    }
+    if (0 < nest->level)
+      nestedTransact = nest;
+    if (nest->lock == _lock)
+      goto reuse;
   }
-  if (nest == 0) {
-    nest = malloc(sizeof(*nest));
-    if (nest == 0) abort();
-    nest->lock = _lock;
-    nest->level = 0;
-    SLIST_INSERT_HEAD(&self->lock_list,nest,next);
-  }
-  SLIST_FOREACH(nested,&self->lock_list,next) {
-    if (0 < nested->level) break;
-  }
-  if (nested != 0) {
+  nest = malloc(sizeof(*nest));
+  if (nest == 0) abort();
+  nest->lock = _lock;
+  nest->level = 0;
+  SLIST_INSERT_HEAD(&self->lock_list,nest,next);
+ reuse:
+  if (nestedTransact != 0) {
     assert(0 <= nest->level);
     _stmfunc(self->stmThread);
   } else if (nest->level < 0) {

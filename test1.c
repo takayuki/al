@@ -8,7 +8,7 @@ void
 help(void)
 {
   fprintf(stderr,
-          "usage: test [-hnpx]\n"
+          "usage: test1 [-hnpx]\n"
           "  -p  number of threads (default: 2)\n"
           "  -n  number of repeats (default: 1000000)\n"
           "  -a  use adaptive lock (default)\n"
@@ -44,7 +44,8 @@ task(void* arg)
 {
   long n = iter;
 
-  while (n--) if (n % 2) decr(); else incr();
+  while (n--)
+    if (n % 2) decr(); else incr();
   return 0;
 }
 

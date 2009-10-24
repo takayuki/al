@@ -1,5 +1,8 @@
 #! /bin/sh
 
+LD_PRELOAD="./hoard/src/libhoard.so:/usr/lib/libCrun.so.1"
+export LD_PRELOAD
+
 invoke() {
   proc=$1; shift; p=$1; shift; n=$1; shift;
   $proc -p$p -n$n $@ 2>&1| \
