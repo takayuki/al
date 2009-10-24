@@ -266,6 +266,12 @@ enterCritical_1(al_t* lock)
   return useTransact;
 }
 
+int
+enterCritical_2(al_t* lock)
+{
+  return 1;
+}
+
 void
 exitCritical_0(al_t* lock)
 {
@@ -278,6 +284,11 @@ exitCritical_1(al_t* lock)
 {
   while(1)
     RELEASE();
+}
+
+void
+exitCritical_2(al_t* lock)
+{
 }
 
 unsigned long

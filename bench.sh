@@ -1,11 +1,11 @@
 #! /bin/sh
 
-LD_PRELOAD="./hoard/src/libhoard.so:/usr/lib/libCrun.so.1"
-export LD_PRELOAD
+#LD_PRELOAD="./hoard/src/libhoard.so:/usr/lib/libCrun.so.1"
+#export LD_PRELOAD
 
 invoke() {
   proc=$1; shift; p=$1; shift; n=$1; shift;
-  $proc -p$p -n$n $@ 2>&1| \
+  $proc -p$p -n$n -s2 -x25 $@ 2>&1| \
   awk '
   BEGIN {
     exec='$p'*'$n'; exec_per_sec=0.0; start=0; abort=0;
@@ -25,10 +25,11 @@ invoke() {
 }
 
 bench() {
-  proc="./test2"; n=100000; r=3
+  #proc="./test2"; n=100000; r=3
   #proc="./test3"; n=100000; r=3
-  #proc="./test4"; n=10000; r=3
-  for m in "-t" "-l" "-a"; do
+  proc="./test4"; n=10000; r=3
+  #for m in "-t" "-l" "-a"; do
+  for m in "-t"; do
     for p in 1 2 4 8 16 32 64; do
       i=1;
       while expr $i \<= $r >/dev/null; do

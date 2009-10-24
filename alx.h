@@ -60,8 +60,24 @@ _al_template(void)
   } else {
     assert(nest->level == 0);
     switch (getLockScheme()) {
+    case 2:
+      if (enterCritical_2(_lock)) {
+        if (sigsetjmp(buf,1)) nest->level = 0;
+        timer_start(&start);
+	inc(nest->level);
+        TxStart(self->stmThread,&buf,&_ro);
+        _stmfunc(self->stmThread);
+        TxCommit(self->stmThread);
+	dec(nest->level);
+        exitCritical_2(_lock);
+        timer_stop(&start,&self->timeSTM,_lock,0);
+      } else {
+        abort();
+      }
+      break;
     case 1:
       if (enterCritical_1(_lock)) {
+write(1,".",1);
 	tries = 0;
 	if (sigsetjmp(buf,1)) nest->level = 0;
 	timer_start(&start);
