@@ -117,7 +117,8 @@ displayUsage (const char* appName)
     printf("    L          Use lock only\n");
     printf("    T          Use transaction only\n");
     printf("    S          Lock scheme                           (1)\n");
-    printf("    X          Transactional overhead x10            (50)\n");
+    printf("    X          Transactional overhead                (2.5)\n");
+    printf("    Z          Number of instr. in transact. load    (50)\n");
     exit(1);
 }
 
@@ -151,7 +152,7 @@ parseArgs (long argc, char* const argv[])
 
     setDefaultParams();
 
-    while ((opt = getopt(argc, argv, "b:i:pt:x:y:z:ALTX:")) != -1) {
+    while ((opt = getopt(argc, argv, "b:i:pt:x:y:z:ALTX:Z:")) != -1) {
         switch (opt) {
             case 'b':
             case 't':
@@ -177,6 +178,9 @@ parseArgs (long argc, char* const argv[])
 		break;
 	    case 'X':
 		setTranxOvhd(atof(optarg));
+		break;
+	    case 'Z':
+		setTranxInstr(atoi(optarg),atoi(optarg)*2);
 		break;
             case '?':
             default:

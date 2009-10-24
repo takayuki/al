@@ -163,7 +163,7 @@ MAIN(argc, argv)
     line = (char*)malloc(MAX_LINE_LENGTH); /* reserve memory line */
 
     nthreads = 1;
-    while ((opt = getopt(argc,(char**)argv,"p:i:m:n:t:bzALTX:")) != EOF) {
+    while ((opt = getopt(argc,(char**)argv,"p:i:m:n:t:bzALTX:Z:")) != EOF) {
         switch (opt) {
             case 'i': filename = optarg;
                       break;
@@ -190,6 +190,9 @@ MAIN(argc, argv)
 		break;
 	    case 'X':
 		setTranxOvhd(atof(optarg));
+		break;
+	    case 'Z':
+		setTranxInstr(atoi(optarg),atoi(optarg)*2);
 		break;
             case '?': usage((char*)argv[0]);
                       break;

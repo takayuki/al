@@ -32,7 +32,7 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 #  THE POSSIBILITY OF SUCH DAMAGE.
 #
-AC_INIT([CIS 609 Final Project],[0.15],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.16],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])

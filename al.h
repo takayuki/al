@@ -88,21 +88,24 @@ typedef struct {
   long nestLevel;
   long txLd;
   long txSt;
-#ifdef HAVE_OBSOLETE_CPC
-  cpc_event_t cpcAtom;
-  cpc_event_t cpcTrnx;
-  cpc_event_t cpcStrt0;
-  cpc_event_t cpcStrt1;
-  cpc_event_t cpcStop;
-  cpc_event_t cpcDiff;
-#endif
-#ifdef HAVE_CPC
+#if defined(HAVE_CPC)
   cpc_buf_t* cpcAtom;
-  cpc_buf_t* cpcTrnx;
   cpc_buf_t* cpcStrt0;
+#ifdef HAVE_AND_DEPEND_ON_CPC
+  cpc_buf_t* cpcTrnx;
   cpc_buf_t* cpcStrt1;
+#endif
   cpc_buf_t* cpcStop;
   cpc_buf_t* cpcDiff;
+#elif defined(HAVE_OBSOLETE_CPC)
+  cpc_event_t cpcAtom;
+  cpc_event_t cpcStrt0;
+#ifdef HAVE_AND_DEPEND_ON_CPC
+  cpc_event_t cpcTrnx;
+  cpc_event_t cpcStrt1;
+#endif
+  cpc_event_t cpcStop;
+  cpc_event_t cpcDiff;
 #endif
 } thread_t;
 
@@ -111,10 +114,10 @@ typedef struct {
 int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 #define pthread_create al_pthread_create
 
-
 thread_t* thread_self(void);
 void setAdaptMode(int);
 void setTranxOvhd(double);
+void setTranxInstr(int,int);
 int enterCritical_0(al_t*);
 int enterCritical_1(al_t*);
 void exitCritical_0(al_t*);

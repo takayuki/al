@@ -62,26 +62,19 @@ static pthread_key_t _al_key;
 static int adaptMode = 0;
 static int tranxOvhd = 250;
 static int tranxOvhdScale = 100;
+static int tranxInstrLd = 95;
+static int tranxInstrSt = 95 * 2;
+static uint64_t instrCntOvhd = 0;
 static long txLd;
 static long txSt;
-#if defined(HAVE_OBSOLETE_CPC)
-static cpc_event_t cpc;
-#elif defined(HAVE_CPC)
+#if defined(HAVE_CPC)
 static cpc_t* cpc;
 static cpc_set_t* set;
 static int ind0;
+#elif defined(HAVE_OBSOLETE_CPC)
+static cpc_event_t cpc;
 #endif
 static pthread_mutex_t globMutex = PTHREAD_MUTEX_INITIALIZER;  
-
-thread_t*
-thread_self(void)
-{
-#ifdef TLS
-  return _al_self;
-#else
-  return (thread_t*)pthread_getspecific(_al_key);
-#endif
-}
 
 void
 setAdaptMode(int mode)
@@ -95,70 +88,62 @@ setTranxOvhd(double ovhd)
   tranxOvhd = ovhd * tranxOvhdScale;
 }
 
-typedef struct {
-  void* (*start)(void*);
-  void* arg;
-} _dispatch_t;
-
-static void*
-_dispatcher(void* _arg)
+void
+setTranxInstr(int ld,int st)
 {
-  _dispatch_t* disp = (_dispatch_t*)_arg;
-  void* (*start)(void*) = disp->start;
-  void* arg = disp->arg;
-  thread_t* self;
+  tranxInstrLd = ld;
+  tranxInstrSt = st;
+}
 
-  free(disp);
-  self = malloc(sizeof(*self));
-  if (self == 0)
-    return (void*)EAGAIN;
-  memset(self,0,sizeof(*self));
-  self->tl2Thread = TxNewThread();
-  if (self->tl2Thread == 0) {
-    free(self);
-    return (void*)EAGAIN;
-  }
-  TxInitThread(self->tl2Thread,(long)pthread_self());
-  self->lock = 0;
-  self->transactMode = 0;
-  self->nestLevel = 0;
-  pthread_setspecific(_al_key,self);
-#ifdef TLS
-  _al_self = self;
-#endif
-#if defined(HAVE_OBSOLETE_CPC)
-  if (Cpc_bind(&cpc) == -1)
-    return (void*)EAGAIN;
-#elif defined(HAVE_CPC)
-  if (Cpc_bind(cpc,set) == -1)
-    return (void*)EAGAIN;
-  if ((self->cpcAtom  = cpc_buf_create(cpc,set)) == 0) abort();
-  if ((self->cpcTrnx  = cpc_buf_create(cpc,set)) == 0) abort();
-  if ((self->cpcStrt0 = cpc_buf_create(cpc,set)) == 0) abort();
-  if ((self->cpcStrt1 = cpc_buf_create(cpc,set)) == 0) abort();
-  if ((self->cpcStop  = cpc_buf_create(cpc,set)) == 0) abort();
-  if ((self->cpcDiff  = cpc_buf_create(cpc,set)) == 0) abort();
-#endif
-  return start(arg);
+#if defined(HAVE_CPC)
+int
+Cpc_init(void)
+{
+  cpc = cpc_open(CPC_VER_CURRENT);
+  if (cpc == 0)
+    return -1;
+  set = cpc_set_create(cpc);
+  if (set == 0)
+    return -1;
+  ind0 = cpc_set_add_request(cpc,set,"Instr_cnt",0,
+			     CPC_COUNT_SYSTEM|CPC_COUNT_USER,0,0);
+  if (ind0 == -1)
+    return -1;
+  return 0;
 }
 
 int
-al_pthread_create(pthread_t* thread,
-		  const pthread_attr_t* attr,
-		  void* (*start)(void*),
-		  void* arg)
+Cpc_bind(cpc_t* cpc,cpc_set_t* set)
 {
-  _dispatch_t* disp;
-  
-  disp = (_dispatch_t*)malloc(sizeof(*disp));
-  if (disp == 0)
-    return EAGAIN;
-  disp->start = start;
-  disp->arg = arg;
-  return pthread_create(thread,attr,_dispatcher,disp);
+  return cpc_bind_curlwp(cpc,set,0);
 }
 
-#if defined(HAVE_OBSOLETE_CPC)
+int
+Cpc_unbind(cpc_t* cpc,cpc_set_t* set)
+{
+  return cpc_unbind(cpc,set);
+}
+
+int
+Cpc_sample(cpc_t* cpc,cpc_set_t* set,cpc_buf_t* before)
+{
+  return cpc_set_sample(cpc,set,before);
+}
+
+int
+Cpc_diff(cpc_t* cpc,cpc_set_t* set,
+	 cpc_buf_t* accum,cpc_buf_t* diff,
+	 cpc_buf_t* before,cpc_buf_t* after)
+{
+  if (cpc_set_sample(cpc,set,after) == -1)
+    return -1;
+  if (diff == 0)
+    return 0;
+  cpc_buf_sub(cpc,diff,after,before);
+  cpc_buf_add(cpc,accum,accum,diff);
+  return 0;
+}
+#elif defined(HAVE_OBSOLETE_CPC)
 int
 Cpc_init(void)
 {
@@ -210,55 +195,94 @@ Cpc_diff(cpc_event_t* accum,cpc_event_t* diff,
   cpc_event_accum(accum,diff);
   return 0;
 }
-#elif defined(HAVE_CPC)
-int
-Cpc_init(void)
-{
-  cpc = cpc_open(CPC_VER_CURRENT);
-  if (cpc == 0)
-    return -1;
-  set = cpc_set_create(cpc);
-  if (set == 0)
-    return -1;
-  ind0 = cpc_set_add_request(cpc,set,"Instr_cnt",0,
-			     CPC_COUNT_SYSTEM|CPC_COUNT_USER,0,0);
-  if (ind0 == -1)
-    return -1;
-  return 0;
-}
-
-int
-Cpc_bind(cpc_t* cpc,cpc_set_t* set)
-{
-  return cpc_bind_curlwp(cpc,set,0);
-}
-
-int
-Cpc_unbind(cpc_t* cpc,cpc_set_t* set)
-{
-  return cpc_unbind(cpc,set);
-}
-
-int
-Cpc_sample(cpc_t* cpc,cpc_set_t* set,cpc_buf_t* before)
-{
-  return cpc_set_sample(cpc,set,before);
-}
-
-int
-Cpc_diff(cpc_t* cpc,cpc_set_t* set,
-	 cpc_buf_t* accum,cpc_buf_t* diff,
-	 cpc_buf_t* before,cpc_buf_t* after)
-{
-  if (cpc_set_sample(cpc,set,after) == -1)
-    return -1;
-  if (diff == 0)
-    return 0;
-  cpc_buf_sub(cpc,diff,after,before);
-  cpc_buf_add(cpc,accum,accum,diff);
-  return 0;
-}
 #endif
+
+thread_t*
+thread_self(void)
+{
+#ifdef TLS
+  return _al_self;
+#else
+  return (thread_t*)pthread_getspecific(_al_key);
+#endif
+}
+
+typedef struct {
+  void* (*start)(void*);
+  void* arg;
+} _dispatch_t;
+
+static void*
+_dispatcher(void* _arg)
+{
+  _dispatch_t* disp = (_dispatch_t*)_arg;
+  void* (*start)(void*) = disp->start;
+  void* arg = disp->arg;
+  thread_t* self;
+
+  free(disp);
+  self = malloc(sizeof(*self));
+  if (self == 0)
+    return (void*)EAGAIN;
+  memset(self,0,sizeof(*self));
+  self->tl2Thread = TxNewThread();
+  if (self->tl2Thread == 0) {
+    free(self);
+    return (void*)EAGAIN;
+  }
+  TxInitThread(self->tl2Thread,(long)pthread_self());
+  self->lock = 0;
+  self->transactMode = 0;
+  self->nestLevel = 0;
+  pthread_setspecific(_al_key,self);
+#ifdef TLS
+  _al_self = self;
+#endif
+#if defined(HAVE_CPC)
+  uint64_t cpcAtom[1];
+
+  if (Cpc_bind(cpc,set) == -1)
+    return (void*)EAGAIN;
+  if ((self->cpcAtom  = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcStrt0 = cpc_buf_create(cpc,set)) == 0) abort();
+#if  defined(HAVE_AND_DEPEND_ON_CPC)
+  if ((self->cpcTrnx  = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcStrt1 = cpc_buf_create(cpc,set)) == 0) abort();
+#endif
+  if ((self->cpcStop  = cpc_buf_create(cpc,set)) == 0) abort();
+  if ((self->cpcDiff  = cpc_buf_create(cpc,set)) == 0) abort();
+  cpc_buf_zero(cpc,self->cpcAtom);
+  cpc_set_restart(cpc,set);
+  Cpc_sample(cpc,set,self->cpcStrt0);
+  Cpc_diff(cpc,set,self->cpcAtom,self->cpcDiff,self->cpcStrt0,self->cpcStop);
+  cpc_buf_get(cpc,self->cpcAtom,ind0,&cpcAtom[0]);
+  instrCntOvhd = cpcAtom[0];
+#elif defined(HAVE_OBSOLETE_CPC)
+  if (Cpc_bind(&cpc) == -1)
+    return (void*)EAGAIN;
+  memset(&self->cpcAtom,0,sizeof(cpc_event_t));
+  Cpc_sample(&self->cpcStrt0);
+  Cpc_diff(&self->cpcAtom,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
+  instrCntOvhd = self->cpcAtom.ce_pic[0];
+#endif
+  return start(arg);
+}
+
+int
+al_pthread_create(pthread_t* thread,
+		  const pthread_attr_t* attr,
+		  void* (*start)(void*),
+		  void* arg)
+{
+  _dispatch_t* disp;
+  
+  disp = (_dispatch_t*)malloc(sizeof(*disp));
+  if (disp == 0)
+    return EAGAIN;
+  disp->start = start;
+  disp->arg = arg;
+  return pthread_create(thread,attr,_dispatcher,disp);
+}
 
 int
 transactMode_1(al_t* lock,int spins)
@@ -279,15 +303,21 @@ transactMode_1(al_t* lock,int spins)
   if (spins == 0) thrdsContend++;
   thrdsInTranx = thrdsInStmMode(state);
   if (0 < thrdsInTranx) thrdsContend += thrdsInTranx;
+#if 0
   else if (lockHeld(state)) thrdsContend++;
+#endif
 
   triesCommits = lock->triesCommits;
   Tries = tries(triesCommits);
   Commits = commits(triesCommits);
   if (0 == Commits) { Commits = 1; Tries = 1; }
-
+  
+#if 1
+  return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
+#else
   return (((Tries%Commits)?((Tries/Commits)+1):(Tries/Commits)) * tranxOvhd)
     < (tranxOvhdScale * thrdsContend);
+#endif
 }
 
 int
@@ -308,14 +338,19 @@ transactMode_0(al_t* lock,int spins)
   if (spins == 0) thrdsContend++;
   thrdsInTranx = thrdsInStmMode(state);
   if (0 < thrdsInTranx) thrdsContend += thrdsInTranx;
+#if 0
   else if (lockHeld(state)) thrdsContend++;
-
+#endif
   Tries = tries(statistic);
   Commits = commits(statistic);
   if (0 == Commits) { Commits = 1; Tries = 1; }
 
+#if 1
+  return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
+#else
   return (((Tries%Commits)?((Tries/Commits)+1):(Tries/Commits)) * tranxOvhd)
     < (tranxOvhdScale * thrdsContend);
+#endif
 }
 
 void
@@ -500,19 +535,32 @@ StxStart(thread_t* self,sigjmp_buf* buf,int* ro)
 {
   self->txLd = 0;
   self->txSt = 0;
-#if defined(HAVE_OBSOLETE_CPC)
-  memset(&self->cpcAtom,0,sizeof(cpc_event_t));
-  memset(&self->cpcTrnx,0,sizeof(cpc_event_t));
-  Cpc_sample(&self->cpcStrt0);
-  TxStart(self->tl2Thread,buf,ro);
-  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
-#elif defined(HAVE_CPC)
+#if defined(HAVE_CPC)
+#ifdef HAVE_AND_DEPEND_ON_CPC
   cpc_buf_zero(cpc,self->cpcAtom);
   cpc_buf_zero(cpc,self->cpcTrnx);
   cpc_set_restart(cpc,set);
   Cpc_sample(cpc,set,self->cpcStrt0);
   TxStart(self->tl2Thread,buf,ro);
   Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt0,self->cpcStop);
+#else
+  cpc_buf_zero(cpc,self->cpcAtom);
+  cpc_set_restart(cpc,set);
+  Cpc_sample(cpc,set,self->cpcStrt0);
+  TxStart(self->tl2Thread,buf,ro);
+#endif
+#elif defined(HAVE_OBSOLETE_CPC)
+#if defined(HAVE_AND_DEPEND_ON_CPC)
+  memset(&self->cpcAtom,0,sizeof(cpc_event_t));
+  memset(&self->cpcTrnx,0,sizeof(cpc_event_t));
+  Cpc_sample(&self->cpcStrt0);
+  TxStart(self->tl2Thread,buf,ro);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
+#else
+  memset(&self->cpcAtom,0,sizeof(cpc_event_t));
+  Cpc_sample(&self->cpcStrt0);
+  TxStart(self->tl2Thread,buf,ro);
+#endif
 #else
   TxStart(self->tl2Thread,buf,ro);
 #endif
@@ -521,28 +569,14 @@ StxStart(thread_t* self,sigjmp_buf* buf,int* ro)
 void
 StxCommit(thread_t* self)
 {
-#if defined(HAVE_OBSOLETE_CPC)
-  uint64_t atom;
-  uint64_t trnx;
-  int tranxOvhdNew;
-
-  Cpc_sample(&self->cpcStrt1);
-  TxCommit(self->tl2Thread);
-  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
-  Cpc_diff(&self->cpcAtom,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
-  atom = self->cpcAtom.ce_pic[0];
-  trnx = self->cpcTrnx.ce_pic[0];
-  if (trnx < atom) {
-    tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
-    tranxOvhd = (tranxOvhd + tranxOvhdNew) / 2;
-  }
-#elif defined(HAVE_CPC)
+#if defined(HAVE_CPC)
   uint64_t cpcAtom[1];
   uint64_t cpcTrnx[1];
   uint64_t atom;
   uint64_t trnx;
   int tranxOvhdNew;
 
+#ifdef HAVE_AND_DEPEND_ON_CPC
   Cpc_sample(cpc,set,self->cpcStrt1);
   TxCommit(self->tl2Thread);
   Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt1,self->cpcStop);
@@ -551,6 +585,36 @@ StxCommit(thread_t* self)
   cpc_buf_get(cpc,self->cpcTrnx,ind0,&cpcTrnx[0]);
   atom = cpcAtom[0];
   trnx = cpcTrnx[0];
+#else
+  TxCommit(self->tl2Thread);
+  Cpc_diff(cpc,set,self->cpcAtom,self->cpcDiff,self->cpcStrt0,self->cpcStop);
+  cpc_buf_get(cpc,self->cpcAtom,ind0,&cpcAtom[0]);
+  atom = cpcAtom[0] - instrCntOvhd;
+  trnx = tranxInstrLd * self->txLd + tranxInstrSt * self->txSt;
+#endif
+  if (10000 < atom && 0 < trnx && trnx < atom) {
+    tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
+    tranxOvhd = (tranxOvhd + tranxOvhdNew) / 2;
+    //fprintf(stderr,"%d %lld %lld\n",tranxOvhd,atom,atom - trnx);
+  }
+#elif defined(HAVE_OBSOLETE_CPC)
+  uint64_t atom;
+  uint64_t trnx;
+  int tranxOvhdNew;
+
+#ifdef HAVE_AND_DEPEND_ON_CPC
+  Cpc_sample(&self->cpcStrt1);
+  TxCommit(self->tl2Thread);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
+  Cpc_diff(&self->cpcAtom,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
+  atom = self->cpcAtom.ce_pic[0];
+  trnx = self->cpcTrnx.ce_pic[0];
+#else
+  TxCommit(self->tl2Thread);
+  Cpc_diff(&self->cpcAtom,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
+  atom = self->cpcAtom.ce_pic[0] - 842;
+  trnx = tranxInstrLd * self->txLd + tranxInstrSt * self->txSt;
+#endif
   if (trnx < atom) {
     tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
     tranxOvhd = (tranxOvhd + tranxOvhdNew) / 2;
@@ -563,14 +627,14 @@ StxCommit(thread_t* self)
 void
 StxStore(thread_t* self,intptr_t* dest,intptr_t src)
 {
-#if defined(HAVE_OBSOLETE_CPC)
-  Cpc_sample(&self->cpcStrt1);
-  TxStore(self->tl2Thread,dest,src);
-  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
-#elif defined(HAVE_CPC)
+#if defined(HAVE_CPC) && defined(HAVE_AND_DEPEND_ON_CPC)
   Cpc_sample(cpc,set,self->cpcStrt1);
   TxStore(self->tl2Thread,dest,src);
   Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt1,self->cpcStop);
+#elif defined(HAVE_OBSOLETE_CPC) && defined(HAVE_AND_DEPEND_ON_CPC)
+  Cpc_sample(&self->cpcStrt1);
+  TxStore(self->tl2Thread,dest,src);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
 #else
   TxStore(self->tl2Thread,dest,src);
 #endif
@@ -581,14 +645,14 @@ intptr_t
 StxLoad(thread_t* self,intptr_t* src)
 {
   intptr_t value;
-#if defined(HAVE_OBSOLETE_CPC)
-  Cpc_sample(&self->cpcStrt1);
-  value = TxLoad(self->tl2Thread,src);
-  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
-#elif defined(HAVE_CPC)
+#if defined(HAVE_CPC) && defined(HAVE_AND_DEPEND_ON_CPC)
   Cpc_sample(cpc,set,self->cpcStrt1);
   value = TxLoad(self->tl2Thread,src);
   Cpc_diff(cpc,set,self->cpcTrnx,self->cpcDiff,self->cpcStrt1,self->cpcStop);
+#elif defined(HAVE_OBSOLETE_CPC) && defined(HAVE_AND_DEPEND_ON_CPC)
+  Cpc_sample(&self->cpcStrt1);
+  value = TxLoad(self->tl2Thread,src);
+  Cpc_diff(&self->cpcTrnx,&self->cpcDiff,&self->cpcStrt1,&self->cpcStop);
 #else
   value = TxLoad(self->tl2Thread,src);
 #endif
@@ -710,10 +774,12 @@ destroy_thread(void* arg)
 {
   thread_t* self = (thread_t*)arg;
 
-#if defined(HAVE_OBSOLETE_CPC)
-  Cpc_unbind();
-#elif defined(HAVE_CPC)
+#if 0
+#if defined(HAVE_CPC)
   Cpc_unbind(cpc,set);
+#elif defined(HAVE_OBSOLETE_CPC)
+  Cpc_unbind();
+#endif
 #endif
   pthread_mutex_lock(&globMutex);
   txLd += self->txLd;
@@ -728,10 +794,10 @@ init(void)
 {
   TxOnce();
   pthread_key_create(&_al_key,destroy_thread);
-#if defined(HAVE_OBSOLETE_CPC)
+#if defined(HAVE_CPC)
   if (Cpc_init() == -1)
     abort();
-#elif defined(HAVE_CPC)
+#elif defined(HAVE_OBSOLETE_CPC)
   if (Cpc_init() == -1)
     abort();
 #endif
@@ -740,6 +806,7 @@ init(void)
 __attribute__((destructor)) void
 finish(void)
 {
-  printf("tranxOvhd=%d,tranxOvhdScale=%d\n",tranxOvhd,tranxOvhdScale);
+  printf("tranxOvhd=%d/%d,tranxInstrLd=%d,tranxInstrSt=%d,instrCntOvhd=%lld\n",
+	 tranxOvhd,tranxOvhdScale,tranxInstrLd,tranxInstrSt,instrCntOvhd);
   TxShutdown();
 }

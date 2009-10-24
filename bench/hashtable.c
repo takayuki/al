@@ -52,6 +52,7 @@ help(void)
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
           "  -x  transactional overhead (default: 5.0)\n"
+          "  -z  number of instr. in transactional load (default: 50)\n"
           "  -f  power number of locks (default: 0(single lock))\n"
           "  -h  show this\n");
   exit(0);
@@ -291,7 +292,7 @@ main(int argc,char* argv[])
   double elapse;
   size_t size;
 
-  while ((ch = getopt(argc,argv,"p:n:altx:f:h")) != -1) {
+  while ((ch = getopt(argc,argv,"p:n:altx:z:f:h")) != -1) {
     switch (ch) {
     case 'p': thrd = atoi(optarg); break;
     case 'n': iter = atoi(optarg); break;
@@ -299,6 +300,7 @@ main(int argc,char* argv[])
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
     case 'x': setTranxOvhd(atof(optarg)); break;
+    case 'z': setTranxInstr(atoi(optarg),atoi(optarg)*2); break;
     case 'f': NLOCKS = 1<<atoi(optarg); LOCKMASK = NLOCKS-1; break;
     case 'h':
     default: help();
