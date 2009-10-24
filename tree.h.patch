@@ -1,0 +1,87 @@
+--- /usr/include/sys/tree.h	2004-03-28 11:38:30.000000000 -0800
++++ tree.h	2008-02-29 20:25:59.000000000 -0800
+@@ -308,7 +308,7 @@
+ 	struct type *rbe_left;		/* left element */		\
+ 	struct type *rbe_right;		/* right element */		\
+ 	struct type *rbe_parent;	/* parent element */		\
+-	int rbe_color;			/* node color */		\
++	long rbe_color;			/* node color */		\
+ }
+ 
+ #define RB_LEFT(elm, field)		(elm)->field.rbe_left
+@@ -387,7 +387,8 @@
+ /* Main rb operation.
+  * Moves node close to the key of elm to top
+  */
+-#define RB_GENERATE(name, type, field, cmp)				\
++#define RB_GENERATE(name, type, field, cmp, lock)			\
++__attribute__((atomic (lock)))						\
+ void									\
+ name##_RB_INSERT_COLOR(struct name *head, struct type *elm)		\
+ {									\
+@@ -432,6 +433,7 @@
+ 	RB_COLOR(head->rbh_root, field) = RB_BLACK;			\
+ }									\
+ 									\
++__attribute__((atomic (lock)))						\
+ void									\
+ name##_RB_REMOVE_COLOR(struct name *head, struct type *parent, struct type *elm) \
+ {									\
+@@ -510,11 +512,12 @@
+ 		RB_COLOR(elm, field) = RB_BLACK;			\
+ }									\
+ 									\
++__attribute__((atomic (lock)))						\
+ struct type *								\
+ name##_RB_REMOVE(struct name *head, struct type *elm)			\
+ {									\
+ 	struct type *child, *parent, *old = elm;			\
+-	int color;							\
++	long color;							\
+ 	if (RB_LEFT(elm, field) == NULL)				\
+ 		child = RB_RIGHT(elm, field);				\
+ 	else if (RB_RIGHT(elm, field) == NULL)				\
+@@ -539,7 +542,10 @@
+ 			RB_ROOT(head) = child;				\
+ 		if (RB_PARENT(elm, field) == old)			\
+ 			parent = elm;					\
+-		(elm)->field = (old)->field;				\
++		(elm)->field.rbe_left = (old)->field.rbe_left;		\
++		(elm)->field.rbe_right = (old)->field.rbe_right;	\
++		(elm)->field.rbe_parent = (old)->field.rbe_parent;	\
++		(elm)->field.rbe_color = (old)->field.rbe_color;	\
+ 		if (RB_PARENT(old, field)) {				\
+ 			if (RB_LEFT(RB_PARENT(old, field), field) == old)\
+ 				RB_LEFT(RB_PARENT(old, field), field) = elm;\
+@@ -578,6 +584,7 @@
+ }									\
+ 									\
+ /* Inserts a node into the RB tree */					\
++__attribute__((atomic (lock)))						\
+ struct type *								\
+ name##_RB_INSERT(struct name *head, struct type *elm)			\
+ {									\
+@@ -609,6 +616,7 @@
+ }									\
+ 									\
+ /* Finds the node with the same key as elm */				\
++__attribute__((atomic (lock)))						\
+ struct type *								\
+ name##_RB_FIND(struct name *head, struct type *elm)			\
+ {									\
+@@ -627,6 +635,7 @@
+ }									\
+ 									\
+ /* ARGSUSED */								\
++__attribute__((atomic (lock)))						\
+ struct type *								\
+ name##_RB_NEXT(struct type *elm)					\
+ {									\
+@@ -648,6 +657,7 @@
+ 	return (elm);							\
+ }									\
+ 									\
++__attribute__((atomic (lock)))						\
+ struct type *								\
+ name##_RB_MINMAX(struct name *head, int val)				\
+ {									\

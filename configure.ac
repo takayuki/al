@@ -1,4 +1,4 @@
-AC_INIT([CIS 609 Final Project],[0.2],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.3],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -46,10 +46,12 @@ case "$target" in
   *powerpc*darwin*) ac_archos=ppc_DARWIN;;
   *86*cygwin*) ac_archos=x86_WIN32;;
   *sparc*solaris*) ac_archos=sparc_SOLARIS;;
+  *86*solaris*) ac_archos=x86_SOLARIS;;
 esac
 if test "x$ac_archos" != "x"; then
   AC_SUBST([ARCHOS],[$ac_archos])
 fi
+AC_CONFIG_SUBDIRS([tl2])
 ac_save_configure_args=$ac_configure_args
 ac_configure_args="$ac_configure_args EXTRASRCDIRS='..' EXTRAFEATURES='atomic'"
 AC_CONFIG_SUBDIRS([cil])

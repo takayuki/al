@@ -87,117 +87,117 @@ m4trace:configure.in:55: -1- AC_SUBST([target], [$ac_cv_target])
 m4trace:configure.in:55: -1- AC_SUBST([target_cpu], [`echo $ac_cv_target | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\1/'`])
 m4trace:configure.in:55: -1- AC_SUBST([target_vendor], [`echo $ac_cv_target | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\2/'`])
 m4trace:configure.in:55: -1- AC_SUBST([target_os], [`echo $ac_cv_target | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\3/'`])
-m4trace:configure.in:336: -1- AC_HEADER_STDC
-m4trace:configure.in:336: -1- AC_PROG_CPP
-m4trace:configure.in:336: -1- AC_SUBST([CPP])
-m4trace:configure.in:336: -1- AC_SUBST([CPPFLAGS])
-m4trace:configure.in:336: -1- AC_SUBST([CPP])
-m4trace:configure.in:336: -1- AC_SUBST([EGREP])
-m4trace:configure.in:336: -1- AC_DEFINE_TRACE_LITERAL([STDC_HEADERS])
-m4trace:configure.in:336: -1- AH_OUTPUT([STDC_HEADERS], [/* Define to 1 if you have the ANSI C header files. */
+m4trace:configure.in:331: -1- AC_HEADER_STDC
+m4trace:configure.in:331: -1- AC_PROG_CPP
+m4trace:configure.in:331: -1- AC_SUBST([CPP])
+m4trace:configure.in:331: -1- AC_SUBST([CPPFLAGS])
+m4trace:configure.in:331: -1- AC_SUBST([CPP])
+m4trace:configure.in:331: -1- AC_SUBST([EGREP])
+m4trace:configure.in:331: -1- AC_DEFINE_TRACE_LITERAL([STDC_HEADERS])
+m4trace:configure.in:331: -1- AH_OUTPUT([STDC_HEADERS], [/* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS])
-m4trace:configure.in:336: -1- AC_CHECK_HEADERS([sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
+m4trace:configure.in:331: -1- AC_CHECK_HEADERS([sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
 		  inttypes.h stdint.h unistd.h], [], [], [$ac_includes_default])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_SYS_TYPES_H], [/* Define to 1 if you have the <sys/types.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_SYS_TYPES_H], [/* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_SYS_STAT_H], [/* Define to 1 if you have the <sys/stat.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_SYS_STAT_H], [/* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_STDLIB_H], [/* Define to 1 if you have the <stdlib.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_STDLIB_H], [/* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_STRING_H], [/* Define to 1 if you have the <string.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_STRING_H], [/* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_MEMORY_H], [/* Define to 1 if you have the <memory.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_MEMORY_H], [/* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_STRINGS_H], [/* Define to 1 if you have the <strings.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_STRINGS_H], [/* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_INTTYPES_H], [/* Define to 1 if you have the <inttypes.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_INTTYPES_H], [/* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_STDINT_H], [/* Define to 1 if you have the <stdint.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_STDINT_H], [/* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H])
-m4trace:configure.in:336: -1- AH_OUTPUT([HAVE_UNISTD_H], [/* Define to 1 if you have the <unistd.h> header file. */
+m4trace:configure.in:331: -1- AH_OUTPUT([HAVE_UNISTD_H], [/* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H])
-m4trace:configure.in:356: -1- AC_HEADER_STDC
-m4trace:configure.in:356: -1- AC_DEFINE_TRACE_LITERAL([STDC_HEADERS])
-m4trace:configure.in:356: -1- AH_OUTPUT([STDC_HEADERS], [/* Define to 1 if you have the ANSI C header files. */
+m4trace:configure.in:351: -1- AC_HEADER_STDC
+m4trace:configure.in:351: -1- AC_DEFINE_TRACE_LITERAL([STDC_HEADERS])
+m4trace:configure.in:351: -1- AH_OUTPUT([STDC_HEADERS], [/* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS])
-m4trace:configure.in:357: -1- AC_CHECK_HEADERS([stdlib.h strings.h sys/time.h unistd.h wchar.h])
-m4trace:configure.in:357: -1- AH_OUTPUT([HAVE_STDLIB_H], [/* Define to 1 if you have the <stdlib.h> header file. */
+m4trace:configure.in:352: -1- AC_CHECK_HEADERS([stdlib.h strings.h sys/time.h unistd.h wchar.h])
+m4trace:configure.in:352: -1- AH_OUTPUT([HAVE_STDLIB_H], [/* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H])
-m4trace:configure.in:357: -1- AH_OUTPUT([HAVE_STRINGS_H], [/* Define to 1 if you have the <strings.h> header file. */
+m4trace:configure.in:352: -1- AH_OUTPUT([HAVE_STRINGS_H], [/* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H])
-m4trace:configure.in:357: -1- AH_OUTPUT([HAVE_SYS_TIME_H], [/* Define to 1 if you have the <sys/time.h> header file. */
+m4trace:configure.in:352: -1- AH_OUTPUT([HAVE_SYS_TIME_H], [/* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H])
-m4trace:configure.in:357: -1- AH_OUTPUT([HAVE_UNISTD_H], [/* Define to 1 if you have the <unistd.h> header file. */
+m4trace:configure.in:352: -1- AH_OUTPUT([HAVE_UNISTD_H], [/* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H])
-m4trace:configure.in:357: -1- AH_OUTPUT([HAVE_WCHAR_H], [/* Define to 1 if you have the <wchar.h> header file. */
+m4trace:configure.in:352: -1- AH_OUTPUT([HAVE_WCHAR_H], [/* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H])
-m4trace:configure.in:360: -1- AC_C_CONST
-m4trace:configure.in:360: -1- AC_DEFINE_TRACE_LITERAL([const])
-m4trace:configure.in:360: -1- AH_OUTPUT([const], [/* Define to empty if `const\' does not conform to ANSI C. */
+m4trace:configure.in:355: -1- AC_C_CONST
+m4trace:configure.in:355: -1- AC_DEFINE_TRACE_LITERAL([const])
+m4trace:configure.in:355: -1- AH_OUTPUT([const], [/* Define to empty if `const\' does not conform to ANSI C. */
 #undef const])
-m4trace:configure.in:361: -1- AC_C_INLINE
-m4trace:configure.in:361: -1- AH_OUTPUT([inline], [/* Define to `__inline__\' or `__inline\' if that\'s what the C compiler
+m4trace:configure.in:356: -1- AC_C_INLINE
+m4trace:configure.in:356: -1- AH_OUTPUT([inline], [/* Define to `__inline__\' or `__inline\' if that\'s what the C compiler
    calls it, or to nothing if \'inline\' is not supported under any name.  */
 #ifndef __cplusplus
 #undef inline
 #endif])
-m4trace:configure.in:362: -1- AC_HEADER_TIME
-m4trace:configure.in:362: -1- AC_DEFINE_TRACE_LITERAL([TIME_WITH_SYS_TIME])
-m4trace:configure.in:362: -1- AH_OUTPUT([TIME_WITH_SYS_TIME], [/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+m4trace:configure.in:357: -1- AC_HEADER_TIME
+m4trace:configure.in:357: -1- AC_DEFINE_TRACE_LITERAL([TIME_WITH_SYS_TIME])
+m4trace:configure.in:357: -1- AH_OUTPUT([TIME_WITH_SYS_TIME], [/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME])
-m4trace:configure.in:365: -1- AC_FUNC_MEMCMP
-m4trace:configure.in:365: -1- AC_LIBSOURCE([memcmp.c])
-m4trace:configure.in:365: -1- AC_SUBST([LIB@&t@OBJS])
-m4trace:configure.in:366: -1- AC_CHECK_FUNCS([mkdir select socket __sysv_signal])
-m4trace:configure.in:366: -1- AH_OUTPUT([HAVE_MKDIR], [/* Define to 1 if you have the `mkdir\' function. */
+m4trace:configure.in:360: -1- AC_FUNC_MEMCMP
+m4trace:configure.in:360: -1- AC_LIBSOURCE([memcmp.c])
+m4trace:configure.in:360: -1- AC_SUBST([LIB@&t@OBJS])
+m4trace:configure.in:361: -1- AC_CHECK_FUNCS([mkdir select socket __sysv_signal])
+m4trace:configure.in:361: -1- AH_OUTPUT([HAVE_MKDIR], [/* Define to 1 if you have the `mkdir\' function. */
 #undef HAVE_MKDIR])
-m4trace:configure.in:366: -1- AH_OUTPUT([HAVE_SELECT], [/* Define to 1 if you have the `select\' function. */
+m4trace:configure.in:361: -1- AH_OUTPUT([HAVE_SELECT], [/* Define to 1 if you have the `select\' function. */
 #undef HAVE_SELECT])
-m4trace:configure.in:366: -1- AH_OUTPUT([HAVE_SOCKET], [/* Define to 1 if you have the `socket\' function. */
+m4trace:configure.in:361: -1- AH_OUTPUT([HAVE_SOCKET], [/* Define to 1 if you have the `socket\' function. */
 #undef HAVE_SOCKET])
-m4trace:configure.in:366: -1- AH_OUTPUT([HAVE___SYSV_SIGNAL], [/* Define to 1 if you have the `__sysv_signal\' function. */
+m4trace:configure.in:361: -1- AH_OUTPUT([HAVE___SYSV_SIGNAL], [/* Define to 1 if you have the `__sysv_signal\' function. */
 #undef HAVE___SYSV_SIGNAL])
-m4trace:configure.in:395: -1- AC_DEFINE_TRACE_LITERAL([TYPE_SIZE_T])
-m4trace:configure.in:403: -1- AC_DEFINE_TRACE_LITERAL([TYPE_WCHAR_T])
-m4trace:configure.in:492: -1- _m4_warn([cross], [cannot check for file existence when cross compiling], [autoconf/general.m4:2315: AC_CHECK_FILE is expanded from...
-configure.in:492: the top level])
-m4trace:configure.in:516: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+m4trace:configure.in:390: -1- AC_DEFINE_TRACE_LITERAL([TYPE_SIZE_T])
+m4trace:configure.in:398: -1- AC_DEFINE_TRACE_LITERAL([TYPE_WCHAR_T])
+m4trace:configure.in:493: -1- _m4_warn([cross], [cannot check for file existence when cross compiling], [autoconf/general.m4:2315: AC_CHECK_FILE is expanded from...
+configure.in:493: the top level])
+m4trace:configure.in:517: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
 You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
-configure.in:516: the top level])
-m4trace:configure.in:519: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+configure.in:517: the top level])
+m4trace:configure.in:520: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
 You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
-configure.in:519: the top level])
-m4trace:configure.in:522: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+configure.in:520: the top level])
+m4trace:configure.in:523: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
 You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
-configure.in:522: the top level])
-m4trace:configure.in:525: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+configure.in:523: the top level])
+m4trace:configure.in:526: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
 You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
-configure.in:525: the top level])
-m4trace:configure.in:563: -1- AC_SUBST([ARCHOS])
-m4trace:configure.in:564: -1- AC_SUBST([CILHOME])
-m4trace:configure.in:565: -1- AC_SUBST([HAS_MSVC])
-m4trace:configure.in:566: -1- AC_SUBST([DEFAULT_COMPILER])
-m4trace:configure.in:567: -1- AC_SUBST([DEFAULT_CIL_MODE])
-m4trace:configure.in:568: -1- AC_SUBST([CIL_VERSION_MAJOR])
-m4trace:configure.in:569: -1- AC_SUBST([CIL_VERSION_MINOR])
-m4trace:configure.in:570: -1- AC_SUBST([CIL_VERSION_REV])
-m4trace:configure.in:571: -1- AC_SUBST([CIL_VERSION])
-m4trace:configure.in:572: -1- AC_SUBST([CYCLES_PER_USEC])
-m4trace:configure.in:573: -1- AC_SUBST([HAS_PERFCOUNT])
-m4trace:configure.in:574: -1- AC_SUBST([HAVE_BUILTIN_VA_LIST])
-m4trace:configure.in:575: -1- AC_SUBST([THREAD_IS_KEYWORD])
-m4trace:configure.in:576: -1- AC_SUBST([UNDERSCORE_NAME])
-m4trace:configure.in:577: -1- AC_SUBST([EXTRAFEATURES])
-m4trace:configure.in:578: -1- AC_SUBST([EXTRASRCDIRS])
-m4trace:configure.in:608: -1- AC_CONFIG_FILES([Makefile], [chmod a-w Makefile])
-m4trace:configure.in:609: -1- AC_CONFIG_FILES([cil.spec], [chmod a-w cil.spec])
-m4trace:configure.in:610: -1- AC_CONFIG_FILES([config.mk], [chmod a-w config.mk])
-m4trace:configure.in:611: -1- AC_CONFIG_FILES([test/Makefile], [chmod a-w test/Makefile])
-m4trace:configure.in:612: -1- AC_CONFIG_FILES([bin/cilly.bat], [chmod a-w,a+x bin/cilly.bat])
-m4trace:configure.in:613: -1- AC_CONFIG_FILES([bin/patcher.bat], [chmod a-w,a+x bin/patcher.bat])
-m4trace:configure.in:614: -1- AC_CONFIG_FILES([bin/CilConfig.pm], [chmod a-w bin/CilConfig.pm])
-m4trace:configure.in:615: -1- AC_CONFIG_FILES([doc/index.html], [chmod a-w doc/index.html])
-m4trace:configure.in:616: -1- AC_CONFIG_FILES([doc/header.html], [chmod a-w doc/header.html])
-m4trace:configure.in:617: -1- AC_CONFIG_FILES([ocamlutil/perfcount.c], [chmod a-w ocamlutil/perfcount.c])
-m4trace:configure.in:619: -1- AC_SUBST([LIB@&t@OBJS], [$ac_libobjs])
-m4trace:configure.in:619: -1- AC_SUBST([LTLIBOBJS], [$ac_ltlibobjs])
+configure.in:526: the top level])
+m4trace:configure.in:564: -1- AC_SUBST([ARCHOS])
+m4trace:configure.in:565: -1- AC_SUBST([CILHOME])
+m4trace:configure.in:566: -1- AC_SUBST([HAS_MSVC])
+m4trace:configure.in:567: -1- AC_SUBST([DEFAULT_COMPILER])
+m4trace:configure.in:568: -1- AC_SUBST([DEFAULT_CIL_MODE])
+m4trace:configure.in:569: -1- AC_SUBST([CIL_VERSION_MAJOR])
+m4trace:configure.in:570: -1- AC_SUBST([CIL_VERSION_MINOR])
+m4trace:configure.in:571: -1- AC_SUBST([CIL_VERSION_REV])
+m4trace:configure.in:572: -1- AC_SUBST([CIL_VERSION])
+m4trace:configure.in:573: -1- AC_SUBST([CYCLES_PER_USEC])
+m4trace:configure.in:574: -1- AC_SUBST([HAS_PERFCOUNT])
+m4trace:configure.in:575: -1- AC_SUBST([HAVE_BUILTIN_VA_LIST])
+m4trace:configure.in:576: -1- AC_SUBST([THREAD_IS_KEYWORD])
+m4trace:configure.in:577: -1- AC_SUBST([UNDERSCORE_NAME])
+m4trace:configure.in:578: -1- AC_SUBST([EXTRAFEATURES])
+m4trace:configure.in:579: -1- AC_SUBST([EXTRASRCDIRS])
+m4trace:configure.in:609: -1- AC_CONFIG_FILES([Makefile], [chmod a-w Makefile])
+m4trace:configure.in:610: -1- AC_CONFIG_FILES([cil.spec], [chmod a-w cil.spec])
+m4trace:configure.in:611: -1- AC_CONFIG_FILES([config.mk], [chmod a-w config.mk])
+m4trace:configure.in:612: -1- AC_CONFIG_FILES([test/Makefile], [chmod a-w test/Makefile])
+m4trace:configure.in:613: -1- AC_CONFIG_FILES([bin/cilly.bat], [chmod a-w,a+x bin/cilly.bat])
+m4trace:configure.in:614: -1- AC_CONFIG_FILES([bin/patcher.bat], [chmod a-w,a+x bin/patcher.bat])
+m4trace:configure.in:615: -1- AC_CONFIG_FILES([bin/CilConfig.pm], [chmod a-w bin/CilConfig.pm])
+m4trace:configure.in:616: -1- AC_CONFIG_FILES([doc/index.html], [chmod a-w doc/index.html])
+m4trace:configure.in:617: -1- AC_CONFIG_FILES([doc/header.html], [chmod a-w doc/header.html])
+m4trace:configure.in:618: -1- AC_CONFIG_FILES([ocamlutil/perfcount.c], [chmod a-w ocamlutil/perfcount.c])
+m4trace:configure.in:620: -1- AC_SUBST([LIB@&t@OBJS], [$ac_libobjs])
+m4trace:configure.in:620: -1- AC_SUBST([LTLIBOBJS], [$ac_ltlibobjs])

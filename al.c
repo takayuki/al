@@ -17,7 +17,24 @@
 #include "port.h"
 
 pthread_key_t _al_key;
+int adaptiveMode = 0;
 double transactOvhd = 25.0;
+
+int
+setAdaptMode(int mode)
+{
+  int old = adaptiveMode;
+  adaptiveMode = mode;
+  return old;
+}
+
+double
+setTransactOvhd(double ovhd)
+{
+  double old = transactOvhd;
+  transactOvhd = ovhd;
+  return old;
+}
 
 typedef struct {
   void* (*start)(void*);
@@ -48,10 +65,10 @@ _dispatcher(void* _arg)
 }
 
 int
-_al_pthread_create(pthread_t* thread,
-		   const pthread_attr_t* attr,
-		   void* (*start)(void*),
-		   void* arg)
+al_pthread_create(pthread_t* thread,
+		  const pthread_attr_t* attr,
+		  void* (*start)(void*),
+		  void* arg)
 {
   _dispatch_t* disp;
   
@@ -63,32 +80,23 @@ _al_pthread_create(pthread_t* thread,
   return pthread_create(thread,attr,_dispatcher,disp);
 }
 
-static int
+int
 transactMode(_profile_t* prof)
 {
-  intptr_t threadsInStmMode = 0 < prof->lockHeld ? prof->lockHeld : 0;
-  double avgTries = ((double)prof->tries) / (prof->commit+1);
-  double contention = threadsInStmMode + prof->threadsWaiting;
+  int threadsInStmMode;
+  double avgTries,contention;
+
+  if (adaptiveMode == -1) return 0;
+  if (adaptiveMode == 1) return 1;
+  if (0 < prof->lockHeld) threadsInStmMode =  prof->lockHeld;
+  else threadsInStmMode = 0;
+  if (prof->commit == 0) avgTries =  1.0;
+  else avgTries = ((double)prof->tries) / prof->commit;
+  contention  = threadsInStmMode + prof->threadsWaiting;
   return (avgTries * transactOvhd) < contention;
 }
 
-int
-isInStmMode(void)
-{
-  _thread_t *self;
-  assert((self = pthread_getspecific(_al_key)));
-  return 1 <= self->nestLevel;
-}
-
-int
-isInLockMode(void)
-{
-  _thread_t *self;
-  assert((self = pthread_getspecific(_al_key)));
-  return self->nestLevel == -1;
-}
-
-static void
+void
 busy(void)
 {
 #if HAVE_SCHED_YIELD	
@@ -98,89 +106,7 @@ busy(void)
 #endif
 }
 
-static const int default_spins = 100;
-
-void*
-al(_profile_t* prof,
-   void* (*rawfunc)(void*),
-   void* (*stmfunc)(Thread*,void*),
-   void* arg,
-   int ro)
-{
-  _thread_t *self;
-  intptr_t tmp;
-  sigjmp_buf buf;
-  int cnt = default_spins;
-  void* ret;
-
-  assert((self = pthread_getspecific(_al_key)));
-  assert(self->nestLevel == 0);
-  if (transactMode(prof)) {
-    inc(prof->threadsWaiting);
-    while ((tmp = load(prof->lockHeld)) == ~0 ||
-	   CAS(prof->lockHeld,tmp,tmp+1) != tmp) {
-      if (--cnt <= 0) {
-	busy(); cnt = default_spins;
-      }
-    }
-    dec(prof->threadsWaiting);
-    inc(self->nestLevel);
-    sigsetjmp(buf,1);
-    inc(prof->tries);
-    TxStart(self->stmThread,&buf,&ro);
-    ret = stmfunc(self->stmThread,arg);
-    TxCommit(self->stmThread);
-    inc(prof->commit);
-    dec(self->nestLevel);
-    DEC(prof->lockHeld);
-  } else {
-    inc(prof->invokeInLockMode);
-    inc(prof->threadsWaiting);
-    if (load(prof->lockHeld) != 0 ||
-	CAS(prof->lockHeld,0,~0) != 0) {
-      inc(prof->waitLock);
-      while (load(prof->lockHeld) != 0 ||
-	     CAS(prof->lockHeld,0,~0) != 0)
-	if (--cnt <= 0) {
-	  busy(); cnt = default_spins;
-	}
-    }
-    dec(prof->threadsWaiting);
-    self->nestLevel = -1;
-    ret = rawfunc(arg);
-    self->nestLevel = 0;
-    INC(prof->lockHeld);
-  }
-  return ret;
-}
-
-void*
-mallocInStm(size_t size)
-{
-  _thread_t *self;
-  assert((self = pthread_getspecific(_al_key)));
-  return TxAlloc(self->stmThread,size);
-}
-
-void
-freeInStm(void* ptr)
-{
-  _thread_t *self;
-  assert((self = pthread_getspecific(_al_key)));
-  TxFree(self->stmThread,ptr);
-}
-
-void*
-mallocInLock(size_t size)
-{
-  return tmalloc_reserve(size);
-}
-
-void
-freeInLock(void* ptr)
-{
-  return tmalloc_free(ptr);
-}
+/* al() is moved to alx.h */
 
 void
 dump_profile(_profile_t* prof)

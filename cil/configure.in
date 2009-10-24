@@ -96,13 +96,8 @@ if "$CC" 2>&1 | grep "Microsoft" >/dev/null; then
   DEFAULT_COMPILER=_MSVC
   DEFAULT_CIL_MODE=MSVC
 else
-  if cl 2>&1 | grep "Microsoft" >/dev/null ;then
-     AC_MSG_RESULT(found)
-     HAS_MSVC=yes
-  else
-     AC_MSG_RESULT(not found)
-     HAS_MSVC=no
-  fi
+  AC_MSG_RESULT(not found)
+  HAS_MSVC=no
 fi
 
 # is ocaml available?
@@ -473,6 +468,12 @@ case "$target" in
     AC_MSG_RESULT(configuring for SPARC/Solaris)
 
     ARCHOS=sparc_SOLARIS
+    ;;
+
+  *86*solaris*)
+    AC_MSG_RESULT(configuring for x86/Solaris)
+
+    ARCHOS=x86_SOLARIS
     ;;
 
   *)

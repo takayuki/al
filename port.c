@@ -7,10 +7,6 @@
 #include "port.h"
 
 #if defined(__i386__) || defined(__x86_64__)
-#define mb()  __asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
-#define rmb() __asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
-#define wmb() __asm__ __volatile__ ("" : : : "memory")
-
 #ifdef __LP64__
 intptr_t
 __cmpxchg_u64(volatile intptr_t* ptr,intptr_t old,intptr_t new)
@@ -36,16 +32,6 @@ __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 #endif /* __LP64__ */
 #endif /* __i386__ */
 #ifdef __sparc__
-#define membar_safe(type)				\
-  do { __asm__ __volatile__("ba,pt    %%xcc,1f\n\t"	\
-			    "membar   " type "\n"	\
-			    "1:\n"			\
-			    : : : "memory");		\
-  } while (0)
-#define mb()  membar("#LoadLoad | #LoadStore | #StoreStore | #StoreLoad")
-#define rmb() membar("#LoadLoad")
-#define wmb() membar("#StoreStore")
-
 intptr_t
 __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 {

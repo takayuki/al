@@ -2490,15 +2490,9 @@ echo "${ECHO_T}found, set as default" >&6
   DEFAULT_COMPILER=_MSVC
   DEFAULT_CIL_MODE=MSVC
 else
-  if cl 2>&1 | grep "Microsoft" >/dev/null ;then
-     echo "$as_me:$LINENO: result: found" >&5
-echo "${ECHO_T}found" >&6
-     HAS_MSVC=yes
-  else
-     echo "$as_me:$LINENO: result: not found" >&5
+  echo "$as_me:$LINENO: result: not found" >&5
 echo "${ECHO_T}not found" >&6
-     HAS_MSVC=no
-  fi
+  HAS_MSVC=no
 fi
 
 # is ocaml available?
@@ -4309,6 +4303,13 @@ echo "${ECHO_T}configuring for Cygwin on win32/x86" >&6
 echo "${ECHO_T}configuring for SPARC/Solaris" >&6
 
     ARCHOS=sparc_SOLARIS
+    ;;
+
+  *86*solaris*)
+    echo "$as_me:$LINENO: result: configuring for x86/Solaris" >&5
+echo "${ECHO_T}configuring for x86/Solaris" >&6
+
+    ARCHOS=x86_SOLARIS
     ;;
 
   *)

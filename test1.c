@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "al.h"
-
-volatile long cnt[3] = {0,0,0};
+#include <sys/queue.h>
+#include "alx.h"
 
 void
 help(void)
@@ -12,31 +11,37 @@ help(void)
           "usage: test [-hnpx]\n"
           "  -p  number of threads (default: 2)\n"
           "  -n  number of repeats (default: 1000000)\n"
+          "  -l  use lock only\n"
+          "  -t  use transaction only\n"
           "  -x  transactional overhead (default: 25)\n"
           "  -h  show this\n");
   exit(0);
 }
 
+long cnt[3] = {0,0,0};
+
 __attribute__((atomic ("l1")))
-void* 
-incr (void* arg)
+void
+incr(long n)
 {
-  long n; long* p;
+  long* p;
 
   cnt[1]++;
-  p = &cnt[2]; n = (long)arg; *p += n;
-  return 0;
+  p = &cnt[2];
+  *p += n;
+  return;
 }
 
 __attribute__((atomic ("l1")))
-void*
-decr (void* arg)
+void
+decr(long n)
 {
-  long n; long* p;
+  long* p;
 
   cnt[1]++;
-  p = &cnt[2]; n = (long)arg; *p -= n;
-  return 0;
+  p = &cnt[2];
+  *p -= n;
+  return;
 }
 
 void*
@@ -56,11 +61,13 @@ main(int argc,char* argv[])
   pthread_t t[256];
   void* r;
 
-  while ((ch = getopt(argc,argv,"p:n:x:")) != -1) {
+  while ((ch = getopt(argc,argv,"p:n:ltx:")) != -1) {
     switch (ch) {
     case 'n': n = atoi(optarg); break;
     case 'p': p = atoi(optarg); break;
-    case 'x': transactOvhd = atof(optarg); break;
+    case 'l': setAdaptMode(-1); break;
+    case 't': setAdaptMode(1); break;
+    case 'x': setTransactOvhd(atof(optarg)); break;
     case 'h':
     default: help();
     }
@@ -71,6 +78,6 @@ main(int argc,char* argv[])
   if (256 <= p) p = 256;
   for (i = 0; i < p; i++) pthread_create(&t[i],0,task,(void*)n);
   for (i = 0; i < p; i++) pthread_join(t[i],&r);
-  printf("p=%d,n=%d,cnt=[%d,%d]\n",p,n,cnt[1],cnt[2]);
+  printf("p=%d,n=%d,cnt=[%ld,%ld]\n",p,n,cnt[1],cnt[2]);
   return 0;
 }

@@ -505,7 +505,7 @@ s,@CPP@,gcc -E,;t t
 s,@EGREP@,grep -E,;t t
 s,@LIBOBJS@,,;t t
 s,@ARCHOS@,x86_NETBSD,;t t
-s,@CILHOME@,/home/takayuki/assignment/project/al-0.2/cil,;t t
+s,@CILHOME@,/home/takayuki/assignment/project/al-0.3/cil,;t t
 s,@HAS_MSVC@,no,;t t
 s,@DEFAULT_COMPILER@,_GNUCC,;t t
 s,@DEFAULT_CIL_MODE@,GNUCC,;t t
@@ -513,7 +513,7 @@ s,@CIL_VERSION_MAJOR@,1,;t t
 s,@CIL_VERSION_MINOR@,3,;t t
 s,@CIL_VERSION_REV@,6,;t t
 s,@CIL_VERSION@,1.3.6,;t t
-s,@CYCLES_PER_USEC@,1320.000,;t t
+s,@CYCLES_PER_USEC@,1316.438,;t t
 s,@HAS_PERFCOUNT@,1,;t t
 s,@HAVE_BUILTIN_VA_LIST@,true,;t t
 s,@THREAD_IS_KEYWORD@,true,;t t

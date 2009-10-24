@@ -8,6 +8,7 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include "stm.h"
+#include "port.h"
 
 typedef struct {
   Thread* stmThread;
@@ -27,17 +28,13 @@ typedef struct {
 #define PROFILE_INITIALIZER  {0,0,0,0,0,0,0}
 
 int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
-#define pthread_create _al_pthread_create
+#define pthread_create al_pthread_create
 
-extern pthread_key_t _thread_self_key;
-extern double transactOvhd;
-int isInStmMode(void);
-int isInLockMode(void);
-void* al(_profile_t*,void* (*)(void*),void* (*)(Thread*,void*),void*,int);
-void* mallocInStm(size_t);
-void freeInStm(void*);
-void* mallocInLock(size_t);
-void freeInLock(void*);
+extern pthread_key_t _al_key;
+int setAdaptMode(int);
+double setTransactOvhd(double);
+int transactMode(_profile_t*);
+void busy(void);
 void dump_profile(_profile_t*);
 
 #endif

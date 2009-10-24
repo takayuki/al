@@ -926,7 +926,7 @@ TxOnce ()
 
     pthread_key_create(&global_key_self, NULL); /* CCM: do before we register handler */
 
-    registerUseAfterFreeHandler();
+    //registerUseAfterFreeHandler();
 }
 
 
@@ -957,7 +957,7 @@ TxShutdown ()
 
 
 
-    restoreUseAfterFreeHandler();
+    //restoreUseAfterFreeHandler();
 
 
     MEMBARSTLD();
@@ -1848,16 +1848,18 @@ TxLoad (Thread* Self, volatile intptr_t* Addr)
      * TL2 does not permit zombie/doomed txns to run
      */
     volatile vwLock* LockFor = PSLOCK(Addr);
-    vwLock rdv = LDLOCK(LockFor) & ~LOCKBIT;
-    if (rdv <= Self->rv && LDLOCK(LockFor) == rdv) {
+    vwLock rdv = LDLOCK(LockFor);
+    if ((rdv & LOCKBIT) == 0 && rdv <= Self->rv) {
         if (!Self->IsRO) {
             TrackLoad(Self, LockFor);
         }
         MEMBARLDLD();
         Valu = LDNF(Addr);
         MEMBARLDLD();
-        PROF_STM_READ_END();
-        return Valu;
+	if (LDLOCK(LockFor) == rdv) {
+	    PROF_STM_READ_END();
+	    return Valu;
+	}
     }
 
     /*
