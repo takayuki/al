@@ -417,7 +417,7 @@ Yield(void)
       if (lockMode(prev) == 0) {					\
 	if (lockHeld(prev) == 0) {					\
 	  useTransact = 1;						\
-	  next = setThrdsInStmMode(prev,thrdsInStmMode(prev)+1);	\
+	  next = setThrdsInStmMode(prev,1);				\
 	  next = setTransition(next,0);					\
 	  assert(lockMode(next) == 0);					\
 	  assert(lockHeld(next) == 0);					\
@@ -426,7 +426,7 @@ Yield(void)
 	  if (CAS(lock->state,prev,next) == prev) break;		\
 	}								\
       } else {								\
-	if (lockHeld(prev) == 0 && thrdsInStmMode(prev) == 0) {		\
+	if (thrdsInStmMode(prev) == 0) {				\
 	  useTransact = 0;						\
 	  next = setLockHeld(prev,1);					\
 	  next = setTransition(next,0);					\
