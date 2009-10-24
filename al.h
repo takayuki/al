@@ -69,22 +69,24 @@ int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 #define pthread_create al_pthread_create
 
 extern pthread_key_t _al_key;
-int setAdaptMode(int);
-int setLockScheme(int);
+void setAdaptMode(int);
+void setTranxOvhd(int);
+void setTranxOvhdScale(int);
+void setLockScheme(int);
 int getLockScheme(void);
-double setTransactOvhd(double);
 int enterCritical_0(al_t*);
 int enterCritical_1(al_t*);
 void exitCritical_0(al_t*);
 void exitCritical_1(al_t*);
+unsigned long Random(unsigned long*);
 void TxStoreSized(Thread*,intptr_t*,intptr_t*,size_t);
 void TxLoadSized(Thread*,intptr_t*,intptr_t*,size_t);
 #ifdef HAVE_GETHRTIME
 void timer_start(hrtime_t*);
-void timer_stop(hrtime_t*,hrtime_t*);
+void timer_stop(hrtime_t*,hrtime_t*,al_t*,int);
 #else
 void timer_start(struct timeval*);
-void timer_stop(struct timeval*,struct timeval*);
+void timer_stop(struct timeval*,struct timeval*,al_t*,int);
 #endif
 void dump_profile(al_t*);
 

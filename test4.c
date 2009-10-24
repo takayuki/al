@@ -15,24 +15,25 @@ help(void)
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
           "  -s  lock scheme (default: 1)\n"
-          "  -x  transactional overhead (default: 5.0)\n"
+          "  -x  transactional overhead x10 (default: 50)\n"
           "  -h  show this\n");
   exit(0);
 }
 
 SPLAY_HEAD(TREE,tree_node) tab = SPLAY_INITIALIZER(tab);
 
-struct tree_node {
+typedef struct tree_node {
   long key;
-  long val;
+  long value;
   SPLAY_ENTRY(tree_node) links;
-};
+} tree_node;
 
 __attribute__((atomic ("l1")))
 int
-node_cmp(struct tree_node* x,struct tree_node* y)
+node_cmp(tree_node* x,tree_node* y)
 {
-  if (x == 0 || y == 0) abort();
+  if (x == 0 || y == 0)
+    abort();
   return x->key - y->key;
 }
 
@@ -40,39 +41,31 @@ SPLAY_PROTOTYPE(TREE,tree_node,links,node_cmp,"l1");
 SPLAY_GENERATE(TREE,tree_node,links,node_cmp,"l1");
 
 __attribute__((atomic ("l1")))
-void
-add(long n)
+tree_node*
+insert(tree_node* node)
 {
-  struct tree_node* r;
-  
-  if ((r = (struct tree_node*)malloc(sizeof(*r))) == 0)
-    abort();
-  r->key = n;
-  r->val = n+1;
-  TREE_SPLAY_INSERT(&tab,r);
-  return;
+  return TREE_SPLAY_INSERT(&tab,node);
 }
 
 __attribute__((atomic ("l1")))
-struct tree_node*
-del(long n)
+tree_node*
+delete(long n)
 {
-  struct tree_node find;
-  struct tree_node* r;
+  tree_node find;
+  tree_node* r;
 
   find.key = n;
-  if ((r = TREE_SPLAY_FIND(&tab, &find)))
+  if ((r = TREE_SPLAY_FIND(&tab,&find)))
     return TREE_SPLAY_REMOVE(&tab,r);
   else
     return 0;
 }
 
 __attribute__((atomic ("l1")))
-struct tree_node*
-lookup(long n)
+tree_node*
+find(long n)
 {
-  struct tree_node find;
-
+  tree_node find;
   find.key = n;
   return TREE_SPLAY_FIND(&tab, &find);
 }
@@ -85,18 +78,33 @@ task(void* arg)
 {
   unsigned short id = (unsigned short)(unsigned int)arg;
   long n = iter;
-  long t;
-  unsigned short xseed[3] = {id,id,id};
+  long key;
+  tree_node* node;
+  unsigned long seed = id;
   unsigned long rand;
 
   while (n--) {
-    rand = nrand48(xseed);
-    t = rand % 1000;
-    rand = nrand48(xseed);
+    rand = Random(&seed);
+    key = rand % 1000;
+    rand = Random(&seed);
+    rand >>= 6;
     switch(rand%4) {
-    case 0: add(t); break;
-    case 1: del(t); break;
-    default: lookup(t); break;
+    case 0:
+      if ((node = malloc(sizeof(tree_node))) == 0)
+	abort();
+      node->key = key;
+      node->value = key;
+      if (insert(node))
+	free(node);
+      break;
+    case 1:
+      node = delete(key);
+      if (node)
+	free(node);
+      break;
+    default:
+      find(key);
+      break;
     }
   }
   return 0;
@@ -106,7 +114,7 @@ void*
 validate(void* arg)
 {
   int flag = (int)arg;
-  struct tree_node *p;
+  tree_node *p;
   long a = 0,b = 0,c = 0;
 
   setAdaptMode(-1);
@@ -142,7 +150,7 @@ invoke(void* arg)
   ret = task(arg);
   pthread_mutex_lock(&totalMutex);
   totalThreads--;
-  if (totalThreads == 0) timer_stop(&start,&totalElapse);
+  if (totalThreads == 0) timer_stop(&start,&totalElapse,0,0);
   pthread_mutex_unlock(&totalMutex);
   return ret;
 }
@@ -163,7 +171,7 @@ main(int argc,char* argv[])
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
     case 's': setLockScheme(atoi(optarg)); break;
-    case 'x': setTransactOvhd(atof(optarg)); break;
+    case 'x': setTranxOvhd(atoi(optarg)); break;
     case 'h':
     default: help();
     }

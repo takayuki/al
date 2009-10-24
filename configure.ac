@@ -1,4 +1,4 @@
-AC_INIT([CIS 609 Final Project],[0.9],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.10],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -10,9 +10,12 @@ AC_ARG_ENABLE([m32],[AS_HELP_STRING([--enable-m32],[generate 32-bit code])],
               [CFLAGS="-m32 $CFLAGS"; LDFLAGS="$LDFLAGS -m32"])
 AC_ARG_ENABLE([m64],[AS_HELP_STRING([--enable-m64],[generate 64-bit code])],
               [CFLAGS="-m64 $CFLAGS"; LDFLAGS="$LDFLAGS -m64"])
+AC_ARG_ENABLE([pg],[AS_HELP_STRING([--enable-pg],[generate code to profile])],
+              [CFLAGS="-pg $CFLAGS"; LDFLAGS="$LDFLAGS -pg"])
 AC_PROG_CC([gcc])
 AC_PROG_INSTALL
-dnl AX_CFLAGS_GCC_OPTION([-Wall])
+AX_CFLAGS_GCC_OPTION([-Winline])
+AX_CFLAGS_GCC_OPTION([-O3])
 AX_CFLAGS_GCC_OPTION([-mcpu=v9])
 AC_CHECK_HEADERS([inttypes.h])
 AC_CHECK_HEADERS([sched.h])

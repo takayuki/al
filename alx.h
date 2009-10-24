@@ -73,14 +73,14 @@ _al_template(void)
 	dec(nest->level);
 	_lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
 	exitCritical_1(_lock);
-	timer_stop(&start,&self->timeSTM);
+	timer_stop(&start,&self->timeSTM,_lock,0);
       } else {
 	timer_start(&start);
 	nest->level = -1;
 	_rawfunc();
 	nest->level = 0;
 	exitCritical_1(_lock);
-	timer_stop(&start,&self->timeRaw);
+	timer_stop(&start,&self->timeRaw,_lock,0);
       }
       break;
     default:
@@ -100,14 +100,14 @@ _al_template(void)
 	  if (CAS(_lock->statistic,prev,next) == prev) break;
 	}
 	exitCritical_0(_lock);
-	timer_stop(&start,&self->timeSTM);
+	timer_stop(&start,&self->timeSTM,_lock,1);
       } else {
 	timer_start(&start);
 	nest->level = -1;
 	_rawfunc();
 	nest->level = 0;
 	exitCritical_0(_lock);
-	timer_stop(&start,&self->timeRaw);
+	timer_stop(&start,&self->timeRaw,_lock,0);
       }
       break;
     }

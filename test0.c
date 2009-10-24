@@ -15,7 +15,7 @@ help(void)
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
           "  -s  lock scheme (default: 1)\n"
-          "  -x  transactional overhead (default: 5.0)\n"
+          "  -x  transactional overhead x10 (default: 50)\n"
           "  -f  power number of locks (default: 0(single lock))\n"
           "  -h  show this\n");
   exit(0);
@@ -47,10 +47,11 @@ task(void* arg)
 {
   unsigned short id = (unsigned short)(unsigned long)arg;
   long n = iter;
-  unsigned short xseed[3] = {id,id,id};
+  unsigned long seed = id;
 
-  while (n--)
-    empty(nrand48(xseed));
+  while (n--) {
+    empty(Random(&seed));
+  }
   return 0;
 }
 
@@ -76,7 +77,7 @@ invoke(void* arg)
   ret = task(arg);
   pthread_mutex_lock(&totalMutex);
   totalThreads--;
-  if (totalThreads == 0) timer_stop(&start,&totalElapse);
+  if (totalThreads == 0) timer_stop(&start,&totalElapse,0,0);
   pthread_mutex_unlock(&totalMutex);
   return ret;
 }
@@ -97,7 +98,7 @@ main(int argc,char* argv[])
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
     case 's': setLockScheme(atoi(optarg)); break;
-    case 'x': setTransactOvhd(atof(optarg)); break;
+    case 'x': setTranxOvhd(atoi(optarg)); break;
     case 'f': NLOCKS = 1<<atoi(optarg); LOCKMASK = NLOCKS-1; break;
     case 'h':
     default: help();

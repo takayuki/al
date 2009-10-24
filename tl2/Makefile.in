@@ -37,7 +37,7 @@ default: $(LIBTL2)
 
 .PHONY: clean
 clean:
-	$(RM) $(LIBTL2) $(OBJS) *~ core *.core
+	$(RM) $(LIBTL2) $(OBJS) *~ gmon.out core *.core
 
 .PHONY: distclean
 distclean: clean

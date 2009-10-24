@@ -15,7 +15,7 @@ help(void)
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
           "  -s  lock scheme (default: 1)\n"
-          "  -x  transactional overhead (default: 5.0)\n"
+          "  -x  transactional overhead x10 (default: 50)\n"
           "  -h  show this\n");
   exit(0);
 }
@@ -71,7 +71,7 @@ invoke(void* arg)
   ret = task(arg);
   pthread_mutex_lock(&totalMutex);
   totalThreads--;
-  if (totalThreads == 0) timer_stop(&start,&totalElapse);
+  if (totalThreads == 0) timer_stop(&start,&totalElapse,0,0);
   pthread_mutex_unlock(&totalMutex);
   return ret;
 }
@@ -92,7 +92,7 @@ main(int argc,char* argv[])
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
     case 's': setLockScheme(atoi(optarg)); break;
-    case 'x': setTransactOvhd(atof(optarg)); break;
+    case 'x': setTranxOvhd(atoi(optarg)); break;
     case 'h':
     default: help();
     }

@@ -7,6 +7,8 @@ AC_ARG_ENABLE([m32],[AS_HELP_STRING([--enable-m32],[generate 32-bit code])],
               [CFLAGS="-m32 $CFLAGS"; LDFLAGS="$LDFLAGS -m32"])
 AC_ARG_ENABLE([m64],[AS_HELP_STRING([--enable-m64],[generate 64-bit code])],
               [CFLAGS="-m64 $CFLAGS"; LDFLAGS="$LDFLAGS -m64"])
+AC_ARG_ENABLE([pg],[AS_HELP_STRING([--enable-pg],[generate code to profile])],
+              [CFLAGS="-pg $CFLAGS"; LDFLAGS="$LDFLAGS -pg"])
 AC_PROG_CC([gcc])
 AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-Winline])

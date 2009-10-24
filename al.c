@@ -20,35 +20,36 @@
 #include "queue.h"
 
 pthread_key_t _al_key;
-static int adaptiveMode = 0;
-static double transactOvhd = 5.0;
+static int adaptMode = 0;
+static int tranxOvhd = 50;
+static int tranxOvhdScale = 10;
 static double timeSTM = 0.0;
 static double timeRaw = 0.0;
 static pthread_mutex_t timeMutex = PTHREAD_MUTEX_INITIALIZER;  
 static int lockScheme = 1;
 
-int
+void
 setAdaptMode(int mode)
 {
-  int old = adaptiveMode;
-  adaptiveMode = mode;
-  return old;
+  adaptMode = mode;
 }
 
-double
-setTransactOvhd(double ovhd)
+void
+setTranxOvhd(int ovhd)
 {
-  double old = transactOvhd;
-  transactOvhd = ovhd;
-  return old;
+  tranxOvhd = ovhd;
 }
 
-int
+void
+setTranxOvhdScale(int scale)
+{
+  tranxOvhdScale = scale;
+}
+
+void
 setLockScheme(int scheme)
 {
-  int old = lockScheme;
   lockScheme = scheme;
-  return old;
 }
 
 int
@@ -102,40 +103,41 @@ al_pthread_create(pthread_t* thread,
   return pthread_create(thread,attr,_dispatcher,disp);
 }
 
-int
+__inline__ int
 transactMode(al_t* lock,int spins)
 {
-  unsigned long state = lock->state;
-  unsigned long statistic = lock->statistic;
+  unsigned long state;
+  unsigned long statistic;
+  unsigned long thrdsInTranx;
+  unsigned long thrdsContend;
   unsigned long triesCommits;
-  unsigned long thrdsInTransact;
-  unsigned long thrdsContending;
-  double Tries;
-  double Commits;
-  double avgTries;
+  unsigned long Tries;
+  unsigned long Commits;
 
-  if (adaptiveMode == -1) return 0;
-  if (adaptiveMode == 1) return 1;
+  if (adaptMode == -1) return 0;
+  if (adaptMode == 1) return 1;
+  state = lock->state;
+  statistic = lock->statistic;
+  thrdsContend = contention(statistic);
+  if (spins == 0) thrdsContend++;
+  thrdsInTranx = thrdsInStmMode(state);
+  if (0 < thrdsInTranx) thrdsContend += thrdsInTranx;
+  else if (lockHeld(state)) thrdsContend++;
   switch (lockScheme) {
   case 1:
-    thrdsContending = contention(statistic);
-    thrdsInTransact = thrdsInStmMode(state);
-    if (0 < thrdsInTransact) thrdsContending += thrdsInTransact;
-    if (lockHeld(state)) thrdsContending++;
-    if (spins == 0) thrdsContending++;
     triesCommits = lock->triesCommits;
-    Tries = (double)tries(triesCommits);
-    Commits = (double)commits(triesCommits);
+    Tries = tries(triesCommits);
+    Commits = commits(triesCommits);
     break;
   default:
-    thrdsContending = contention(statistic);
-    Tries = (double)tries(statistic);
-    Commits = (double)commits(statistic);
+    Tries = tries(statistic);
+    Commits = commits(statistic);
     break;
   }
-  if (!(0 < Commits)) avgTries =  1.0;
-  else avgTries = Tries / Commits;
-  return (avgTries * transactOvhd) < (double)thrdsContending;
+  if (0 == Commits) {
+    Commits = 1; Tries = 1;
+  }
+  return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
 }
 
 void
@@ -278,6 +280,12 @@ exitCritical_1(al_t* lock)
     RELEASE();
 }
 
+unsigned long
+Random(unsigned long* next)
+{
+  return (*next = *next * 1103515245 + 12345) % ((unsigned long)RAND_MAX + 1);
+}
+
 void
 TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 {
@@ -312,11 +320,13 @@ timer_start(hrtime_t* start)
 }
 
 void
-timer_stop(hrtime_t* start,hrtime_t* acc)
+timer_stop(hrtime_t* start,hrtime_t* acc,al_t* lock,int stmMode)
 {
   hrtime_t stop;
+
   stop = gethrtime();
-  *acc += stop - *start;
+  stop -= *start;
+  *acc += stop;
 }
 #else
 void
@@ -330,7 +340,7 @@ timer_start(struct timeval* start)
 }
 
 void
-timer_stop(struct timeval* start,struct timeval* acc)
+timer_stop(struct timeval* start,struct timeval* acc,al_t* lock,int stmMode)
 {
   int status;
   struct timeval stop;

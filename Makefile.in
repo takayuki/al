@@ -31,16 +31,16 @@ CILLYFLAGS = --keepunused --doatomic --save-temps #--check
 
 all: subdirs test0 test1 test2 test3 test4
 
-test0: test0.o al.o port.o
-	$(CC) $(LDFLAGS) -o test0 test0.o al.o port.o $(LIBS)
+test0: test0.o al.o port.o fmt_ulong.o
+	$(CC) $(LDFLAGS) -o test0 test0.o al.o port.o fmt_ulong.o $(LIBS)
 test1: test1.o al.o port.o
-	$(CC) $(LDFLAGS) -o test1 test1.o al.o port.o $(LIBS)
+	$(CC) $(LDFLAGS) -o test1 test1.o al.o port.o fmt_ulong.o $(LIBS)
 test2: test2.o al.o port.o
-	$(CC) $(LDFLAGS) -o test2 test2.o al.o port.o $(LIBS)
+	$(CC) $(LDFLAGS) -o test2 test2.o al.o port.o fmt_ulong.o $(LIBS)
 test3: test3.o al.o port.o
-	$(CC) $(LDFLAGS) -o test3 test3.o al.o port.o $(LIBS)
+	$(CC) $(LDFLAGS) -o test3 test3.o al.o port.o fmt_ulong.o $(LIBS)
 test4: test4.o al.o port.o
-	$(CC) $(LDFLAGS) -o test4 test4.o al.o port.o $(LIBS)
+	$(CC) $(LDFLAGS) -o test4 test4.o al.o port.o fmt_ulong.o $(LIBS)
 
 check: atomic.cmo test1.check test2.check test3.check test4.check
 
@@ -70,7 +70,7 @@ subdirs:
 
 clean:
 	rm -f *.cmi *.cmo *.cmx *.cil.c *.cil.i *.i bench.dat
-	rm -f test? *.o *.check *~ core *.core
+	rm -f test? *.o *.check *~ gmon.out core *.core
 
 distclean: clean
 	for dir in $(SUBDIRS); do\

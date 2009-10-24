@@ -805,6 +805,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-m32            generate 32-bit code
   --enable-m64            generate 64-bit code
+  --enable-pg             generate code to profile
 
 Some influential environment variables:
   CC          C compiler command
@@ -1376,6 +1377,11 @@ fi;
 if test "${enable_m64+set}" = set; then
   enableval="$enable_m64"
   CFLAGS="-m64 $CFLAGS"; LDFLAGS="$LDFLAGS -m64"
+fi;
+# Check whether --enable-pg or --disable-pg was given.
+if test "${enable_pg+set}" = set; then
+  enableval="$enable_pg"
+  CFLAGS="-pg $CFLAGS"; LDFLAGS="$LDFLAGS -pg"
 fi;
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
