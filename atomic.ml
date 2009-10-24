@@ -20,7 +20,7 @@ let findFunc name =
 let findSymbol name =
   try List.assoc name !symbol_list
   with Not_found -> E.s (E.bug "symbol '%s' is not found in runtime" name)
-let profile_t () = findType "profile_t"
+let al_t () = findType "al_t"
 
 class collectGlobals = object
   inherit nopCilVisitor
@@ -28,7 +28,7 @@ class collectGlobals = object
   method vglob g = match g with
   | GType(t,_) when t.tname = "intptr_t" ->
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
-  | GType(t,_) when t.tname = "profile_t" ->
+  | GType(t,_) when t.tname = "al_t" ->
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
   | GType(t,_) when t.tname = "thread_t" ->
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
@@ -240,10 +240,10 @@ class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
   method vinst i =
     let prefix = "" in
     match vs with
-      [prof;rawfunc;stmfunc] ->
+      [lock;rawfunc;stmfunc] ->
       (match i with
-       | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"prof") ->
-           ChangeTo([Set((Var v,NoOffset),mkAddrOf(var prof),loc)])
+       | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"lock") ->
+           ChangeTo([Set((Var v,NoOffset),mkAddrOf(var lock),loc)])
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"ro") && ro ->
            ChangeTo([Set((Var v,NoOffset),one,loc)])
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"ro") && not ro ->
@@ -321,7 +321,7 @@ let findAtomic = function
           let p,q = try findLock lock,[]
                     with Not_found ->
                     (let p = makeGlobalVar
-                             ("_"^lock^"_prof") (profile_t()) in
+                             ("_"^lock^"_lock") (al_t()) in
                      lock_list := (lock,p) :: !lock_list;
                      let c = buildInit (f,loc,p) in
                      let d = buildAtExit (f,loc,p) in

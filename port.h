@@ -27,9 +27,9 @@ intptr_t cmpxchg(volatile intptr_t*,intptr_t,intptr_t);
 intptr_t fetch_and_add1(volatile intptr_t*);
 intptr_t fetch_and_sub1(volatile intptr_t*);
 
-#define CAS(var,old,new)  cmpxchg(&(var),(old),(new))
-#define INC(var)          fetch_and_add1(&(var))
-#define DEC(var)          fetch_and_sub1(&(var))
+#define CAS(var,old,new)  cmpxchg((volatile intptr_t*)&(var),(old),(new))
+#define INC(var)          fetch_and_add1((volatile intptr_t*)&(var))
+#define DEC(var)          fetch_and_sub1((volatile intptr_t*)&(var))
 #define inc(var)          (((intptr_t)var)++)
 #define dec(var)          (((intptr_t)var)--)
 

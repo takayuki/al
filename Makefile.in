@@ -69,7 +69,7 @@ subdirs:
 	done
 
 clean:
-	rm -f *.cmi *.cmo *.cmx *.cil.c *.cil.i *.i
+	rm -f *.cmi *.cmo *.cmx *.cil.c *.cil.i *.i bench.dat
 	rm -f test? *.o *.check *~ core *.core
 
 distclean: clean

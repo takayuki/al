@@ -81,7 +81,7 @@ static int iter = 100000;
 void*
 task(void* arg)
 {
-  unsigned short id = (unsigned short)(unsigned int)arg;
+  unsigned short id = (unsigned short)arg;
   long n = iter;
   long t;
   unsigned short xseed[3] = {id,id,id};

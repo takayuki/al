@@ -22,14 +22,16 @@ invoke() {
 }
 
 bench() {
-  proc="./test3"; n=100000; r=3
+  proc="./test2"; n=100000; r=3
+  #proc="./test3"; n=100000; r=3
+  #proc="./test4"; n=10000; r=3
   for m in "-t" "-l" "-a"; do
     for p in 1 2 4 8 16 32 64; do
       i=1;
       while expr $i \<= $r >/dev/null; do
         invoke $proc $p $n $m; i=`expr $i + 1`
       done | \
-      sort -n | \
+      sort -n | head -2 | tail -1 | \
       while read l; do
         printf "%s," $l;
       done

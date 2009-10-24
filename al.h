@@ -17,7 +17,7 @@ typedef struct {
   volatile unsigned long state;
   volatile unsigned long statistic;
   volatile unsigned long triesCommits;
-} profile_t;
+} al_t;
 
 #define lockMode(x)		((x)&0x80000000UL)
 #define lockHeld(x)		((x)&0x40000000UL)
@@ -46,7 +46,7 @@ typedef struct {
     (_x|_c);})
 
 typedef struct _nest_t {
-  profile_t* prof;
+  al_t* lock;
   long level;
   SLIST_ENTRY(_nest_t) next;
 } nest_t;
@@ -60,10 +60,10 @@ typedef struct {
   struct timeval timeRaw;
   struct timeval timeSTM;
 #endif
-  SLIST_HEAD(,_nest_t) prof_list;
+  SLIST_HEAD(,_nest_t) lock_list;
 } thread_t;
 
-#define PROFILE_INITIALIZER  {0,0,0,0,0,0,0}
+#define AL_INITIALIZER  {0,0,0,0}
 
 int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 #define pthread_create al_pthread_create
@@ -71,8 +71,10 @@ int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 extern pthread_key_t _al_key;
 int setAdaptMode(int);
 double setTransactOvhd(double);
-int transactMode(profile_t*);
+int transactMode(al_t*);
 void Yield(void);
+int enterCritical(al_t*);
+void exitCritical(al_t*);
 void TxStoreSized(Thread*,intptr_t*,intptr_t*,size_t);
 void TxLoadSized(Thread*,intptr_t*,intptr_t*,size_t);
 #ifdef HAVE_GETHRTIME
@@ -82,6 +84,6 @@ void timer_stop(hrtime_t*,hrtime_t*);
 void timer_start(struct timeval*);
 void timer_stop(struct timeval*,struct timeval*);
 #endif
-void dump_profile(profile_t*);
+void dump_profile(al_t*);
 
 #endif

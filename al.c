@@ -66,7 +66,7 @@ _dispatcher(void* _arg)
     return (void*)EAGAIN;
   }
   TxInitThread(self->stmThread,(long)pthread_self());
-  SLIST_INIT(&self->prof_list);
+  SLIST_INIT(&self->lock_list);
   pthread_setspecific(_al_key,self);
   return start(arg);
 }
@@ -88,11 +88,11 @@ al_pthread_create(pthread_t* thread,
 }
 
 int
-transactMode(profile_t* prof)
+transactMode(al_t* lock)
 {
-  unsigned long state = prof->state;
-  unsigned long statistic = prof->statistic;
-  unsigned long triesCommits = prof->triesCommits;
+  unsigned long state = lock->state;
+  unsigned long statistic = lock->statistic;
+  unsigned long triesCommits = lock->triesCommits;
   double thrdsInTransact = (double)thrdsInStmMode(state);
   double thrdsContending = (double)contention(statistic);
   double Tries = (double)tries(triesCommits);
@@ -118,7 +118,107 @@ Yield(void)
 #endif
 }
 
-/* al() is moved to alx.h */
+int
+enterCritical(al_t* lock)
+{
+  intptr_t prev,next;
+  int spins;
+  int spin_thrld = 100;
+  int useTransact;
+
+  spins = 0;
+  while (1) {
+    prev = lock->state;
+    if (transition(prev) == 0) {
+      if ((useTransact = transactMode(lock))) {
+	if (lockHeld(prev) == 0) {
+	  next = setLockMode(prev,0);
+	  next = setThrdsInStmMode(next,thrdsInStmMode(next)+1);
+	  assert(lockMode(next) == 0);
+	  assert(lockHeld(next) == 0);
+	  assert(thrdsInStmMode(next));
+	  assert(transition(next) == 0);
+	  if (CAS(lock->state,prev,next) == prev) break;
+	} else {
+	  next = setLockMode(prev,0);
+	  next = setTransition(next,1);
+	  assert(lockMode(next) == 0);
+	  assert(lockHeld(next));
+	  assert(thrdsInStmMode(next) == 0);
+	  assert(transition(next));
+	  CAS(lock->state,prev,next);
+	}
+      } else {
+	if (lockHeld(prev) == 0 && thrdsInStmMode(prev) == 0) {
+	  next = setLockMode(prev,1);
+	  next = setLockHeld(next,1);
+	  assert(lockMode(next));
+	  assert(lockHeld(next));
+	  assert(thrdsInStmMode(next) == 0);
+	  assert(transition(next) == 0);
+	  if (CAS(lock->state,prev,next) == prev) break;
+	} else if (lockMode(prev) == 0) {
+	  next = setLockMode(prev,1);
+	  next = setTransition(next,1);
+	  assert(lockMode(next));
+	  assert(lockHeld(next) == 0);
+	  assert(thrdsInStmMode(next));
+	  assert(transition(next));
+	  CAS(lock->state,prev,next);
+	}
+      }
+    } else {
+      if (lockMode(prev) == 0) {
+	if (lockHeld(prev) == 0) {
+	  useTransact = 1;
+	  next = setThrdsInStmMode(prev,thrdsInStmMode(prev)+1);
+	  next = setTransition(next,0);
+	  assert(lockMode(next) == 0);
+	  assert(lockHeld(next) == 0);
+	  assert(thrdsInStmMode(next));
+	  assert(transition(next) == 0);
+	  if (CAS(lock->state,prev,next) == prev) break;
+	}
+      } else {
+	if (lockHeld(prev) == 0 && thrdsInStmMode(prev) == 0) {
+	  useTransact = 0;
+	  next = setLockHeld(prev,1);
+	  next = setTransition(next,0);
+	  assert(lockMode(next));
+	  assert(lockHeld(next));
+	  assert(thrdsInStmMode(next) == 0);
+	  assert(transition(next) == 0);
+	  if (CAS(lock->state,prev,next) == prev) break;
+	}
+      }
+    }
+    if (spins == 0) INC(lock->statistic);
+    if (spin_thrld < ++spins) Yield();
+  }
+  if (0 < spins) DEC(lock->statistic);
+  return useTransact;
+}
+
+void
+exitCritical(al_t* lock)
+{
+  intptr_t prev,next;
+
+  while (1) {
+    prev = lock->state;
+    if (lockHeld(prev) == 0) {
+      assert(lockHeld(prev) == 0);
+      assert(thrdsInStmMode(prev));
+      next = setThrdsInStmMode(prev,thrdsInStmMode(prev)-1);
+      if (CAS(lock->state,prev,next) == prev) break;
+    } else {
+      assert(lockHeld(prev));
+      assert(thrdsInStmMode(prev) == 0);
+      next = setLockHeld(prev,0);
+      if (CAS(lock->state,prev,next) == prev) break;
+    }
+  }
+}
 
 void
 TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
@@ -199,9 +299,9 @@ timer_stop(struct timeval* start,struct timeval* acc)
 #endif
 
 void
-dump_profile(profile_t* prof)
+dump_profile(al_t* lock)
 {
-  printf("%s: raw=%.3lf,stm=%.3lf\n",prof->name,timeRaw,timeSTM);
+  printf("%s: raw=%.3lf,stm=%.3lf\n",lock->name,timeRaw,timeSTM);
 }
 
 static void
@@ -220,10 +320,10 @@ destroy_thread(void* arg)
   timeSTM += ((double)self->timeSTM.tv_usec) / 1000000.0;
 #endif
   TxFreeThread(self->stmThread);
-  while (!SLIST_EMPTY(&self->prof_list)) {
+  while (!SLIST_EMPTY(&self->lock_list)) {
     nest_t* nest;
-    nest = SLIST_FIRST(&self->prof_list);
-    SLIST_REMOVE_HEAD(&self->prof_list,next);
+    nest = SLIST_FIRST(&self->lock_list);
+    SLIST_REMOVE_HEAD(&self->lock_list,next);
     free(nest);
   }
   free(arg);

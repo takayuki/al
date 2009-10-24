@@ -26,13 +26,13 @@ help(void)
 typedef unsigned long hash_code;
 
 typedef struct hash_node {
-  SLIST_ENTRY(hash_node) next;
+  LIST_ENTRY(hash_node) next;
   hash_code hash;
   char* key;
   char* value;
 } hash_node;
 
-SLIST_HEAD(bucket_head,hash_node);
+LIST_HEAD(bucket_head,hash_node);
 
 typedef struct {
   struct bucket_head table[NBUCKETS];
@@ -58,6 +58,7 @@ hash_node*
 insert(hash_node* newnode)
 {
   struct bucket_head* head;
+  hash_node* prev;
   hash_node* node;
   hash_code h,h2;
   hash_node* result = 0;
@@ -65,16 +66,20 @@ insert(hash_node* newnode)
   newnode->hash = hash(newnode->key);
   h = newnode->hash;
   head = &t.table[(h & BUCKETMASK)];
-  SLIST_FOREACH(node,head,next) {
+  prev = 0;
+  LIST_FOREACH(node,head,next) {
     h2 = node->hash;
     if (h == h2 && strcmp(newnode->key,node->key) == 0) {
-      SLIST_REMOVE(head,node,hash_node,next);
-      SLIST_INSERT_HEAD(head,newnode,next);
+      LIST_REMOVE(node,next);
+      if (prev) LIST_INSERT_AFTER(prev,newnode,next);
+      else LIST_INSERT_HEAD(head,newnode,next);
       result = node;
       goto done;
     }
+    prev = node;
   }
-  SLIST_INSERT_HEAD(head,newnode,next);
+  if (prev) LIST_INSERT_AFTER(prev,newnode,next);
+  else LIST_INSERT_HEAD(head,newnode,next);
   t.entries++;
  done:
   return result;
@@ -91,10 +96,10 @@ delete(char* key)
 
   h = hash(key);
   head = &t.table[(h & BUCKETMASK)];
-  SLIST_FOREACH(node,head,next) {
+  LIST_FOREACH(node,head,next) {
     h2 = node->hash;
     if (h == h2 && strcmp(key,node->key) == 0) {
-      SLIST_REMOVE(head,node,hash_node,next);
+      LIST_REMOVE(node,next);
       t.entries--;
       result = node;
       goto done;
@@ -115,7 +120,7 @@ find(char* key)
 
   h = hash(key);
   head = &t.table[(h & BUCKETMASK)];
-  SLIST_FOREACH(node,head,next) {
+  LIST_FOREACH(node,head,next) {
     h2 = node->hash;
     if (h == h2 && strcmp(key,node->key) == 0) {
       result = node;
@@ -136,7 +141,7 @@ validate(void* arg)
 
   for (i = 0; i < NBUCKETS; i++) {
     head = &t.table[i];
-    SLIST_FOREACH(node,head,next) {
+    LIST_FOREACH(node,head,next) {
       if (node->hash != hash(node->key))
 	printf("*** Oops, %s(%lx/%lx)\n",
 	       node->key,node->hash,hash(node->key));
@@ -153,7 +158,7 @@ static int iter = 100000;
 void*
 task(void* arg)
 {
-  unsigned short id = (unsigned short)(unsigned int)arg;
+  unsigned short id = (unsigned short)arg;
   long n = iter;
   char key[20];
   hash_node* node;
@@ -162,7 +167,7 @@ task(void* arg)
 
   while (n--) {
     rand = nrand48(xseed);
-    sprintf(key,"k%ld",rand);
+    sprintf(key,"k%ld",(rand % 1000));
     switch(rand%4) {
     case 0:
       if ((node = malloc(sizeof(hash_node))) == 0) abort();
