@@ -17,16 +17,27 @@
 #endif
 #include "stm.h"
 #include "port.h"
-#include "queue.h"
 
-pthread_key_t _al_key;
+#ifdef TLS
+static TLS thread_t* _al_self;
+#endif
+static pthread_key_t _al_key;
 static int adaptMode = 0;
 static int tranxOvhd = 50;
 static int tranxOvhdScale = 10;
 static double timeSTM = 0.0;
 static double timeRaw = 0.0;
 static pthread_mutex_t timeMutex = PTHREAD_MUTEX_INITIALIZER;  
-static int lockScheme = 1;
+
+thread_t*
+thread_self(void)
+{
+#ifdef TLS
+  return _al_self;
+#else
+  return (thread_t*)pthread_getspecific(_al_key);
+#endif
+}
 
 void
 setAdaptMode(int mode)
@@ -35,27 +46,9 @@ setAdaptMode(int mode)
 }
 
 void
-setTranxOvhd(int ovhd)
+setTranxOvhd(double ovhd)
 {
-  tranxOvhd = ovhd;
-}
-
-void
-setTranxOvhdScale(int scale)
-{
-  tranxOvhdScale = scale;
-}
-
-void
-setLockScheme(int scheme)
-{
-  lockScheme = scheme;
-}
-
-int
-getLockScheme(void)
-{
-  return lockScheme;
+  tranxOvhd = ovhd * tranxOvhdScale;
 }
 
 typedef struct {
@@ -75,15 +68,18 @@ _dispatcher(void* _arg)
   self = malloc(sizeof(*self));
   if (self == 0)
     return (void*)EAGAIN;
-  memset(self,0,sizeof(*self));
   self->stmThread = TxNewThread();
   if (self->stmThread == 0) {
     free(self);
     return (void*)EAGAIN;
   }
   TxInitThread(self->stmThread,(long)pthread_self());
-  SLIST_INIT(&self->lock_list);
+  self->lock = 0;
+  self->nestLevel = 0;
   pthread_setspecific(_al_key,self);
+#ifdef TLS
+  _al_self = self;
+#endif
   return start(arg);
 }
 
@@ -103,8 +99,8 @@ al_pthread_create(pthread_t* thread,
   return pthread_create(thread,attr,_dispatcher,disp);
 }
 
-__inline__ int
-transactMode(al_t* lock,int spins)
+int
+transactMode_1(al_t* lock,int spins)
 {
   unsigned long state;
   unsigned long statistic;
@@ -123,17 +119,41 @@ transactMode(al_t* lock,int spins)
   thrdsInTranx = thrdsInStmMode(state);
   if (0 < thrdsInTranx) thrdsContend += thrdsInTranx;
   else if (lockHeld(state)) thrdsContend++;
-  switch (lockScheme) {
-  case 1:
-    triesCommits = lock->triesCommits;
-    Tries = tries(triesCommits);
-    Commits = commits(triesCommits);
-    break;
-  default:
-    Tries = tries(statistic);
-    Commits = commits(statistic);
-    break;
+
+  triesCommits = lock->triesCommits;
+  Tries = tries(triesCommits);
+  Commits = commits(triesCommits);
+
+  if (0 == Commits) {
+    Commits = 1; Tries = 1;
   }
+  return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
+}
+
+int
+transactMode_0(al_t* lock,int spins)
+{
+  unsigned long state;
+  unsigned long statistic;
+  unsigned long thrdsInTranx;
+  unsigned long thrdsContend;
+  unsigned long triesCommits;
+  unsigned long Tries;
+  unsigned long Commits;
+
+  if (adaptMode == -1) return 0;
+  if (adaptMode == 1) return 1;
+  state = lock->state;
+  statistic = lock->statistic;
+  thrdsContend = contention(statistic);
+  if (spins == 0) thrdsContend++;
+  thrdsInTranx = thrdsInStmMode(state);
+  if (0 < thrdsInTranx) thrdsContend += thrdsInTranx;
+  else if (lockHeld(state)) thrdsContend++;
+
+  Tries = tries(statistic);
+  Commits = commits(statistic);
+
   if (0 == Commits) {
     Commits = 1; Tries = 1;
   }
@@ -150,7 +170,7 @@ Yield(void)
 #endif
 }
 
-#define ACQUIRE()							\
+#define ACQUIRE(transactMode)						\
   ({intptr_t prev,next;							\
     prev = lock->state;							\
     if (transition(prev) == 0) {					\
@@ -242,7 +262,7 @@ enterCritical_0(al_t* lock)
   spins = 0;
   INC(lock->statistic);
   while (1) {
-    ACQUIRE();
+    ACQUIRE(transactMode_0);
     if (spin_thrld < ++spins) Yield();
   }
   DEC(lock->statistic);
@@ -258,18 +278,12 @@ enterCritical_1(al_t* lock)
 
   spins = 0;
   while (1) {
-    ACQUIRE();
+    ACQUIRE(transactMode_1);
     if (spins == 0) INC(lock->statistic);
     if (spin_thrld < ++spins) Yield();
   }
   if (0 < spins) DEC(lock->statistic);
   return useTransact;
-}
-
-int
-enterCritical_2(al_t* lock)
-{
-  return 1;
 }
 
 void
@@ -284,11 +298,6 @@ exitCritical_1(al_t* lock)
 {
   while(1)
     RELEASE();
-}
-
-void
-exitCritical_2(al_t* lock)
-{
 }
 
 unsigned long
@@ -436,12 +445,6 @@ destroy_thread(void* arg)
   timeSTM += ((double)self->timeSTM.tv_usec) / 1000000.0;
 #endif
   TxFreeThread(self->stmThread);
-  while (!SLIST_EMPTY(&self->lock_list)) {
-    nest_t* nest;
-    nest = SLIST_FIRST(&self->lock_list);
-    SLIST_REMOVE_HEAD(&self->lock_list,next);
-    free(nest);
-  }
   free(arg);
   pthread_mutex_unlock(&timeMutex);
 }
@@ -456,5 +459,6 @@ init(void)
 __attribute__((destructor)) void
 finish(void)
 {
+  printf("tranxOvhd=%d,tranxOvhdScale=%d\n",tranxOvhd,tranxOvhdScale);
   TxShutdown();
 }

@@ -309,218 +309,6 @@ atomic1(al_t* lock, learner_t* learnerPtr, float baseLogLikelihood)
     return globalBaseLogLikelihood;
 }
 
-__attribute__((atomic))
-bool_t
-atomic4(al_t* lock, operation_t op, net_t* netPtr, long fromId, long toId,
-	bitmap_t* visitedBitmapPtr, queue_t* workQueuePtr)
-{
-    TM_BEGIN();
-    /*
-     * Check if task is still valid
-     */
-    bool_t isTaskValid = TRUE;
-    switch (op) {
-    case OPERATION_INSERT: {
-	if (TMNET_HASEDGE(lock, netPtr, fromId, toId) ||
-	    TMNET_ISPATH(lock,
-			 netPtr,
-			 toId,
-			 fromId,
-			 visitedBitmapPtr,
-			 workQueuePtr))
-	    {
-		isTaskValid = FALSE;
-	    }
-	break;
-    }
-    case OPERATION_REMOVE: {
-	/* Can never create cycle, so always valid */
-	break;
-    }
-    case OPERATION_REVERSE: {
-	/* Temporarily remove edge for check */
-	TMNET_APPLYOPERATION(lock, netPtr, OPERATION_REMOVE, fromId, toId);
-	if (TMNET_ISPATH(lock,
-			 netPtr,
-			 fromId,
-			 toId,
-			 visitedBitmapPtr,
-			 workQueuePtr))
-	    {
-		isTaskValid = FALSE;
-	    }
-	TMNET_APPLYOPERATION(lock, netPtr, OPERATION_INSERT, fromId, toId);
-	break;
-    }
-    default:
-	assert(0);
-    }
-
-#ifdef TEST_LEARNER
-    printf("[task] op=%i from=%li to=%li score=%lf valid=%s\n",
-	   taskPtr->op, taskPtr->fromId, taskPtr->toId, taskPtr->score,
-	   (isTaskValid ? "yes" : "no"));
-    fflush(stdout);
-#endif
-
-    /*
-     * Perform task: update graph and probabilities
-     */
-
-    if (isTaskValid) {
-	TMNET_APPLYOPERATION(lock, netPtr, op, fromId, toId);
-    }
-
-    TM_END();
-    return isTaskValid;
-}
-
-__attribute__((atomic))
-bool_t
-atomic5(al_t* lock, learner_t* learnerPtr, adtree_t* adtreePtr,
-	net_t* netPtr, long fromId, long toId,
-	query_t* queries, vector_t* queryVectorPtr,
-	vector_t* parentQueryVectorPtr, float* localBaseLogLikelihoods)
-{
-    TM_BEGIN();
-    float newBaseLogLikelihood;
-    float deltaLogLikelihood;
-    TMpopulateQueryVectors(lock,
-			   netPtr,
-			   toId,
-			   queries,
-			   queryVectorPtr,
-			   parentQueryVectorPtr);
-    newBaseLogLikelihood =
-	computeLocalLogLikelihood(toId,
-				  adtreePtr,
-				  netPtr,
-				  queries,
-				  queryVectorPtr,
-				  parentQueryVectorPtr);
-    float toLocalBaseLogLikelihood =
-	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
-    deltaLogLikelihood =
-	toLocalBaseLogLikelihood - newBaseLogLikelihood;
-    TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
-		      newBaseLogLikelihood);
-    TM_END();
-    TM_BEGIN();
-    long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
-    TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent + 1));
-    TM_END();
-    return deltaLogLikelihood;
-}
-
-__attribute__((atomic))
-bool_t
-atomic6(al_t* lock, learner_t* learnerPtr, adtree_t* adtreePtr,
-	net_t* netPtr, long fromId, long toId,
-	query_t* queries, vector_t* queryVectorPtr,
-	vector_t* parentQueryVectorPtr, float* localBaseLogLikelihoods)
-{
-    TM_BEGIN();
-    float newBaseLogLikelihood;
-    float deltaLogLikelihood;
-    TMpopulateQueryVectors(lock,
-			   netPtr,
-			   fromId,
-			   queries,
-			   queryVectorPtr,
-			   parentQueryVectorPtr);
-    newBaseLogLikelihood =
-	computeLocalLogLikelihood(fromId,
-				  adtreePtr,
-				  netPtr,
-				  queries,
-				  queryVectorPtr,
-				  parentQueryVectorPtr);
-    float fromLocalBaseLogLikelihood =
-	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
-    deltaLogLikelihood +=
-	fromLocalBaseLogLikelihood - newBaseLogLikelihood;
-    TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
-		      newBaseLogLikelihood);
-    TM_END();
-    TM_BEGIN();
-    long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
-    TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent - 1));
-    TM_END();
-    return deltaLogLikelihood;
-}
-
-__attribute__((atomic))
-bool_t
-atomic7(al_t* lock, learner_t* learnerPtr, adtree_t* adtreePtr,
-	net_t* netPtr, long fromId, long toId,
-	query_t* queries, vector_t* queryVectorPtr,
-	vector_t* parentQueryVectorPtr, float* localBaseLogLikelihoods)
-{
-    TM_BEGIN();
-    float newBaseLogLikelihood;
-    float deltaLogLikelihood;
-    TMpopulateQueryVectors(lock,
-			   netPtr,
-			   fromId,
-			   queries,
-			   queryVectorPtr,
-			   parentQueryVectorPtr);
-    newBaseLogLikelihood =
-	computeLocalLogLikelihood(fromId,
-				  adtreePtr,
-				  netPtr,
-				  queries,
-				  queryVectorPtr,
-				  parentQueryVectorPtr);
-    float fromLocalBaseLogLikelihood =
-	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
-    deltaLogLikelihood =
-	fromLocalBaseLogLikelihood - newBaseLogLikelihood;
-    TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
-		      newBaseLogLikelihood);
-    TM_END();
-    TM_BEGIN();
-    TMpopulateQueryVectors(lock,
-			   netPtr,
-			   toId,
-			   queries,
-			   queryVectorPtr,
-			   parentQueryVectorPtr);
-    newBaseLogLikelihood =
-	computeLocalLogLikelihood(toId,
-				  adtreePtr,
-				  netPtr,
-				  queries,
-				  queryVectorPtr,
-				  parentQueryVectorPtr);
-    float toLocalBaseLogLikelihood =
-	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
-    deltaLogLikelihood +=
-	toLocalBaseLogLikelihood - newBaseLogLikelihood;
-    TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
-		      newBaseLogLikelihood);
-    TM_END();
-    return deltaLogLikelihood;
-}
-
-__attribute__((atomic))
-static float
-atomic8(al_t* lock, learner_t* learnerPtr, float deltaLogLikelihood,
-	long* numTotalParent)
-{
-    float baseLogLikelihood;
-
-    TM_BEGIN();
-    float oldBaseLogLikelihood =
-	(float)TM_SHARED_READ_F(learnerPtr->baseLogLikelihood);
-    float newBaseLogLikelihood = oldBaseLogLikelihood + deltaLogLikelihood;
-    TM_SHARED_WRITE_F(learnerPtr->baseLogLikelihood, newBaseLogLikelihood);
-    baseLogLikelihood = newBaseLogLikelihood;
-    *numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
-    TM_END();
-    return baseLogLikelihood;
-}
-
 static void
 createTaskList (void* argPtr)
 {
@@ -903,7 +691,6 @@ computeLocalLogLikelihood (long id,
                                                           parentQueryVectorPtr);
 
     queries[id].value = QUERY_VALUE_WILDCARD;
-
     return localLogLikelihood;
 }
 
@@ -916,23 +703,23 @@ __attribute__((atomic))
 static learner_task_t
 TMfindBestInsertTask (al_t* lock, findBestTaskArg_t* argPtr)
 {
-    long       toId                     = argPtr->toId;
-    learner_t* learnerPtr               = argPtr->learnerPtr;
-    query_t*   queries                  = argPtr->queries;
-    vector_t*  queryVectorPtr           = argPtr->queryVectorPtr;
-    vector_t*  parentQueryVectorPtr     = argPtr->parentQueryVectorPtr;
-    long       numTotalParent           = argPtr->numTotalParent;
-    float      basePenalty              = argPtr->basePenalty;
-    float      baseLogLikelihood        = argPtr->baseLogLikelihood;
-    bitmap_t*  invalidBitmapPtr         = argPtr->bitmapPtr;
-    queue_t*   workQueuePtr             = argPtr->workQueuePtr;
-    vector_t*  baseParentQueryVectorPtr = argPtr->aQueryVectorPtr;
-    vector_t*  baseQueryVectorPtr       = argPtr->bQueryVectorPtr;
+    long       toId                     = LocalLoad(&argPtr->toId);
+    learner_t* learnerPtr               = LocalLoad(&argPtr->learnerPtr);
+    query_t*   queries                  = LocalLoad(&argPtr->queries);
+    vector_t*  queryVectorPtr           = LocalLoad(&argPtr->queryVectorPtr);
+    vector_t*  parentQueryVectorPtr     = LocalLoad(&argPtr->parentQueryVectorPtr);
+    long       numTotalParent           = LocalLoad(&argPtr->numTotalParent);
+    float      basePenalty              = LocalLoadF(&argPtr->basePenalty);
+    float      baseLogLikelihood        = LocalLoadF(&argPtr->baseLogLikelihood);
+    bitmap_t*  invalidBitmapPtr         = LocalLoad(&argPtr->bitmapPtr);
+    queue_t*   workQueuePtr             = LocalLoad(&argPtr->workQueuePtr);
+    vector_t*  baseParentQueryVectorPtr = LocalLoad(&argPtr->aQueryVectorPtr);
+    vector_t*  baseQueryVectorPtr       = LocalLoad(&argPtr->bQueryVectorPtr);
 
     bool_t status;
-    adtree_t* adtreePtr               = learnerPtr->adtreePtr;
-    net_t*    netPtr                  = learnerPtr->netPtr;
-    float*    localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
+    adtree_t* adtreePtr               = LocalLoad(&learnerPtr->adtreePtr);
+    net_t*    netPtr                  = LocalLoad(&learnerPtr->netPtr);
+    float*    localBaseLogLikelihoods = LocalLoad(&learnerPtr->localBaseLogLikelihoods);
 
     TMpopulateParentQueryVector(lock, netPtr, toId, queries, parentQueryVectorPtr);
 
@@ -964,7 +751,7 @@ TMfindBestInsertTask (al_t* lock, findBestTaskArg_t* argPtr)
 
     list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, toId);
 
-    long maxNumEdgeLearned = global_maxNumEdgeLearned;
+    long maxNumEdgeLearned = LocalLoad(&global_maxNumEdgeLearned);
 
     if ((maxNumEdgeLearned < 0) ||
         (TMLIST_GETSIZE(lock, parentIdListPtr) <= maxNumEdgeLearned))
@@ -1023,10 +810,10 @@ TMfindBestInsertTask (al_t* lock, findBestTaskArg_t* argPtr)
     bestTask.score  = 0.0;
 
     if (bestFromId != toId) {
-        long numRecord = adtreePtr->numRecord;
+        long numRecord = LocalLoad(&adtreePtr->numRecord);
         long numParent = TMLIST_GETSIZE(lock, parentIdListPtr) + 1;
         float penalty =
-            (numTotalParent + numParent * global_insertPenalty) * basePenalty;
+            (numTotalParent + numParent * LocalLoad(&global_insertPenalty)) * basePenalty;
         float logLikelihood = numRecord * (baseLogLikelihood +
                                            + bestLocalLogLikelihood
                                            - oldLocalLogLikelihood);
@@ -1047,20 +834,20 @@ __attribute__((atomic))
 static learner_task_t
 TMfindBestRemoveTask (al_t* lock, findBestTaskArg_t* argPtr)
 {
-    long       toId                     = argPtr->toId;
-    learner_t* learnerPtr               = argPtr->learnerPtr;
-    query_t*   queries                  = argPtr->queries;
-    vector_t*  queryVectorPtr           = argPtr->queryVectorPtr;
-    vector_t*  parentQueryVectorPtr     = argPtr->parentQueryVectorPtr;
-    long       numTotalParent           = argPtr->numTotalParent;
-    float      basePenalty              = argPtr->basePenalty;
-    float      baseLogLikelihood        = argPtr->baseLogLikelihood;
-    vector_t*  origParentQueryVectorPtr = argPtr->aQueryVectorPtr;
+    long       toId                     = LocalLoad(&argPtr->toId);
+    learner_t* learnerPtr               = LocalLoad(&argPtr->learnerPtr);
+    query_t*   queries                  = LocalLoad(&argPtr->queries);
+    vector_t*  queryVectorPtr           = LocalLoad(&argPtr->queryVectorPtr);
+    vector_t*  parentQueryVectorPtr     = LocalLoad(&argPtr->parentQueryVectorPtr);
+    long       numTotalParent           = LocalLoad(&argPtr->numTotalParent);
+    float      basePenalty              = LocalLoadF(&argPtr->basePenalty);
+    float      baseLogLikelihood        = LocalLoadF(&argPtr->baseLogLikelihood);
+    vector_t*  origParentQueryVectorPtr = LocalLoad(&argPtr->aQueryVectorPtr);
 
     bool_t status;
-    adtree_t* adtreePtr = learnerPtr->adtreePtr;
-    net_t* netPtr = learnerPtr->netPtr;
-    float* localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
+    adtree_t* adtreePtr = LocalLoad(&learnerPtr->adtreePtr);
+    net_t* netPtr = LocalLoad(&learnerPtr->netPtr);
+    float* localBaseLogLikelihoods = LocalLoad(&learnerPtr->localBaseLogLikelihoods);
 
     TMpopulateParentQueryVector(lock,
                                 netPtr, toId, queries, origParentQueryVectorPtr);
@@ -1079,7 +866,7 @@ TMfindBestRemoveTask (al_t* lock, findBestTaskArg_t* argPtr)
     for (i = 0; i < numParent; i++) {
 
         query_t* queryPtr = (query_t*)PVECTOR_AT(origParentQueryVectorPtr, i);
-        long fromId = queryPtr->index;
+        long fromId = LocalLoad(&queryPtr->index);
 
         /*
          * Create parent query (subset of parents since remove an edge)
@@ -1092,7 +879,7 @@ TMfindBestRemoveTask (al_t* lock, findBestTaskArg_t* argPtr)
             if (p != fromId) {
                 query_t* queryPtr = PVECTOR_AT(origParentQueryVectorPtr, p);
                 status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
-                                          (void*)&queries[queryPtr->index]);
+                                          (void*)&queries[LocalLoad(&queryPtr->index)]);
                 assert(status);
             }
         } /* create new parent query */
@@ -1137,7 +924,7 @@ TMfindBestRemoveTask (al_t* lock, findBestTaskArg_t* argPtr)
     bestTask.score  = 0.0;
 
     if (bestFromId != toId) {
-        long numRecord = adtreePtr->numRecord;
+        long numRecord = LocalLoad(&adtreePtr->numRecord);
         float penalty = (numTotalParent - 1) * basePenalty;
         float logLikelihood = numRecord * (baseLogLikelihood +
                                             + bestLocalLogLikelihood
@@ -1160,23 +947,23 @@ __attribute__((atomic))
 static learner_task_t
 TMfindBestReverseTask (al_t* lock, findBestTaskArg_t* argPtr)
 {
-    long       toId                         = argPtr->toId;
-    learner_t* learnerPtr                   = argPtr->learnerPtr;
-    query_t*   queries                      = argPtr->queries;
-    vector_t*  queryVectorPtr               = argPtr->queryVectorPtr;
-    vector_t*  parentQueryVectorPtr         = argPtr->parentQueryVectorPtr;
-    long       numTotalParent               = argPtr->numTotalParent;
-    float      basePenalty                  = argPtr->basePenalty;
-    float      baseLogLikelihood            = argPtr->baseLogLikelihood;
-    bitmap_t*  visitedBitmapPtr             = argPtr->bitmapPtr;
-    queue_t*   workQueuePtr                 = argPtr->workQueuePtr;
-    vector_t*  toOrigParentQueryVectorPtr   = argPtr->aQueryVectorPtr;
-    vector_t*  fromOrigParentQueryVectorPtr = argPtr->bQueryVectorPtr;
+    long       toId                         = LocalLoad(&argPtr->toId);
+    learner_t* learnerPtr                   = LocalLoad(&argPtr->learnerPtr);
+    query_t*   queries                      = LocalLoad(&argPtr->queries);
+    vector_t*  queryVectorPtr               = LocalLoad(&argPtr->queryVectorPtr);
+    vector_t*  parentQueryVectorPtr         = LocalLoad(&argPtr->parentQueryVectorPtr);
+    long       numTotalParent               = LocalLoad(&argPtr->numTotalParent);
+    float      basePenalty                  = LocalLoadF(&argPtr->basePenalty);
+    float      baseLogLikelihood            = LocalLoadF(&argPtr->baseLogLikelihood);
+    bitmap_t*  visitedBitmapPtr             = LocalLoad(&argPtr->bitmapPtr);
+    queue_t*   workQueuePtr                 = LocalLoad(&argPtr->workQueuePtr);
+    vector_t*  toOrigParentQueryVectorPtr   = LocalLoad(&argPtr->aQueryVectorPtr);
+    vector_t*  fromOrigParentQueryVectorPtr = LocalLoad(&argPtr->bQueryVectorPtr);
 
     bool_t status;
-    adtree_t* adtreePtr = learnerPtr->adtreePtr;
-    net_t* netPtr = learnerPtr->netPtr;
-    float* localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
+    adtree_t* adtreePtr = LocalLoad(&learnerPtr->adtreePtr);
+    net_t* netPtr = LocalLoad(&learnerPtr->netPtr);
+    float* localBaseLogLikelihoods = LocalLoad(&learnerPtr->localBaseLogLikelihoods);
 
     TMpopulateParentQueryVector(lock,
                                 netPtr, toId, queries, toOrigParentQueryVectorPtr);
@@ -1196,10 +983,10 @@ TMfindBestReverseTask (al_t* lock, findBestTaskArg_t* argPtr)
     for (i = 0; i < numParent; i++) {
 
         query_t* queryPtr = (query_t*)PVECTOR_AT(toOrigParentQueryVectorPtr, i);
-        fromId = queryPtr->index;
+        fromId = LocalLoad(&queryPtr->index);
 
         bestLocalLogLikelihood =
-            localBaseLogLikelihoods[toId] + localBaseLogLikelihoods[fromId];
+            LocalLoadF(&localBaseLogLikelihoods[toId]) + LocalLoadF(&localBaseLogLikelihoods[fromId]);
 
         TMpopulateParentQueryVector(lock,
                                     netPtr,
@@ -1218,7 +1005,7 @@ TMfindBestReverseTask (al_t* lock, findBestTaskArg_t* argPtr)
             if (p != fromId) {
                 query_t* queryPtr = PVECTOR_AT(toOrigParentQueryVectorPtr, p);
                 status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
-                                          (void*)&queries[queryPtr->index]);
+                                          (void*)&queries[LocalLoad(&queryPtr->index)]);
                 assert(status);
             }
         } /* create new parent query */
@@ -1315,7 +1102,7 @@ TMfindBestReverseTask (al_t* lock, findBestTaskArg_t* argPtr)
     if (bestFromId != toId) {
         float fromLocalLogLikelihood =
             (float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
-        long numRecord = adtreePtr->numRecord;
+        long numRecord = LocalLoad(&adtreePtr->numRecord);
         float penalty = numTotalParent * basePenalty;
         float logLikelihood = numRecord * (baseLogLikelihood +
                                             + bestLocalLogLikelihood
@@ -1338,6 +1125,244 @@ TMfindBestReverseTask (al_t* lock, findBestTaskArg_t* argPtr)
  * threads.
  * =============================================================================
  */
+
+__attribute__((atomic))
+static bool_t
+atomic4(al_t* lock, operation_t op, net_t* netPtr, long fromId, long toId,
+	bitmap_t* visitedBitmapPtr, queue_t* workQueuePtr)
+{
+    TM_BEGIN();
+    /*
+     * Check if task is still valid
+     */
+    bool_t isTaskValid = TRUE;
+    switch (op) {
+    case OPERATION_INSERT: {
+	if (TMNET_HASEDGE(lock, netPtr, fromId, toId) ||
+	    TMNET_ISPATH(lock,
+			 netPtr,
+			 toId,
+			 fromId,
+			 visitedBitmapPtr,
+			 workQueuePtr))
+	    {
+		isTaskValid = FALSE;
+	    }
+	break;
+    }
+    case OPERATION_REMOVE: {
+	/* Can never create cycle, so always valid */
+	break;
+    }
+    case OPERATION_REVERSE: {
+	/* Temporarily remove edge for check */
+	TMNET_APPLYOPERATION(lock, netPtr, OPERATION_REMOVE, fromId, toId);
+	if (TMNET_ISPATH(lock,
+			 netPtr,
+			 fromId,
+			 toId,
+			 visitedBitmapPtr,
+			 workQueuePtr))
+	    {
+		isTaskValid = FALSE;
+	    }
+	TMNET_APPLYOPERATION(lock, netPtr, OPERATION_INSERT, fromId, toId);
+	break;
+    }
+    default:
+	assert(0);
+    }
+
+#ifdef TEST_LEARNER
+    printf("[task] op=%i from=%li to=%li score=%lf valid=%s\n",
+	   op, fromId, toId, 0,
+	   (isTaskValid ? "yes" : "no"));
+    fflush(stdout);
+#endif
+
+    /*
+     * Perform task: update graph and probabilities
+     */
+
+    if (isTaskValid) {
+	TMNET_APPLYOPERATION(lock, netPtr, op, fromId, toId);
+    }
+
+    TM_END();
+    return isTaskValid;
+}
+
+__attribute__((atomic))
+static float
+atomic5(al_t* lock, adtree_t* adtreePtr,
+	net_t* netPtr, long fromId, long toId,
+	query_t* queries, vector_t* queryVectorPtr,
+	vector_t* parentQueryVectorPtr, float* localBaseLogLikelihoods)
+{
+    TM_BEGIN();
+    float newBaseLogLikelihood;
+    float deltaLogLikelihood;
+    TMpopulateQueryVectors(lock,
+			   netPtr,
+			   toId,
+			   queries,
+			   queryVectorPtr,
+			   parentQueryVectorPtr);
+    newBaseLogLikelihood =
+	computeLocalLogLikelihood(toId,
+				  adtreePtr,
+				  netPtr,
+				  queries,
+				  queryVectorPtr,
+				  parentQueryVectorPtr);
+    float toLocalBaseLogLikelihood =
+	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
+    deltaLogLikelihood =
+	toLocalBaseLogLikelihood - newBaseLogLikelihood;
+    TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
+		      newBaseLogLikelihood);
+    TM_END();
+    return deltaLogLikelihood;
+}
+
+__attribute__((atomic))
+void
+atomic6(al_t* lock, learner_t* learnerPtr)
+{
+    TM_BEGIN();
+    long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
+    TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent + 1));
+    TM_END();
+}
+
+__attribute__((atomic))
+static float
+atomic7(al_t* lock, adtree_t* adtreePtr,
+	net_t* netPtr, long fromId, long toId,
+	query_t* queries, vector_t* queryVectorPtr,
+	vector_t* parentQueryVectorPtr, float* localBaseLogLikelihoods)
+{
+    TM_BEGIN();
+    float newBaseLogLikelihood;
+    float deltaLogLikelihood;
+    TMpopulateQueryVectors(lock,
+			   netPtr,
+			   fromId,
+			   queries,
+			   queryVectorPtr,
+			   parentQueryVectorPtr);
+    newBaseLogLikelihood =
+	computeLocalLogLikelihood(fromId,
+				  adtreePtr,
+				  netPtr,
+				  queries,
+				  queryVectorPtr,
+				  parentQueryVectorPtr);
+    float fromLocalBaseLogLikelihood =
+	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
+    deltaLogLikelihood =
+	fromLocalBaseLogLikelihood - newBaseLogLikelihood;
+    TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
+		      newBaseLogLikelihood);
+    TM_END();
+    return deltaLogLikelihood;
+}
+
+__attribute__((atomic))
+static void
+atomic8(al_t* lock, learner_t* learnerPtr)
+{
+    TM_BEGIN();
+    long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
+    TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent - 1));
+    TM_END();
+}
+
+__attribute__((atomic))
+static float
+atomic9(al_t* lock, adtree_t* adtreePtr,
+	net_t* netPtr, long fromId, long toId,
+	query_t* queries, vector_t* queryVectorPtr,
+	vector_t* parentQueryVectorPtr, float* localBaseLogLikelihoods)
+{
+    TM_BEGIN();
+    float newBaseLogLikelihood;
+    float deltaLogLikelihood;
+    TMpopulateQueryVectors(lock,
+			   netPtr,
+			   fromId,
+			   queries,
+			   queryVectorPtr,
+			   parentQueryVectorPtr);
+    newBaseLogLikelihood =
+	computeLocalLogLikelihood(fromId,
+				  adtreePtr,
+				  netPtr,
+				  queries,
+				  queryVectorPtr,
+				  parentQueryVectorPtr);
+    float fromLocalBaseLogLikelihood =
+	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
+    deltaLogLikelihood =
+	fromLocalBaseLogLikelihood - newBaseLogLikelihood;
+    TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
+		      newBaseLogLikelihood);
+    TM_END();
+    return deltaLogLikelihood;
+}
+
+__attribute__((atomic))
+static float
+atomic10(al_t* lock, adtree_t* adtreePtr,
+	 net_t* netPtr, long fromId, long toId,
+	 query_t* queries, vector_t* queryVectorPtr,
+	 vector_t* parentQueryVectorPtr, float* localBaseLogLikelihoods)
+{
+    float newBaseLogLikelihood;
+    float deltaLogLikelihood;
+    TM_BEGIN();
+    TMpopulateQueryVectors(lock,
+			   netPtr,
+			   toId,
+			   queries,
+			   queryVectorPtr,
+			   parentQueryVectorPtr);
+    newBaseLogLikelihood =
+	computeLocalLogLikelihood(toId,
+				  adtreePtr,
+				  netPtr,
+				  queries,
+				  queryVectorPtr,
+				  parentQueryVectorPtr);
+    float toLocalBaseLogLikelihood =
+	(float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
+    deltaLogLikelihood =
+	toLocalBaseLogLikelihood - newBaseLogLikelihood;
+    TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
+		      newBaseLogLikelihood);
+    TM_END();
+    return deltaLogLikelihood;
+}
+
+__attribute__((atomic))
+static float
+atomic11(al_t* lock, learner_t* learnerPtr,
+	 float deltaLogLikelihood, long* numTotalParent)
+{
+    float baseLogLikelihood;
+
+    TM_BEGIN();
+    float oldBaseLogLikelihood =
+	(float)TM_SHARED_READ_F(learnerPtr->baseLogLikelihood);
+    float newBaseLogLikelihood = oldBaseLogLikelihood + deltaLogLikelihood;
+    TM_SHARED_WRITE_F(learnerPtr->baseLogLikelihood, newBaseLogLikelihood);
+    baseLogLikelihood = newBaseLogLikelihood;
+    LocalStore(numTotalParent,
+	       (long)TM_SHARED_READ(learnerPtr->numTotalParent));
+    TM_END();
+    return baseLogLikelihood;
+}
+
 static void
 learnStructure (void* argPtr)
 {
@@ -1418,7 +1443,6 @@ learnStructure (void* argPtr)
             switch (op) {
                 case OPERATION_INSERT: {
 		    deltaLogLikelihood += atomic5(&learnerLock,
-						  learnerPtr,
 						  adtreePtr,
 						  netPtr,
 						  fromId,
@@ -1427,12 +1451,12 @@ learnStructure (void* argPtr)
 						  queryVectorPtr,
 						  parentQueryVectorPtr,
 						  localBaseLogLikelihoods);
+		    atomic6(&learnerLock, learnerPtr);
                     break;
                 }
 #ifdef LEARNER_TRY_REMOVE
                 case OPERATION_REMOVE: {
-		    deltaLogLikelihood += atomic6(&learnerLock,
-						  learnerPtr,
+		    deltaLogLikelihood += atomic7(&learnerLock,
 						  adtreePtr,
 						  netPtr,
 						  fromId,
@@ -1441,13 +1465,13 @@ learnStructure (void* argPtr)
 						  queryVectorPtr,
 						  parentQueryVectorPtr,
 						  localBaseLogLikelihoods);
+		    atomic8(&learnerLock, learnerPtr);
                     break;
                 }
 #endif /* LEARNER_TRY_REMOVE */
 #ifdef LEARNER_TRY_REVERSE
                 case OPERATION_REVERSE: {
-		    deltaLogLikelihood += atomic7(&learnerLock,
-						  learnerPtr,
+		    deltaLogLikelihood += atomic9(&learnerLock,
 						  adtreePtr,
 						  netPtr,
 						  fromId,
@@ -1456,6 +1480,15 @@ learnStructure (void* argPtr)
 						  queryVectorPtr,
 						  parentQueryVectorPtr,
 						  localBaseLogLikelihoods);
+		    deltaLogLikelihood += atomic10(&learnerLock,
+						   adtreePtr,
+						   netPtr,
+						   fromId,
+						   toId,
+						   queries,
+						   queryVectorPtr,
+						   parentQueryVectorPtr,
+						   localBaseLogLikelihoods);
                     break;
                 }
 #endif /* LEARNER_TRY_REVERSE */
@@ -1472,8 +1505,8 @@ learnStructure (void* argPtr)
         float baseLogLikelihood;
         long numTotalParent;
 
-	baseLogLikelihood = atomic8(&learnerLock, learnerPtr,
-				    deltaLogLikelihood, &numTotalParent);
+	baseLogLikelihood = atomic11(&learnerLock, learnerPtr,
+				     deltaLogLikelihood, &numTotalParent);
 
         /*
          * Find next task
@@ -1686,7 +1719,7 @@ main (int argc, char* argv[])
 
     data_free(dataPtr);
 
-    learner_run(learnerPtr);
+    learner_run(learnerPtr,1);
 
     assert(!net_isCycle(learnerPtr->netPtr));
 

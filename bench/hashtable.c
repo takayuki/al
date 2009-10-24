@@ -10,14 +10,13 @@ void
 help(void)
 {
   fprintf(stderr,
-          "usage: test2 [-hnpx]\n"
+          "usage: hashtable [-hnpx]\n"
           "  -p  number of threads (default: 2)\n"
           "  -n  number of repeats (default: 100)\n"
           "  -a  use adaptive lock (default)\n"
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
-          "  -s  lock scheme (default: 1)\n"
-          "  -x  transactional overhead x10 (default: 50)\n"
+          "  -x  transactional overhead (default: 5.0)\n"
           "  -f  power number of locks (default: 0(single lock))\n"
           "  -h  show this\n");
   exit(0);
@@ -224,12 +223,14 @@ static struct timeval totalElapse;
 #endif
 static int totalThreads;
 static pthread_mutex_t totalMutex = PTHREAD_MUTEX_INITIALIZER;  
+static pthread_barrier_t invokeBarrier;
 
 void*
 invoke(void* arg)
 {
   void* ret;
 
+  pthread_barrier_wait(&invokeBarrier);
   pthread_mutex_lock(&totalMutex);
   if (totalThreads == 0) timer_start(&start);
   totalThreads++;
@@ -251,15 +252,14 @@ main(int argc,char* argv[])
   double elapse;
   size_t size;
 
-  while ((ch = getopt(argc,argv,"p:n:alts:x:f:h")) != -1) {
+  while ((ch = getopt(argc,argv,"p:n:altx:f:h")) != -1) {
     switch (ch) {
     case 'p': thrd = atoi(optarg); break;
     case 'n': iter = atoi(optarg); break;
     case 'a': setAdaptMode(0); break;
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
-    case 's': setLockScheme(atoi(optarg)); break;
-    case 'x': setTranxOvhd(atoi(optarg)); break;
+    case 'x': setTranxOvhd(atof(optarg)); break;
     case 'f': NLOCKS = 1<<atoi(optarg); LOCKMASK = NLOCKS-1; break;
     case 'h':
     default: help();
@@ -270,6 +270,7 @@ main(int argc,char* argv[])
 
   if (NBUCKETS < NLOCKS) { NLOCKS = NBUCKETS; LOCKMASK = NLOCKS-1; }
   if (256 <= thrd) thrd = 256;
+  pthread_barrier_init(&invokeBarrier,0,thrd);
   for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
   for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
   pthread_create(&t[0],0,validate,0);

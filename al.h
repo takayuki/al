@@ -10,7 +10,6 @@
 #include <sys/time.h>
 #include "stm.h"
 #include "port.h"
-#include "queue.h"
 
 typedef struct {
   const char* name;
@@ -45,14 +44,10 @@ typedef struct {
     }								\
     (_x|_c);})
 
-typedef struct _nest_t {
-  al_t* lock;
-  long level;
-  SLIST_ENTRY(_nest_t) next;
-} nest_t;
-
 typedef struct {
   Thread* stmThread;
+  al_t* lock;
+  long nestLevel;
 #ifdef HAVE_GETHRTIME
   hrtime_t timeRaw;
   hrtime_t timeSTM;
@@ -60,7 +55,6 @@ typedef struct {
   struct timeval timeRaw;
   struct timeval timeSTM;
 #endif
-  SLIST_HEAD(,_nest_t) lock_list;
 } thread_t;
 
 #define AL_INITIALIZER  {0,0,0,0}
@@ -68,12 +62,9 @@ typedef struct {
 int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 #define pthread_create al_pthread_create
 
-extern pthread_key_t _al_key;
+thread_t* thread_self(void);
 void setAdaptMode(int);
-void setTranxOvhd(int);
-void setTranxOvhdScale(int);
-void setLockScheme(int);
-int getLockScheme(void);
+void setTranxOvhd(double);
 int enterCritical_0(al_t*);
 int enterCritical_1(al_t*);
 void exitCritical_0(al_t*);

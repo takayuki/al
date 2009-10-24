@@ -110,12 +110,11 @@ hashtable_iter_reset (hashtable_iter_t* itPtr, hashtable_t* hashtablePtr)
  * TMhashtable_iter_reset
  * =============================================================================
  */
-__attribute__((atomic))
 void
 TMhashtable_iter_reset (al_t* lock,
                         hashtable_iter_t* itPtr, hashtable_t* hashtablePtr)
 {
-    LocalStore(&itPtr->bucket,0);
+    itPtr->bucket = 0;
     TMLIST_ITER_RESET(lock, &(itPtr->it), hashtablePtr->buckets[0]);
 }
 
@@ -149,7 +148,6 @@ hashtable_iter_hasNext (hashtable_iter_t* itPtr, hashtable_t* hashtablePtr)
  * hashtable_iter_hasNext
  * =============================================================================
  */
-__attribute__((atomic))
 bool_t
 TMhashtable_iter_hasNext (al_t* lock,
                           hashtable_iter_t* itPtr, hashtable_t* hashtablePtr)
@@ -208,7 +206,6 @@ hashtable_iter_next (hashtable_iter_t* itPtr, hashtable_t* hashtablePtr)
  * TMhashtable_iter_next
  * =============================================================================
  */
-__attribute__((atomic))
 void*
 TMhashtable_iter_next (al_t* lock,
                        hashtable_iter_t* itPtr, hashtable_t* hashtablePtr)
@@ -230,8 +227,8 @@ TMhashtable_iter_next (al_t* lock,
         TMLIST_ITER_RESET(lock, &it, buckets[++bucket]);
     }
 
-    LocalStore(&itPtr->bucket,bucket);
-    LocalStore(&itPtr->it,it);
+    itPtr->bucket = bucket;
+    itPtr->it = it;
     return dataPtr;
 }
 
@@ -295,7 +292,7 @@ TMallocBuckets (al_t* lock, long numBucket,
 		 (long (*)(al_t*, const void*, const void*))comparePairs);
         if (chainPtr == NULL) {
             while (--i >= 0) {
-		TMLIST_FREE(lock, buckets[i]);
+		TMLIST_FREE(lock, LocalLoad(&buckets[i]));
             }
             return NULL;
         }
@@ -369,22 +366,25 @@ TMhashtable_alloc (al_t* lock,
         return NULL;
     }
 
-    hashtablePtr->buckets = TMallocBuckets(lock, initNumBucket, comparePairs);
-    if (hashtablePtr->buckets == NULL) {
+    LocalStore(&hashtablePtr->buckets,
+	       TMallocBuckets(lock, initNumBucket, comparePairs));
+    if (LocalLoad(&hashtablePtr->buckets) == NULL) {
         TM_FREE(hashtablePtr);
         return NULL;
     }
 
-    hashtablePtr->numBucket = initNumBucket;
+    LocalStore(&hashtablePtr->numBucket, initNumBucket);
 #ifdef HASHTABLE_SIZE_FIELD
-    hashtablePtr->size = 0;
+    LocalStore(&hashtablePtr->size, 0);
 #endif
-    hashtablePtr->hash = hash;
-    hashtablePtr->comparePairs = comparePairs;
-    hashtablePtr->resizeRatio = ((resizeRatio < 0) ?
-                                  HASHTABLE_DEFAULT_RESIZE_RATIO : resizeRatio);
-    hashtablePtr->growthFactor = ((growthFactor < 0) ?
-                                  HASHTABLE_DEFAULT_GROWTH_FACTOR : growthFactor);
+    LocalStore(&hashtablePtr->hash, hash);
+    LocalStore(&hashtablePtr->comparePairs, comparePairs);
+    LocalStore(&hashtablePtr->resizeRatio,
+	       ((resizeRatio < 0) ?
+		HASHTABLE_DEFAULT_RESIZE_RATIO : resizeRatio));
+    LocalStore(&hashtablePtr->growthFactor,
+	       ((growthFactor < 0) ?
+		HASHTABLE_DEFAULT_GROWTH_FACTOR : growthFactor));
 
     return hashtablePtr;
 }
@@ -418,7 +418,7 @@ TMfreeBuckets (al_t* lock, list_t** buckets, long numBucket)
     long i;
 
     for (i = 0; i < numBucket; i++) {
-        TMLIST_FREE(lock, buckets[i]);
+        TMLIST_FREE(lock, LocalLoad(&buckets[i]));
     }
 
     TM_FREE(buckets);
@@ -445,7 +445,7 @@ __attribute__((atomic))
 void
 TMhashtable_free (al_t* lock, hashtable_t* hashtablePtr)
 {
-    TMfreeBuckets(lock, hashtablePtr->buckets, hashtablePtr->numBucket);
+    TMfreeBuckets(lock, LocalLoad(&hashtablePtr->buckets), LocalLoad(&hashtablePtr->numBucket));
     TM_FREE(hashtablePtr);
 }
 
@@ -486,8 +486,8 @@ TMhashtable_isEmpty (al_t* lock, hashtable_t* hashtablePtr)
 #else
     long i;
 
-    for (i = 0; i < hashtablePtr->numBucket; i++) {
-        if (!TMLIST_ISEMPTY(lock, hashtablePtr->buckets[i])) {
+    for (i = 0; i < LocalLoad(&hashtablePtr->numBucket); i++) {
+        if (!TMLIST_ISEMPTY(lock, LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]))) {
             return FALSE;
         }
     }
@@ -511,8 +511,8 @@ hashtable_getSize (hashtable_t* hashtablePtr)
     long i;
     long size = 0;
 
-    for (i = 0; i < hashtablePtr->numBucket; i++) {
-        size += list_getSize(hashtablePtr->buckets[i]);
+    for (i = 0; i < LocalLoad(&hashtablePtr->numBucket); i++) {
+        size += list_getSize(LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]));
     }
 
     return size;
@@ -535,8 +535,8 @@ TMhashtable_getSize (al_t* lock, hashtable_t* hashtablePtr)
     long i;
     long size = 0;
 
-    for (i = 0; i < hashtablePtr->numBucket; i++) {
-        size += TMLIST_GETSIZE(lock, hashtablePtr->buckets[i]);
+    for (i = 0; i < LocalLoad(&hashtablePtr->numBucket); i++) {
+        size += TMLIST_GETSIZE(lock, LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]));
     }
 
     return size;
@@ -570,12 +570,12 @@ __attribute__((atomic))
 bool_t
 TMhashtable_containsKey (al_t* lock, hashtable_t* hashtablePtr, void* keyPtr)
 {
-    long i = hashtablePtr->hash(keyPtr) % hashtablePtr->numBucket;
+    long i = ((ulong_t (*)(const void*))LocalLoad(&hashtablePtr->hash))(keyPtr) % LocalLoad(&hashtablePtr->numBucket);
     pair_t* pairPtr;
     pair_t findPair;
 
     findPair.firstPtr = keyPtr;
-    pairPtr = (pair_t*)TMLIST_FIND(lock, hashtablePtr->buckets[i], &findPair);
+    pairPtr = (pair_t*)TMLIST_FIND(lock, LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]), &findPair);
 
     return ((pairPtr != NULL) ? TRUE : FALSE);
 }
@@ -612,17 +612,17 @@ __attribute__((atomic))
 void*
 TMhashtable_find (al_t* lock, hashtable_t* hashtablePtr, void* keyPtr)
 {
-    long i = hashtablePtr->hash(keyPtr) % hashtablePtr->numBucket;
+    long i = ((ulong_t (*)(const void*))LocalLoad(&hashtablePtr->hash))(keyPtr) % LocalLoad(&hashtablePtr->numBucket);
     pair_t* pairPtr;
     pair_t findPair;
 
     findPair.firstPtr = keyPtr;
-    pairPtr = (pair_t*)TMLIST_FIND(lock, hashtablePtr->buckets[i], &findPair);
+    pairPtr = (pair_t*)TMLIST_FIND(lock, LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]), &findPair);
     if (pairPtr == NULL) {
         return NULL;
     }
 
-    return pairPtr->secondPtr;
+    return LocalLoad(&pairPtr->secondPtr);
 }
 
 
@@ -734,12 +734,12 @@ bool_t
 TMhashtable_insert (al_t* lock,
                     hashtable_t* hashtablePtr, void* keyPtr, void* dataPtr)
 {
-    long numBucket = hashtablePtr->numBucket;
-    long i = hashtablePtr->hash(keyPtr) % numBucket;
+    long numBucket = LocalLoad(&hashtablePtr->numBucket);
+    long i = ((ulong_t (*)(const void*))LocalLoad(&hashtablePtr->hash))(keyPtr) % numBucket;
 
     pair_t findPair;
     findPair.firstPtr = keyPtr;
-    pair_t* pairPtr = (pair_t*)TMLIST_FIND(lock, hashtablePtr->buckets[i], &findPair);
+    pair_t* pairPtr = (pair_t*)TMLIST_FIND(lock, LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]), &findPair);
     if (pairPtr != NULL) {
         return FALSE;
     }
@@ -750,7 +750,7 @@ TMhashtable_insert (al_t* lock,
     }
 
     /* Add new entry  */
-    if (TMLIST_INSERT(lock, hashtablePtr->buckets[i], insertPtr) == FALSE) {
+    if (TMLIST_INSERT(lock, LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]), insertPtr) == FALSE) {
         TMPAIR_FREE(lock, insertPtr);
         return FALSE;
     }
@@ -807,9 +807,9 @@ __attribute__((atomic))
 bool_t
 TMhashtable_remove (al_t* lock, hashtable_t* hashtablePtr, void* keyPtr)
 {
-    long numBucket = hashtablePtr->numBucket;
-    long i = hashtablePtr->hash(keyPtr) % numBucket;
-    list_t* chainPtr = hashtablePtr->buckets[i];
+    long numBucket = LocalLoad(&hashtablePtr->numBucket);
+    long i = ((ulong_t (*)(const void*))LocalLoad(&hashtablePtr->hash))(keyPtr) % numBucket;
+    list_t* chainPtr = LocalLoad(&((list_t**)LocalLoad(&hashtablePtr->buckets))[i]);
     pair_t* pairPtr;
     pair_t removePair;
 

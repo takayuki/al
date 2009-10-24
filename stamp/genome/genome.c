@@ -145,7 +145,7 @@ parseArgs (long argc, char* const argv[])
 
     setDefaultParams();
 
-    while ((opt = getopt(argc, argv, "g:n:s:t:ALTS:X:")) != -1) {
+    while ((opt = getopt(argc, argv, "g:n:s:t:ALTX:")) != -1) {
         switch (opt) {
             case 'g':
             case 'n':
@@ -161,9 +161,6 @@ parseArgs (long argc, char* const argv[])
 		break;
 	    case 'T':
 		setAdaptMode(1);
-		break;
-	    case 'S':
-		setLockScheme(atoi(optarg));
 		break;
 	    case 'X':
 		setTranxOvhd(atoi(optarg));

@@ -1,4 +1,4 @@
-AC_INIT([CIS 609 Final Project],[0.12],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.13],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -6,12 +6,15 @@ AC_CONFIG_HEADER([config.h])
 m4_include([build/acx_pthread.m4])
 m4_include([build/check_gnu_make.m4])
 m4_include([build/ax_cflags_gcc_option.m4])
+m4_include([build/ax_tls.m4])
 AC_ARG_ENABLE([m32],[AS_HELP_STRING([--enable-m32],[generate 32-bit code])],
               [CFLAGS="-m32 $CFLAGS"; LDFLAGS="$LDFLAGS -m32"])
 AC_ARG_ENABLE([m64],[AS_HELP_STRING([--enable-m64],[generate 64-bit code])],
               [CFLAGS="-m64 $CFLAGS"; LDFLAGS="$LDFLAGS -m64"])
 AC_ARG_ENABLE([pg],[AS_HELP_STRING([--enable-pg],[generate code to profile])],
               [CFLAGS="-pg $CFLAGS"; LDFLAGS="$LDFLAGS -pg"])
+AC_ARG_ENABLE([tls],[AS_HELP_STRING([--disable-tls],
+              [disable thread local storage (TLS)])])
 AC_PROG_CC([gcc])
 AC_PROG_INSTALL
 AC_CHECK_PROG([AR],[ar],[ar])
@@ -38,6 +41,7 @@ AC_CHECK_FUNC([pthread_yield],[AC_DEFINE([HAVE_PTHREAD_YIELD],[1],
 CFLAGS=$_ac_save_CFLAGS
 LDFLAGS=$_ac_save_LDFLAGS
 LIBS=$_ac_save_LIBS
+AS_IF([test "x$enable_tls" = xno], [], [AX_TLS])
 AC_CHECK_PROG([OCAMLC],[ocamlc],[ocamlc])
 AC_CHECK_PROG([OCAMLOPT],[ocamlopt],[ocamlopt])
 AC_CHECK_PROG([OCAMLDEP],[ocamldep],[ocamldep])
@@ -75,5 +79,6 @@ AC_CONFIG_FILES([stamp/genome/Makefile])
 AC_CONFIG_FILES([stamp/kmeans/Makefile])
 AC_CONFIG_FILES([stamp/labyrinth/Makefile])
 AC_CONFIG_FILES([stamp/vacation/Makefile])
+AC_CONFIG_FILES([bench/Makefile])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

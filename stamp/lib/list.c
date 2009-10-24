@@ -130,7 +130,8 @@ __attribute__((atomic))
 bool_t
 TMlist_iter_hasNext (al_t* lock, list_iter_t* itPtr, list_t* listPtr)
 {
-    list_iter_t next = (list_iter_t)TM_SHARED_READ_P((*itPtr)->nextPtr);
+    list_node_t* nodePtr = (list_node_t*)LocalLoad(itPtr);
+    list_iter_t next = (list_iter_t)TM_SHARED_READ_P(nodePtr->nextPtr);
 
     return ((next != NULL) ? TRUE : FALSE);
 }
@@ -157,10 +158,11 @@ __attribute__((atomic))
 void*
 TMlist_iter_next (al_t* lock, list_iter_t* itPtr, list_t* listPtr)
 {
-    list_iter_t next = (list_iter_t)TM_SHARED_READ_P((*itPtr)->nextPtr);
+    list_node_t* nodePtr = (list_node_t*)LocalLoad(itPtr);
+    list_iter_t next = (list_iter_t)TM_SHARED_READ_P(nodePtr->nextPtr);
     LocalStore(itPtr,next);
 
-    return next->dataPtr;
+    return LocalLoad(&next->dataPtr);
 }
 
 
@@ -296,9 +298,9 @@ TMlist_alloc (al_t* lock, long (*compare)(al_t*, const void*, const void*))
         return NULL;
     }
 
-    LocalStore(&listPtr->head.dataPtr,NULL);
-    LocalStore(&listPtr->head.nextPtr,NULL);
-    LocalStore(&listPtr->size,0);
+    LocalStore(&listPtr->head.dataPtr, NULL);
+    LocalStore(&listPtr->head.nextPtr, NULL);
+    LocalStore(&listPtr->size, 0);
 
     if (compare == NULL) {
 	LocalStore(&listPtr->compare,&compareDataPtrAddresses); /* default */
@@ -510,12 +512,13 @@ TMfindPrevious (al_t* lock, list_t* listPtr, void* dataPtr)
 {
     list_node_t* prevPtr = &(listPtr->head);
     list_node_t* nodePtr;
+    long (*compare)(al_t*, const void*, const void*) = (long (*)(al_t*, const void*, const void*))LocalLoad(&listPtr->compare);
 
     for (nodePtr = (list_node_t*)TM_SHARED_READ_P(prevPtr->nextPtr);
          nodePtr != NULL;
          nodePtr = (list_node_t*)TM_SHARED_READ_P(nodePtr->nextPtr))
     {
-        if (listPtr->compare(lock, nodePtr->dataPtr, dataPtr) >= 0) {
+        if (compare(lock, LocalLoad(&nodePtr->dataPtr), dataPtr) >= 0) {
             return prevPtr;
         }
         prevPtr = nodePtr;
@@ -559,15 +562,16 @@ TMlist_find (al_t* lock, list_t* listPtr, void* dataPtr)
 {
     list_node_t* nodePtr;
     list_node_t* prevPtr = TMfindPrevious(lock, listPtr, dataPtr);
+    long (*compare)(al_t*, const void*, const void*) = (long (*)(al_t*, const void*, const void*))LocalLoad(&listPtr->compare);
 
     nodePtr = (list_node_t*)TM_SHARED_READ_P(prevPtr->nextPtr);
 
     if ((nodePtr == NULL) ||
-        (listPtr->compare(lock, nodePtr->dataPtr, dataPtr) != 0)) {
+        compare(lock, LocalLoad(&nodePtr->dataPtr), dataPtr) != 0) {
         return NULL;
     }
 
-    return (nodePtr->dataPtr);
+    return LocalLoad(&nodePtr->dataPtr);
 }
 
 
@@ -660,8 +664,9 @@ TMlist_insert (al_t* lock, list_t* listPtr, void* dataPtr)
     currPtr = (list_node_t*)TM_SHARED_READ_P(prevPtr->nextPtr);
 
 #ifdef LIST_NO_DUPLICATES
+    long (*compare)(al_t*, const void*, const void*) = (long (*)(al_t*, const void*, const void*))LocalLoad(&listPtr->compare);
     if ((currPtr != NULL) &&
-        listPtr->compare(lock, currPtr->dataPtr, dataPtr) == 0) {
+        compare(lock, LocalLoad(&currPtr->dataPtr), dataPtr) == 0) {
         return FALSE;
     }
 #endif
@@ -671,7 +676,7 @@ TMlist_insert (al_t* lock, list_t* listPtr, void* dataPtr)
         return FALSE;
     }
 
-    nodePtr->nextPtr = currPtr;
+    LocalStore(&nodePtr->nextPtr, currPtr);
     TM_SHARED_WRITE_P(prevPtr->nextPtr, nodePtr);
     TM_SHARED_WRITE(listPtr->size, (TM_SHARED_READ(listPtr->size) + 1));
 
@@ -750,18 +755,19 @@ TMlist_remove (al_t* lock, list_t* listPtr, void* dataPtr)
 {
     list_node_t* prevPtr;
     list_node_t* nodePtr;
+    long (*compare)(al_t*, const void*, const void*) = (long (*)(al_t*, const void*, const void*))LocalLoad(&listPtr->compare);
 
     prevPtr = TMfindPrevious(lock, listPtr, dataPtr);
 
     nodePtr = (list_node_t*)TM_SHARED_READ_P(prevPtr->nextPtr);
     if ((nodePtr != NULL) &&
-        (listPtr->compare(lock, nodePtr->dataPtr, dataPtr) == 0))
+	compare(lock, LocalLoad(&nodePtr->dataPtr), dataPtr) == 0)
     {
         TM_SHARED_WRITE_P(prevPtr->nextPtr, TM_SHARED_READ_P(nodePtr->nextPtr));
         TM_SHARED_WRITE_P(nodePtr->nextPtr, (struct list_node*)NULL);
         TMfreeNode(lock, nodePtr);
         TM_SHARED_WRITE(listPtr->size, (TM_SHARED_READ(listPtr->size) - 1));
-        assert(listPtr->size >= 0);
+        assert(TM_SHARED_READ(listPtr->size) >= 0);
         return TRUE;
     }
 

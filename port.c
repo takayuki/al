@@ -1,4 +1,3 @@
-/* large part of this file comes from linux kernel */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -8,7 +7,7 @@
 
 #if defined(__i386__) || defined(__x86_64__)
 #ifdef __LP64__
-intptr_t
+__inline__ intptr_t
 __cmpxchg_u64(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 {
   intptr_t prev;
@@ -19,7 +18,7 @@ __cmpxchg_u64(volatile intptr_t* ptr,intptr_t old,intptr_t new)
    return prev;
 }
 #else
-intptr_t
+__inline__ intptr_t
 __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 {
   intptr_t prev;
@@ -33,7 +32,7 @@ __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 #endif /* __i386__ */
 #ifdef __sparc__
 #ifdef __LP64__
-intptr_t
+__inline__ intptr_t
 __cmpxchg_u64(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 {
   __asm__ __volatile__("membar #StoreLoad | #LoadLoad\n"
@@ -45,7 +44,7 @@ __cmpxchg_u64(volatile intptr_t* ptr,intptr_t old,intptr_t new)
   return new;
 }
 #else
-intptr_t
+__inline__ intptr_t
 __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 {
   __asm__ __volatile__("membar #StoreLoad | #LoadLoad\n"
@@ -59,7 +58,7 @@ __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 #endif /* __LP64__ */
 #endif /* __sparc__ */
 
-static intptr_t
+__inline__ static intptr_t
 __cmpxchg(volatile intptr_t* ptr,intptr_t old,intptr_t new,int size)
 {
   switch (size) {
@@ -75,13 +74,13 @@ __cmpxchg(volatile intptr_t* ptr,intptr_t old,intptr_t new,int size)
   return old;
 }
 
-intptr_t
+__inline__ intptr_t
 cmpxchg(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 {
   return __cmpxchg((ptr),(old),(new),sizeof(intptr_t));
 }
 
-intptr_t
+__inline__ intptr_t
 fetch_and_add1(volatile intptr_t* ptr)
 {
   volatile intptr_t cur = *ptr;
@@ -90,7 +89,7 @@ fetch_and_add1(volatile intptr_t* ptr)
   return cur;
 }
 
-intptr_t
+__inline__ intptr_t
 fetch_and_sub1(volatile intptr_t* ptr)
 {
   volatile intptr_t cur = *ptr;

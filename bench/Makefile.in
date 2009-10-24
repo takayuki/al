@@ -1,0 +1,68 @@
+srcdir = @srcdir@
+prefix = @prefix@
+top_srcdir = @top_srcdir@
+
+CC = @CC@
+CPPFLAGS = @DEFS@ -I. -I$(top_srcdir) -DNDEBUG @CPPFLAGS@
+CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
+LDFLAGS = -L$(top_srcdir)/tl2 @PTHREAD_CFLAGS@ @LDFLAGS@
+LIBS = -ltl2 @PTHREAD_LIBS@ @LIBS@
+OCAMLC = @OCAMLC@
+OCAMLOPT = @OCAMLOPT@
+OCAMLDEP = @OCAMLDEP@
+OCAMLCPPFLAGS = -I $(top_srcdir)/cil/obj/@ARCHOS@
+OCAMLCFLAGS = -w Ae
+OCAMLLDFLAGS =
+INSTALL = @INSTALL@
+CILLY = $(top_srcdir)/cil/bin/cilly
+CILLYFLAGS = --keepunused --doatomic --save-temps #--check
+RE = al.o port.o
+
+.SUFFIXES: .ml .mli .cmo .cmi .cmx .check
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+.ml.cmo .mli.cmi:
+	$(OCAMLC) $(OCAMLCPPFLAGS) $(OCAMLCFLAGS) -c $(srcdir)/$<
+.ml.cmx:
+	$(OCAMLOPT) $(OCAMLCPPFLAGS) $(OCAMLCFLAGS) -c $(srcdir)/$<
+
+all: null count hashtable redblack splay
+
+null: null.o $(RE)
+	$(CC) $(LDFLAGS) -o null null.o $(RE) $(LIBS)
+count: count.o $(RE)
+	$(CC) $(LDFLAGS) -o count count.o $(RE) $(LIBS)
+hashtable: hashtable.o fmt_ulong.o $(RE)
+	$(CC) $(LDFLAGS) -o hashtable hashtable.o fmt_ulong.o $(RE) $(LIBS)
+redblack: redblack.o $(RE)
+	$(CC) $(LDFLAGS) -o redblack redblack.o $(RE) $(LIBS)
+splay: splay.o $(RE)
+	$(CC) $(LDFLAGS) -o splay splay.o $(RE) $(LIBS)
+
+null.o: null.c @top_srcdir@/alx.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+count.o: count.c @top_srcdir@/alx.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+hashtable.o: hashtable.c @top_srcdir@/alx.h fmt.h queue.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+redblack.o: redblack.c @top_srcdir@/alx.h tree.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+splay.o: splay.c @top_srcdir@/alx.h tree.h
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+al.o: @top_srcdir@/al.c @top_srcdir@/al.h @top_srcdir@/stm.h \
+	 @top_srcdir@/port.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+port.o: @top_srcdir@/port.c @top_srcdir@/port.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+fmt_ulong.o: fmt_ulong.c fmt.h
+
+clean:
+	rm -f null count hashtable redblack splay
+	rm -f *.cmi *.cmo *.cmx *.cil.c *.cil.i *.i
+	rm -f *.o *~ gmon.out core *.core
+
+distclean: clean
+	rm -f Makefile

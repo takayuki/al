@@ -179,16 +179,6 @@ pair_swap (pair_t* pairPtr)
     pairPtr->secondPtr = tmpPtr;
 }
 
-__attribute__((atomic))
-void
-TMpair_swap (al_t* lock, pair_t* pairPtr)
-{
-    void* tmpPtr = pairPtr->firstPtr;
-    pairPtr->firstPtr = pairPtr->secondPtr;
-    pairPtr->secondPtr = tmpPtr;
-}
-
-
 /* =============================================================================
  * TEST_PAIR
  * =============================================================================
@@ -199,6 +189,14 @@ TMpair_swap (al_t* lock, pair_t* pairPtr)
 #include <assert.h>
 #include <stdio.h>
 
+__attribute__((atomic))
+void
+TMpair_swap (al_t* lock, pair_t* pairPtr)
+{
+    void* tmpPtr = pairPtr->firstPtr;
+    pairPtr->firstPtr = pairPtr->secondPtr;
+    pairPtr->secondPtr = tmpPtr;
+}
 
 void*
 test (void* arg)

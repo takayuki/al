@@ -239,16 +239,16 @@ __attribute__((atomic))
 static void
 TMinsertEdge (al_t* lock, net_t* netPtr, long fromId, long toId)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
     bool_t status;
 
     net_node_t* childNodePtr = (net_node_t*)vector_at(nodeVectorPtr, toId);
-    list_t* parentIdListPtr = childNodePtr->parentIdListPtr;
+    list_t* parentIdListPtr = LocalLoad(&childNodePtr->parentIdListPtr);
     status = TMLIST_INSERT(lock, parentIdListPtr, (void*)fromId);
     assert(status);
 
     net_node_t* parentNodePtr = (net_node_t*)vector_at(nodeVectorPtr, fromId);
-    list_t* childIdListPtr = parentNodePtr->childIdListPtr;
+    list_t* childIdListPtr = LocalLoad(&parentNodePtr->childIdListPtr);
     status = TMLIST_INSERT(lock, childIdListPtr, (void*)toId);
     assert(status);
 }
@@ -284,16 +284,16 @@ __attribute__((atomic))
 static void
 TMremoveEdge (al_t* lock, net_t* netPtr, long fromId, long toId)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
     bool_t status;
 
     net_node_t* childNodePtr = (net_node_t*)vector_at(nodeVectorPtr, toId);
-    list_t* parentIdListPtr = childNodePtr->parentIdListPtr;
+    list_t* parentIdListPtr = LocalLoad(&childNodePtr->parentIdListPtr);
     status = TMLIST_REMOVE(lock, parentIdListPtr, (void*)fromId);
     assert(status);
 
     net_node_t* parentNodePtr = (net_node_t*)vector_at(nodeVectorPtr, fromId);
-    list_t* childIdListPtr = parentNodePtr->childIdListPtr;
+    list_t* childIdListPtr = LocalLoad(&parentNodePtr->childIdListPtr);
     status = TMLIST_REMOVE(lock, childIdListPtr, (void*)toId);
     assert(status);
 }
@@ -392,9 +392,9 @@ __attribute__((atomic))
 bool_t
 TMnet_hasEdge (al_t* lock, net_t* netPtr, long fromId, long toId)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
     net_node_t* childNodePtr = (net_node_t*)vector_at(nodeVectorPtr, toId);
-    list_t* parentIdListPtr = childNodePtr->parentIdListPtr;
+    list_t* parentIdListPtr = LocalLoad(&childNodePtr->parentIdListPtr);
 
     list_iter_t it;
     TMLIST_ITER_RESET(lock, &it, parentIdListPtr);
@@ -460,6 +460,7 @@ net_isPath (net_t* netPtr,
  * TMnet_isPath
  * =============================================================================
  */
+__attribute__((atomic))
 bool_t
 TMnet_isPath (al_t* lock,
               net_t* netPtr,
@@ -470,8 +471,8 @@ TMnet_isPath (al_t* lock,
 {
     bool_t status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(visitedBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
+    assert(LocalLoad(&visitedBitmapPtr->numBit) == vector_getSize(nodeVectorPtr));
 
     PBITMAP_CLEARALL(visitedBitmapPtr);
     PQUEUE_CLEAR(workQueuePtr);
@@ -488,7 +489,7 @@ TMnet_isPath (al_t* lock,
         status = PBITMAP_SET(visitedBitmapPtr, id);
         assert(status);
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
-        list_t* childIdListPtr = nodePtr->childIdListPtr;
+        list_t* childIdListPtr = LocalLoad(&nodePtr->childIdListPtr);
         list_iter_t it;
         TMLIST_ITER_RESET(lock, &it, childIdListPtr);
         while (TMLIST_ITER_HASNEXT(lock, &it, childIdListPtr)) {
@@ -622,15 +623,15 @@ net_findAncestors (net_t* netPtr,
 {
     bool_t status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(ancestorBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
+    assert(LocalLoad(&ancestorBitmapPtr->numBit) == vector_getSize(nodeVectorPtr));
 
     bitmap_clearAll(ancestorBitmapPtr);
     queue_clear(workQueuePtr);
 
     {
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
-        list_t* parentIdListPtr = nodePtr->parentIdListPtr;
+        list_t* parentIdListPtr = LocalLoad(&nodePtr->parentIdListPtr);
         list_iter_t it;
         list_iter_reset(&it, parentIdListPtr);
         while (list_iter_hasNext(&it, parentIdListPtr)) {
@@ -649,7 +650,7 @@ net_findAncestors (net_t* netPtr,
             return FALSE;
         }
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, parentId);
-        list_t* grandParentIdListPtr = nodePtr->parentIdListPtr;
+        list_t* grandParentIdListPtr = LocalLoad(&nodePtr->parentIdListPtr);
         list_iter_t it;
         list_iter_reset(&it, grandParentIdListPtr);
         while (list_iter_hasNext(&it, grandParentIdListPtr)) {
@@ -673,6 +674,7 @@ net_findAncestors (net_t* netPtr,
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
+__attribute__((atomic))
 bool_t
 TMnet_findAncestors (al_t* lock,
                      net_t* netPtr,
@@ -682,15 +684,15 @@ TMnet_findAncestors (al_t* lock,
 {
     bool_t status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(ancestorBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
+    assert(LocalLoad(&ancestorBitmapPtr->numBit) == vector_getSize(nodeVectorPtr));
 
     PBITMAP_CLEARALL(ancestorBitmapPtr);
     PQUEUE_CLEAR(workQueuePtr);
 
     {
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
-        list_t* parentIdListPtr = nodePtr->parentIdListPtr;
+        list_t* parentIdListPtr = LocalLoad(&nodePtr->parentIdListPtr);
         list_iter_t it;
         TMLIST_ITER_RESET(lock, &it, parentIdListPtr);
         while (TMLIST_ITER_HASNEXT(lock, &it, parentIdListPtr)) {
@@ -709,7 +711,7 @@ TMnet_findAncestors (al_t* lock,
             return FALSE;
         }
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, parentId);
-        list_t* grandParentIdListPtr = nodePtr->parentIdListPtr;
+        list_t* grandParentIdListPtr = LocalLoad(&nodePtr->parentIdListPtr);
         list_iter_t it;
         TMLIST_ITER_RESET(lock, &it, grandParentIdListPtr);
         while (TMLIST_ITER_HASNEXT(lock, &it, grandParentIdListPtr)) {
@@ -741,15 +743,15 @@ net_findDescendants (net_t* netPtr,
 {
     bool_t status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(descendantBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
+    assert(LocalLoad(&descendantBitmapPtr->numBit) == vector_getSize(nodeVectorPtr));
 
     bitmap_clearAll(descendantBitmapPtr);
     queue_clear(workQueuePtr);
 
     {
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
-        list_t* childIdListPtr = nodePtr->childIdListPtr;
+        list_t* childIdListPtr = LocalLoad(&nodePtr->childIdListPtr);
         list_iter_t it;
         list_iter_reset(&it, childIdListPtr);
         while (list_iter_hasNext(&it, childIdListPtr)) {
@@ -768,7 +770,7 @@ net_findDescendants (net_t* netPtr,
             return FALSE;
         }
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, childId);
-        list_t* grandChildIdListPtr = nodePtr->childIdListPtr;
+        list_t* grandChildIdListPtr = LocalLoad(&nodePtr->childIdListPtr);
         list_iter_t it;
         list_iter_reset(&it, grandChildIdListPtr);
         while (list_iter_hasNext(&it, grandChildIdListPtr)) {
@@ -792,6 +794,7 @@ net_findDescendants (net_t* netPtr,
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
+__attribute__((atomic))
 bool_t
 TMnet_findDescendants (al_t* lock,
                        net_t* netPtr,
@@ -801,15 +804,15 @@ TMnet_findDescendants (al_t* lock,
 {
     bool_t status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(descendantBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    vector_t* nodeVectorPtr = LocalLoad(&netPtr->nodeVectorPtr);
+    assert(LocalLoad(&descendantBitmapPtr->numBit) == vector_getSize(nodeVectorPtr));
 
     PBITMAP_CLEARALL(descendantBitmapPtr);
     PQUEUE_CLEAR(workQueuePtr);
 
     {
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
-        list_t* childIdListPtr = nodePtr->childIdListPtr;
+        list_t* childIdListPtr = LocalLoad(&nodePtr->childIdListPtr);
         list_iter_t it;
         TMLIST_ITER_RESET(lock, &it, childIdListPtr);
         while (TMLIST_ITER_HASNEXT(lock, &it, childIdListPtr)) {
@@ -828,7 +831,7 @@ TMnet_findDescendants (al_t* lock,
             return FALSE;
         }
         net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, childId);
-        list_t* grandChildIdListPtr = nodePtr->childIdListPtr;
+        list_t* grandChildIdListPtr = LocalLoad(&nodePtr->childIdListPtr);
         list_iter_t it;
         TMLIST_ITER_RESET(lock, &it, grandChildIdListPtr);
         while (TMLIST_ITER_HASNEXT(lock, &it, grandChildIdListPtr)) {

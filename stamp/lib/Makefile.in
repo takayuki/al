@@ -3,7 +3,7 @@ prefix = @prefix@
 top_srcdir = @top_srcdir@
 
 CC = @CC@
-CPPFLAGS = @DEFS@ -I. -I$(top_srcdir) @CPPFLAGS@
+CPPFLAGS = @DEFS@ -I. -I$(top_srcdir) -DLIST_NO_DUPLICATES @CPPFLAGS@
 CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
 LDFLAGS = -L$(top_srcdir)/tl2 @PTHREAD_CFLAGS@ @LDFLAGS@
 LIBS = -ltl2 @PTHREAD_LIBS@ @LIBS@

@@ -245,40 +245,6 @@ TMqueue_isEmpty (al_t* lock, queue_t* queuePtr)
 
 
 /* =============================================================================
- * queue_shuffle
- * =============================================================================
- */
-__attribute__((atomic))
-void
-TMqueue_shuffle (al_t* lock, queue_t* queuePtr, random_t* randomPtr)
-{
-    long pop      = queuePtr->pop;
-    long push     = queuePtr->push;
-    long capacity = queuePtr->capacity;
-
-    long numElement;
-    if (pop < push) {
-        numElement = push - (pop + 1);
-    } else {
-        numElement = capacity - (pop - push + 1);
-    }
-
-    void** elements = queuePtr->elements;
-    long i;
-    long base = pop + 1;
-    for (i = 0; i < numElement; i++) {
-        long r1 = random_generate(randomPtr) % numElement;
-        long r2 = random_generate(randomPtr) % numElement;
-        long i1 = (base + r1) % capacity;
-        long i2 = (base + r2) % capacity;
-        void* tmp = elements[i1];
-        elements[i1] = elements[i2];
-        elements[i2] = tmp;
-    }
-}
-
-
-/* =============================================================================
  * queue_push
  * =============================================================================
  */
@@ -417,15 +383,15 @@ TMqueue_push (al_t* lock, queue_t* queuePtr, void* dataPtr)
         if (pop < push) {
             long src;
             for (src = (pop + 1); src < push; src++, dst++) {
-                LocalStore(newElements[dst],TM_SHARED_READ_P(elements[src]));
+                LocalStore(&newElements[dst],TM_SHARED_READ_P(elements[src]));
             }
         } else {
             long src;
             for (src = (pop + 1); src < capacity; src++, dst++) {
-                LocalStore(newElements[dst],TM_SHARED_READ_P(elements[src]));
+                LocalStore(&newElements[dst],TM_SHARED_READ_P(elements[src]));
             }
             for (src = 0; src < push; src++, dst++) {
-                LocalStore(newElements[dst],TM_SHARED_READ_P(elements[src]));
+                LocalStore(&newElements[dst],TM_SHARED_READ_P(elements[src]));
             }
         }
 
@@ -503,6 +469,38 @@ TMqueue_pop (al_t* lock, queue_t* queuePtr)
 #include <assert.h>
 #include <stdio.h>
 
+/* =============================================================================
+ * queue_shuffle
+ * =============================================================================
+ */
+__attribute__((atomic))
+void
+TMqueue_shuffle (al_t* lock, queue_t* queuePtr, random_t* randomPtr)
+{
+    long pop      = queuePtr->pop;
+    long push     = queuePtr->push;
+    long capacity = queuePtr->capacity;
+
+    long numElement;
+    if (pop < push) {
+        numElement = push - (pop + 1);
+    } else {
+        numElement = capacity - (pop - push + 1);
+    }
+
+    void** elements = queuePtr->elements;
+    long i;
+    long base = pop + 1;
+    for (i = 0; i < numElement; i++) {
+        long r1 = random_generate(randomPtr) % numElement;
+        long r2 = random_generate(randomPtr) % numElement;
+        long i1 = (base + r1) % capacity;
+        long i2 = (base + r2) % capacity;
+        void* tmp = elements[i1];
+        elements[i1] = elements[i2];
+        elements[i2] = tmp;
+    }
+}
 
 __attribute__((atomic))
 static void
