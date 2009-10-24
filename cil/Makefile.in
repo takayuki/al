@@ -175,7 +175,7 @@ $(OBJDIR)/machdep.ml : src/machdep.c configure.in Makefile.in
 	echo "  const_string_literals: bool; (* Whether string literals have const chars *)">> $@
 	echo "  little_endian: bool; (* whether the machine is little endian *)">>$@
 	echo "}" >> $@ 	
-	if gcc -D_GNUCC $< -o $(OBJDIR)/machdep.exe ;then \
+	if gcc -D_GNUCC @CFLAGS@ $< -o $(OBJDIR)/machdep.exe ;then \
 	    echo "machdep.exe created succesfully." \
 	;else \
             rm -f $@; exit 1 \
@@ -184,11 +184,14 @@ $(OBJDIR)/machdep.ml : src/machdep.c configure.in Makefile.in
 	$(OBJDIR)/machdep.exe >>$@
 	echo "	 underscore_name = @UNDERSCORE_NAME@ ;" >> $@
 	echo "}"          >>$@
-#	if cl /D_MSVC $< /Fe$(OBJDIR)/machdep.exe /Fo$(OBJDIR)/machdep.obj ;then \
-#            echo "let hasMSVC = true" >>$@ \
-#        ;else \
-#            echo "let hasMSVC = false" >>$@ ;fi
-	echo "let hasMSVC = false" >>$@
+	if echo "logout" | cl; then \
+            echo "let hasMSVC = false" >>$@ \
+        ;else \
+            if cl /D_MSVC $< /Fe$(OBJDIR)/machdep.exe /Fo$(OBJDIR)/machdep.obj ;then \
+                echo "let hasMSVC = true" >>$@ \
+            ;else \
+                echo "let hasMSVC = false" >>$@ ;fi \
+        fi
 	echo "let msvc = {" >>$@
 	$(OBJDIR)/machdep.exe >>$@
 	echo "	 underscore_name = true ;" >> $@

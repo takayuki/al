@@ -1,5 +1,5 @@
 --- /usr/include/sys/tree.h	2004-03-28 11:38:30.000000000 -0800
-+++ tree.h	2008-02-29 20:25:59.000000000 -0800
++++ tree.h	2008-03-02 15:17:46.000000000 -0800
 @@ -308,7 +308,7 @@
  	struct type *rbe_left;		/* left element */		\
  	struct type *rbe_right;		/* right element */		\
@@ -41,19 +41,7 @@
  	if (RB_LEFT(elm, field) == NULL)				\
  		child = RB_RIGHT(elm, field);				\
  	else if (RB_RIGHT(elm, field) == NULL)				\
-@@ -539,7 +542,10 @@
- 			RB_ROOT(head) = child;				\
- 		if (RB_PARENT(elm, field) == old)			\
- 			parent = elm;					\
--		(elm)->field = (old)->field;				\
-+		(elm)->field.rbe_left = (old)->field.rbe_left;		\
-+		(elm)->field.rbe_right = (old)->field.rbe_right;	\
-+		(elm)->field.rbe_parent = (old)->field.rbe_parent;	\
-+		(elm)->field.rbe_color = (old)->field.rbe_color;	\
- 		if (RB_PARENT(old, field)) {				\
- 			if (RB_LEFT(RB_PARENT(old, field), field) == old)\
- 				RB_LEFT(RB_PARENT(old, field), field) = elm;\
-@@ -578,6 +584,7 @@
+@@ -578,6 +581,7 @@
  }									\
  									\
  /* Inserts a node into the RB tree */					\
@@ -61,7 +49,7 @@
  struct type *								\
  name##_RB_INSERT(struct name *head, struct type *elm)			\
  {									\
-@@ -609,6 +616,7 @@
+@@ -609,6 +613,7 @@
  }									\
  									\
  /* Finds the node with the same key as elm */				\
@@ -69,7 +57,7 @@
  struct type *								\
  name##_RB_FIND(struct name *head, struct type *elm)			\
  {									\
-@@ -627,6 +635,7 @@
+@@ -627,6 +632,7 @@
  }									\
  									\
  /* ARGSUSED */								\
@@ -77,7 +65,7 @@
  struct type *								\
  name##_RB_NEXT(struct type *elm)					\
  {									\
-@@ -648,6 +657,7 @@
+@@ -648,6 +654,7 @@
  	return (elm);							\
  }									\
  									\

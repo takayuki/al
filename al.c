@@ -15,10 +15,11 @@
 #endif
 #include "stm.h"
 #include "port.h"
+#include "queue.h"
 
 pthread_key_t _al_key;
-int adaptiveMode = 0;
-double transactOvhd = 25.0;
+static int adaptiveMode = 0;
+static double transactOvhd = 25.0;
 
 int
 setAdaptMode(int mode)
@@ -47,7 +48,7 @@ _dispatcher(void* _arg)
   _dispatch_t* disp = (_dispatch_t*)_arg;
   void* (*start)(void*) = disp->start;
   void* arg = disp->arg;
-  _thread_t *self;
+  thread_t* self;
 
   free(disp);
   self = malloc(sizeof(*self));
@@ -59,7 +60,7 @@ _dispatcher(void* _arg)
     return (void*)EAGAIN;
   }
   TxInitThread(self->stmThread,(long)pthread_self());
-  self->nestLevel = 0;
+  SLIST_INIT(&self->prof_list);
   pthread_setspecific(_al_key,self);
   return start(arg);
 }
@@ -81,7 +82,7 @@ al_pthread_create(pthread_t* thread,
 }
 
 int
-transactMode(_profile_t* prof)
+transactMode(profile_t* prof)
 {
   int threadsInStmMode;
   double avgTries,contention;
@@ -109,7 +110,31 @@ busy(void)
 /* al() is moved to alx.h */
 
 void
-dump_profile(_profile_t* prof)
+TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
+{
+  int n,i;
+
+  assert((size % sizeof(intptr_t)) == 0);
+  n = size / sizeof(intptr_t);
+  for (i = 0; i < n; i++)
+    TxStore(self,dest+i,*(src+i));
+  return;
+}
+
+void
+TxLoadSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
+{
+  int n,i;
+
+  assert((size % sizeof(intptr_t)) == 0);
+  n = size / sizeof(intptr_t);
+  for (i = 0; i < n; i++)
+    *(dest+i) = TxLoad(self,src+i);
+  return;
+}
+
+void
+dump_profile(profile_t* prof)
 {
   double r1 = ((double)prof->waitLock)/prof->invokeInLockMode*100.0;
   double r2 = ((double)(prof->tries-prof->commit))/prof->commit*100.0;
@@ -128,8 +153,15 @@ dump_profile(_profile_t* prof)
 static void
 destroy_thread(void* arg)
 {
-  _thread_t* self = (_thread_t*)arg;
+  thread_t* self = (thread_t*)arg;
+
   TxFreeThread(self->stmThread);
+  while (!SLIST_EMPTY(&self->prof_list)) {
+    nest_t* nest;
+    nest = SLIST_FIRST(&self->prof_list);
+    SLIST_REMOVE_HEAD(&self->prof_list,next);
+    free(nest);
+  }
   free(arg);
 }
 

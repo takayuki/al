@@ -92,7 +92,7 @@ task(void* arg)
 }
 
 void*
-dump(void* arg)
+validate(void* arg)
 {
   int flag = (int)arg;
   struct tree_node *p;
@@ -132,7 +132,7 @@ main(int argc,char* argv[])
   if (256 <= p) p = 256;
   for (i = 0; i < p; i++) pthread_create(&t[i],0,task,(void*)n);
   for (i = 0; i < p; i++) pthread_join(t[i],&r);
-  pthread_create(&t[0],0,dump,0);
+  pthread_create(&t[0],0,validate,0);
   pthread_join(t[0],&r);
   return 0;
 }

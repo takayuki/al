@@ -3,7 +3,7 @@ prefix = @prefix@
 
 CC = @CC@
 CPPFLAGS = @DEFS@ -I. @CPPFLAGS@
-CFLAGS = -Wall @CFLAGS@ @PTHREAD_CFLAGS@
+CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
 LDFLAGS = -Ltl2 @PTHREAD_CFLAGS@ @LDFLAGS@
 LIBS = -ltl2 @PTHREAD_LIBS@ @LIBS@
 OCAMLC = @OCAMLC@
@@ -16,7 +16,7 @@ GNUMAKE = @GNUMAKE@
 INSTALL = @INSTALL@
 SUBDIRS = tl2 cil
 CILLY = cil/bin/cilly
-CILLYFLAGS = --doatomic --keepunused --check --save-temps
+CILLYFLAGS = --keepunused --doatomic --save-temps --check
 
 .SUFFIXES: .ml .mli .cmo .cmi .cmx .check
 
@@ -60,7 +60,7 @@ subdirs:
 	done
 
 clean:
-	rm -f *.cmi *.cmo *.cmx *.cil.i *.cil.c *.i
+	rm -f *.cmi *.cmo *.cmx *.cil.i *.i
 	rm -f test? *.o *.check *~ core *.core
 
 distclean: clean

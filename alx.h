@@ -6,24 +6,40 @@
 #include <assert.h>
 #include "al.h"
 
+static int default_spins = 100;
+
 static void
 _al_template(void)
 {
-  _profile_t* prof = 0;
+  profile_t* prof = 0;
   void* (*rawfunc)(void) = 0;
   void* (*stmfunc)(Thread*) = 0;
   int ro = 0;
-  _thread_t *self;
+  int cnt = default_spins;
+  thread_t* self;
+  nest_t* nest;
+  nest_t* nested;
   intptr_t tmp;
   sigjmp_buf buf;
-  int default_spins = 100;
-  int cnt = default_spins;
 
   assert((self = pthread_getspecific(_al_key)));
-  if ((self->nestLevel == 0 && transactMode(prof)) ||
-      0 < self->nestLevel) {
-    assert(0 <= self->nestLevel);
-    if (self->nestLevel == 0) {
+  SLIST_FOREACH(nest,&self->prof_list,next) {
+    if (nest->prof == prof) break;
+  }
+  if (nest == 0) {
+    assert(nest = malloc(sizeof(*nest)));
+    nest->prof = prof;
+    nest->level = 0;
+    SLIST_INSERT_HEAD(&self->prof_list,nest,next);
+  }
+  SLIST_FOREACH(nested,&self->prof_list,next) {
+    if (0 < nested->level) break;
+  }
+  if (nested != 0 || (nest->level == 0 && transactMode(prof))) {
+    assert(0 <= nest->level);
+    if (nested != 0) {
+      stmfunc(self->stmThread);
+    } else {
       inc(prof->threadsWaiting);
       while ((tmp = load(prof->lockHeld)) == ~0 ||
 	     CAS(prof->lockHeld,tmp,tmp+1) != tmp) {
@@ -32,21 +48,22 @@ _al_template(void)
 	}
       }
       dec(prof->threadsWaiting);
-      if (sigsetjmp(buf,1)) self->nestLevel = 0;
-      inc(self->nestLevel);
+      if (sigsetjmp(buf,1)) nest->level = 0;
+      inc(nest->level);
       inc(prof->tries);
+      mb();
       TxStart(self->stmThread,&buf,&ro);
       stmfunc(self->stmThread);
       TxCommit(self->stmThread);
       inc(prof->commit);
-      dec(self->nestLevel);
+      dec(nest->level);
       DEC(prof->lockHeld);
-    } else {
-      stmfunc(self->stmThread);
     }
   } else {
-    assert(self->nestLevel <= 0);
-    if (self->nestLevel == 0) {
+    assert(nest->level <= 0);
+    if (nest->level < 0) {
+      rawfunc();
+    } else {
       inc(prof->invokeInLockMode);
       inc(prof->threadsWaiting);
       if (load(prof->lockHeld) != 0 ||
@@ -59,12 +76,10 @@ _al_template(void)
 	  }
       }
       dec(prof->threadsWaiting);
-      store(self->nestLevel,-1);
+      store(nest->level,-1);
       rawfunc();
-      store(self->nestLevel,0);
+      store(nest->level,0);
       INC(prof->lockHeld);
-    } else {
-      rawfunc();
     }
   }
   return;

@@ -542,10 +542,7 @@ name##_RB_REMOVE(struct name *head, struct type *elm)			\
 			RB_ROOT(head) = child;				\
 		if (RB_PARENT(elm, field) == old)			\
 			parent = elm;					\
-		(elm)->field.rbe_left = (old)->field.rbe_left;		\
-		(elm)->field.rbe_right = (old)->field.rbe_right;	\
-		(elm)->field.rbe_parent = (old)->field.rbe_parent;	\
-		(elm)->field.rbe_color = (old)->field.rbe_color;	\
+		(elm)->field = (old)->field;				\
 		if (RB_PARENT(old, field)) {				\
 			if (RB_LEFT(RB_PARENT(old, field), field) == old)\
 				RB_LEFT(RB_PARENT(old, field), field) = elm;\

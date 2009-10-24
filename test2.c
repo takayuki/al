@@ -136,9 +136,8 @@ main(int argc,char* argv[])
 
     LIST_FOREACH(p,&tab,links) {
       b = p->key;
-      assert(a <= b);
-      a = b; c++;
-      printf("%ld\n",a);
+      if (!(a <= b)) printf("*** Oops, %ld <= %ld\n",a,b);
+      a = b; c++; //printf("%ld\n",a);
     }
     printf("number of elements=%ld\n",c);
   }

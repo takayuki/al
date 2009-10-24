@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/queue.h>
 #include "alx.h"
+#include "queue.h"
 
 void
 help(void)

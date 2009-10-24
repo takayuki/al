@@ -20,7 +20,7 @@ let findFunc name =
 let findSymbol name =
   try List.assoc name !symbol_list
   with Not_found -> E.s (E.bug "symbol '%s' is not found in runtime" name)
-let _profile_t () = findType "_profile_t"
+let profile_t () = findType "profile_t"
 
 class collectGlobals = object
   inherit nopCilVisitor
@@ -28,19 +28,17 @@ class collectGlobals = object
   method vglob g = match g with
   | GType(t,_) when t.tname = "intptr_t" ->
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
-  | GType(t,_) when t.tname = "_profile_t" ->
+  | GType(t,_) when t.tname = "profile_t" ->
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
-  | GType(t,_) when t.tname = "_thread_t" ->
+  | GType(t,_) when t.tname = "thread_t" ->
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
   | GType(t,_) when t.tname = "Thread" ->
       (type_list := (t.tname,TNamed(t,[])) :: !type_list; SkipChildren)
   | GFun(f,_) when f.svar.vname = "_al_template" ->
       (func_list := (f.svar.vname,f) :: !func_list; SkipChildren)
-  | GVarDecl(v,_) when v.vname = "TxLoad" ->
+  | GVarDecl(v,_) when v.vname = "TxLoadSized" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
-  | GVarDecl(v,_) when v.vname = "TxStore" ->
-      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
-  | GVarDecl(v,_) when v.vname = "TxStoreLocal" ->
+  | GVarDecl(v,_) when v.vname = "TxStoreSized" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "al" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
@@ -57,9 +55,9 @@ class collectGlobals = object
   | _ -> DoChildren
 end
 
-let hasIntPtrSize (ts : typ list) =
+let alignedIntPtrSize (ts : typ list) =
   let fold = List.fold_left (fun x y -> x && y) true in
-  let test t = bitsSizeOf t = bitsSizeOf intPtrType in
+  let test t = ((bitsSizeOf t) mod (bitsSizeOf intPtrType)) = 0 in
     fold (List.map test ts)
 
 let castIntPtr e =
@@ -67,6 +65,11 @@ let castIntPtr e =
     mkCast ~e ~newt:p
 
 let castIntPPtr e =
+  let p = findType "intptr_t" in
+  let pp = TPtr(p,[]) in
+    mkCast ~e ~newt:pp
+
+let castVIntPPtr e =
   let p = typeAddAttributes [Attr("volatile",[])] (findType "intptr_t") in
   let pp = TPtr(p,[]) in
     mkCast ~e ~newt:pp
@@ -109,10 +112,13 @@ class transact ((thread_self,ro) : varinfo * bool) = object
       E.s (E.error "update '%s' in read-only atomic section in %a"
                    v.vname d_loc loc)
     | Set(((Var v,_) as lv),e,loc)
-      when v.vglob && hasIntPtrSize [typeOfLval lv; (typeOf e)] ->
-        let store = Lval(var (findSymbol "TxStore")) in
-        let arg = [castIntPPtr(mkAddrOf lv);castIntPtr(e)] in
-        let inst = Call(None,store,arg,loc) in
+      when v.vglob && alignedIntPtrSize [typeOfLval lv; (typeOf e)] ->
+        let t = makeTempVar !current_func ~name:"tmp" (typeOf e) in
+        let store = Lval(var (findSymbol "TxStoreSized")) in
+        let arg = [castIntPPtr(mkAddrOf(lv));
+                   castIntPPtr(mkAddrOf(var t));
+                   SizeOf(typeOf e)] in
+        let inst = [Set(var t,e,loc);Call(None,store,arg,loc)] in
         let protect x =
           match x with
             Call(None,proc,arg,loc)
@@ -120,21 +126,24 @@ class transact ((thread_self,ro) : varinfo * bool) = object
               let arg' = [Lval(var thread_self)] @ arg in
                 Call(None,proc,arg',loc)
           | _ -> x
-        in ChangeDoChildrenPost ([inst],fun x -> List.map protect x)
+        in ChangeDoChildrenPost (inst,fun x -> List.map protect x)
     | Set(((Mem _,_) as lv),e,loc)
-      when hasIntPtrSize [typeOfLval lv; (typeOf e)] ->
-        let store = Lval(var (findSymbol "TxStore")) in
-        let arg = [castIntPPtr(mkAddrOf lv);castIntPtr(e)] in
-        let inst = Call(None,store,arg,loc) in
+      when alignedIntPtrSize [typeOfLval lv; (typeOf e)] ->
+        let t = makeTempVar !current_func ~name:"tmp" (typeOf e) in
+        let store = Lval(var (findSymbol "TxStoreSized")) in
+        let arg = [castIntPPtr(mkAddrOf(lv));
+                   castIntPPtr(mkAddrOf(var t));
+                   SizeOf(typeOf e)] in
+        let inst = [Set(var t,e,loc);Call(None,store,arg,loc)] in
         let protect x =
           match x with
             Call(None,proc,arg,loc) when proc == store ->
               let arg' = [Lval(var thread_self)] @ arg in
                 Call(None,proc,arg',loc)
           | _ -> x
-        in ChangeDoChildrenPost ([inst],fun x -> List.map protect x)
+        in ChangeDoChildrenPost (inst,fun x -> List.map protect x)
     | Set(lv,_,loc) ->
-        E.s (E.error "transact update '%a' is to be pointer-sized in %a"
+        E.s (E.error "transact update '%a' is to be aligned in %a"
                       d_lval lv d_loc loc)
     | Call(lv,Lval(Var v,NoOffset),arg,loc) ->
         (match v.vname with
@@ -165,26 +174,32 @@ class transact ((thread_self,ro) : varinfo * bool) = object
       Var v,NoOffset when isFunctionType v.vtype -> SkipChildren
     | Var v,_ when v.vglob ->
         let ext = function
-          lv when hasIntPtrSize [typeOfLval lv] ->
+          lv when alignedIntPtrSize [typeOfLval lv] ->
             let t = makeTempVar !current_func ~name:"var" (typeOfLval lv) in
-            let load = findSymbol "TxLoad" in
-            let arg = [Lval(var thread_self);castIntPPtr(AddrOf lv)] in
+            let load = findSymbol "TxLoadSized" in
+            let arg = [Lval(var thread_self);
+                       castIntPPtr(mkAddrOf(var t));
+                       castIntPPtr(mkAddrOf(lv));
+                       SizeOf(typeOfLval lv)] in
             let loc = v.vdecl in
-            let inst = Call(Some (var t),Lval(var load),arg,loc) in
+            let inst = Call(None,Lval(var load),arg,loc) in
               (assignment_list := inst :: !assignment_list;var t)
-        | _ -> E.s (E.error "'%a' is not pointer-sized in %a"
+        | _ -> E.s (E.error "'%a' is not aligned in %a"
                             d_lval lv d_loc !currentLoc)
         in ChangeDoChildrenPost(lv,ext)
     | Var _,_ -> SkipChildren
     | Mem _,_ ->
         let ext = function
-          lv when hasIntPtrSize [typeOfLval lv] ->
+          lv when alignedIntPtrSize [typeOfLval lv] ->
             let t = makeTempVar !current_func ~name:"mem" (typeOfLval lv) in
-            let load = findSymbol "TxLoad" in
-            let arg = [Lval(var thread_self);castIntPPtr(AddrOf lv)] in
-            let inst = Call(Some (var t),Lval(var load),arg,locUnknown) in
+            let load = findSymbol "TxLoadSized" in
+            let arg = [Lval(var thread_self);
+                       castIntPPtr(mkAddrOf(var t));
+                       castIntPPtr(mkAddrOf(lv));
+                       SizeOf(typeOfLval lv)] in
+            let inst = Call(None,Lval(var load),arg,locUnknown) in
               (assignment_list := inst :: !assignment_list;var t)
-        | _ -> E.s (E.error "'%a' is not pointer-sized in %a"
+        | _ -> E.s (E.error "'%a' is not aligned in %a"
                             d_lval lv d_loc !currentLoc)
         in ChangeDoChildrenPost(lv,ext)
 
@@ -305,7 +320,7 @@ let findAtomic = function
           let p,q = try findLock lock,[]
                     with Not_found ->
                     (let p = makeGlobalVar
-                             ("_"^lock^"_prof") (_profile_t()) in
+                             ("_"^lock^"_prof") (profile_t()) in
                      lock_list := (lock,p) :: !lock_list;
                      let c = buildInit (f,loc,p) in
                      let d = buildAtExit (f,loc,p) in

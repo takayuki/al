@@ -1849,17 +1849,15 @@ TxLoad (Thread* Self, volatile intptr_t* Addr)
      */
     volatile vwLock* LockFor = PSLOCK(Addr);
     vwLock rdv = LDLOCK(LockFor);
-    if ((rdv & LOCKBIT) == 0 && rdv <= Self->rv) {
+    MEMBARLDLD();
+    Valu = LDNF(Addr);
+    MEMBARLDLD();
+    if (rdv <= Self->rv && (rdv & LOCKBIT) == 0 && LDLOCK(LockFor) == rdv) {
         if (!Self->IsRO) {
-            TrackLoad(Self, LockFor);
+	    TrackLoad(Self, LockFor);
         }
-        MEMBARLDLD();
-        Valu = LDNF(Addr);
-        MEMBARLDLD();
-	if (LDLOCK(LockFor) == rdv) {
-	    PROF_STM_READ_END();
-	    return Valu;
-	}
+	PROF_STM_READ_END();
+	return Valu;
     }
 
     /*

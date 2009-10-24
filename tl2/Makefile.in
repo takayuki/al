@@ -10,10 +10,9 @@
 # ==============================================================================
 
 CC      := @CC@
-CFLAGS  := @DEFS@ -I. -Wall -Winline -O3 @CFLAGS@
+CFLAGS  := @DEFS@ -I. @CFLAGS@
 #CFLAGS  += -DTL2_OPTIM_HASHLOG
 #CFLAGS  += -DTL2_RESIZE_HASHLOG
-LD      := @CC@
 
 LIBTL2 := libtl2.a
 
@@ -38,12 +37,12 @@ default: $(LIBTL2)
 
 .PHONY: clean
 clean:
-	$(RM) $(LIBTL2) $(OBJS)
+	$(RM) $(LIBTL2) $(OBJS) *~ core *.core
 
 .PHONY: distclean
 distclean: clean
-	rm -f Makefile config.h
-	rm -f config.cache config.log config.status
+	$(RM) Makefile config.h
+	$(RM) config.cache config.log config.status
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
