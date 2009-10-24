@@ -14,7 +14,8 @@ help(void)
           "  -a  use adaptive lock (default)\n"
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
-          "  -x  transactional overhead (default: 25)\n"
+          "  -s  lock scheme (default: 1)\n"
+          "  -x  transactional overhead (default: 5.0)\n"
           "  -h  show this\n");
   exit(0);
 }
@@ -153,13 +154,14 @@ main(int argc,char* argv[])
   void* r;
   double elapse;
 
-  while ((ch = getopt(argc,argv,"p:n:atlx:")) != -1) {
+  while ((ch = getopt(argc,argv,"p:n:atls:x:h")) != -1) {
     switch (ch) {
-    case 'n': iter = atoi(optarg); break;
     case 'p': thrd = atoi(optarg); break;
+    case 'n': iter = atoi(optarg); break;
     case 'a': setAdaptMode(0); break;
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
+    case 's': setLockScheme(atoi(optarg)); break;
     case 'x': setTransactOvhd(atof(optarg)); break;
     case 'h':
     default: help();

@@ -25,6 +25,7 @@ static double transactOvhd = 5.0;
 static double timeSTM = 0.0;
 static double timeRaw = 0.0;
 static pthread_mutex_t timeMutex = PTHREAD_MUTEX_INITIALIZER;  
+static int lockScheme = 1;
 
 int
 setAdaptMode(int mode)
@@ -40,6 +41,20 @@ setTransactOvhd(double ovhd)
   double old = transactOvhd;
   transactOvhd = ovhd;
   return old;
+}
+
+int
+setLockScheme(int scheme)
+{
+  int old = lockScheme;
+  lockScheme = scheme;
+  return old;
+}
+
+int
+getLockScheme(void)
+{
+  return lockScheme;
 }
 
 typedef struct {
@@ -88,24 +103,39 @@ al_pthread_create(pthread_t* thread,
 }
 
 int
-transactMode(al_t* lock)
+transactMode(al_t* lock,int spins)
 {
   unsigned long state = lock->state;
   unsigned long statistic = lock->statistic;
-  unsigned long triesCommits = lock->triesCommits;
-  double thrdsInTransact = (double)thrdsInStmMode(state);
-  double thrdsContending = (double)contention(statistic);
-  double Tries = (double)tries(triesCommits);
-  double Commits = (double)commits(triesCommits);
+  unsigned long triesCommits;
+  unsigned long thrdsInTransact;
+  unsigned long thrdsContending;
+  double Tries;
+  double Commits;
   double avgTries;
 
   if (adaptiveMode == -1) return 0;
   if (adaptiveMode == 1) return 1;
-  if (0 < thrdsInTransact) thrdsContending += thrdsInTransact;
-  if (lockHeld(state)) thrdsContending += 1.0;
+  switch (lockScheme) {
+  case 1:
+    thrdsContending = contention(statistic);
+    thrdsInTransact = thrdsInStmMode(state);
+    if (0 < thrdsInTransact) thrdsContending += thrdsInTransact;
+    if (lockHeld(state)) thrdsContending++;
+    if (spins == 0) thrdsContending++;
+    triesCommits = lock->triesCommits;
+    Tries = (double)tries(triesCommits);
+    Commits = (double)commits(triesCommits);
+    break;
+  default:
+    thrdsContending = contention(statistic);
+    Tries = (double)tries(statistic);
+    Commits = (double)commits(statistic);
+    break;
+  }
   if (!(0 < Commits)) avgTries =  1.0;
   else avgTries = Tries / Commits;
-  return (avgTries * transactOvhd) < thrdsContending;
+  return (avgTries * transactOvhd) < (double)thrdsContending;
 }
 
 void
@@ -118,80 +148,115 @@ Yield(void)
 #endif
 }
 
+#define ACQUIRE()							\
+  ({intptr_t prev,next;							\
+    prev = lock->state;							\
+    if (transition(prev) == 0) {					\
+      if ((useTransact = transactMode(lock,spins))) {			\
+	if (lockHeld(prev) == 0) {					\
+	  next = setLockMode(prev,0);					\
+	  next = setThrdsInStmMode(next,thrdsInStmMode(next)+1);	\
+	  assert(lockMode(next) == 0);					\
+	  assert(lockHeld(next) == 0);					\
+	  assert(thrdsInStmMode(next));					\
+	  assert(transition(next) == 0);				\
+	  if (CAS(lock->state,prev,next) == prev) break;		\
+	} else {							\
+	  next = setLockMode(prev,0);					\
+	  next = setTransition(next,1);					\
+	  assert(lockMode(next) == 0);					\
+	  assert(lockHeld(next));					\
+	  assert(thrdsInStmMode(next) == 0);				\
+	  assert(transition(next));					\
+	  CAS(lock->state,prev,next);					\
+	}								\
+      } else {								\
+	if (lockHeld(prev) == 0 && thrdsInStmMode(prev) == 0) {		\
+	  next = setLockMode(prev,1);					\
+	  next = setLockHeld(next,1);					\
+	  assert(lockMode(next));					\
+	  assert(lockHeld(next));					\
+	  assert(thrdsInStmMode(next) == 0);				\
+	  assert(transition(next) == 0);				\
+	  if (CAS(lock->state,prev,next) == prev) break;		\
+	} else if (lockMode(prev) == 0) {				\
+	  next = setLockMode(prev,1);					\
+	  next = setTransition(next,1);					\
+	  assert(lockMode(next));					\
+	  assert(lockHeld(next) == 0);					\
+	  assert(thrdsInStmMode(next));					\
+	  assert(transition(next));					\
+	  CAS(lock->state,prev,next);					\
+	}								\
+      }									\
+    } else {								\
+      if (lockMode(prev) == 0) {					\
+	if (lockHeld(prev) == 0) {					\
+	  useTransact = 1;						\
+	  next = setThrdsInStmMode(prev,thrdsInStmMode(prev)+1);	\
+	  next = setTransition(next,0);					\
+	  assert(lockMode(next) == 0);					\
+	  assert(lockHeld(next) == 0);					\
+	  assert(thrdsInStmMode(next));					\
+	  assert(transition(next) == 0);				\
+	  if (CAS(lock->state,prev,next) == prev) break;		\
+	}								\
+      } else {								\
+	if (lockHeld(prev) == 0 && thrdsInStmMode(prev) == 0) {		\
+	  useTransact = 0;						\
+	  next = setLockHeld(prev,1);					\
+	  next = setTransition(next,0);					\
+	  assert(lockMode(next));					\
+	  assert(lockHeld(next));					\
+	  assert(thrdsInStmMode(next) == 0);				\
+	  assert(transition(next) == 0);				\
+	  if (CAS(lock->state,prev,next) == prev) break;		\
+	}								\
+      }									\
+    }})
+
+#define RELEASE()							\
+  ({intptr_t prev,next;							\
+    prev = lock->state;							\
+    if (lockHeld(prev) == 0) {						\
+      assert(lockHeld(prev) == 0);					\
+      assert(thrdsInStmMode(prev));					\
+      next = setThrdsInStmMode(prev,thrdsInStmMode(prev)-1);		\
+      if (CAS(lock->state,prev,next) == prev) break;			\
+    } else {								\
+      assert(lockHeld(prev));						\
+      assert(thrdsInStmMode(prev) == 0);				\
+      next = setLockHeld(prev,0);					\
+      if (CAS(lock->state,prev,next) == prev) break;			\
+    }})
+
 int
-enterCritical(al_t* lock)
+enterCritical_0(al_t* lock)
 {
-  intptr_t prev,next;
+  int spins;
+  int spin_thrld = 100;
+  int useTransact;
+
+  spins = 0;
+  INC(lock->statistic);
+  while (1) {
+    ACQUIRE();
+    if (spin_thrld < ++spins) Yield();
+  }
+  DEC(lock->statistic);
+  return useTransact;
+}
+
+int
+enterCritical_1(al_t* lock)
+{
   int spins;
   int spin_thrld = 100;
   int useTransact;
 
   spins = 0;
   while (1) {
-    prev = lock->state;
-    if (transition(prev) == 0) {
-      if ((useTransact = transactMode(lock))) {
-	if (lockHeld(prev) == 0) {
-	  next = setLockMode(prev,0);
-	  next = setThrdsInStmMode(next,thrdsInStmMode(next)+1);
-	  assert(lockMode(next) == 0);
-	  assert(lockHeld(next) == 0);
-	  assert(thrdsInStmMode(next));
-	  assert(transition(next) == 0);
-	  if (CAS(lock->state,prev,next) == prev) break;
-	} else {
-	  next = setLockMode(prev,0);
-	  next = setTransition(next,1);
-	  assert(lockMode(next) == 0);
-	  assert(lockHeld(next));
-	  assert(thrdsInStmMode(next) == 0);
-	  assert(transition(next));
-	  CAS(lock->state,prev,next);
-	}
-      } else {
-	if (lockHeld(prev) == 0 && thrdsInStmMode(prev) == 0) {
-	  next = setLockMode(prev,1);
-	  next = setLockHeld(next,1);
-	  assert(lockMode(next));
-	  assert(lockHeld(next));
-	  assert(thrdsInStmMode(next) == 0);
-	  assert(transition(next) == 0);
-	  if (CAS(lock->state,prev,next) == prev) break;
-	} else if (lockMode(prev) == 0) {
-	  next = setLockMode(prev,1);
-	  next = setTransition(next,1);
-	  assert(lockMode(next));
-	  assert(lockHeld(next) == 0);
-	  assert(thrdsInStmMode(next));
-	  assert(transition(next));
-	  CAS(lock->state,prev,next);
-	}
-      }
-    } else {
-      if (lockMode(prev) == 0) {
-	if (lockHeld(prev) == 0) {
-	  useTransact = 1;
-	  next = setThrdsInStmMode(prev,thrdsInStmMode(prev)+1);
-	  next = setTransition(next,0);
-	  assert(lockMode(next) == 0);
-	  assert(lockHeld(next) == 0);
-	  assert(thrdsInStmMode(next));
-	  assert(transition(next) == 0);
-	  if (CAS(lock->state,prev,next) == prev) break;
-	}
-      } else {
-	if (lockHeld(prev) == 0 && thrdsInStmMode(prev) == 0) {
-	  useTransact = 0;
-	  next = setLockHeld(prev,1);
-	  next = setTransition(next,0);
-	  assert(lockMode(next));
-	  assert(lockHeld(next));
-	  assert(thrdsInStmMode(next) == 0);
-	  assert(transition(next) == 0);
-	  if (CAS(lock->state,prev,next) == prev) break;
-	}
-      }
-    }
+    ACQUIRE();
     if (spins == 0) INC(lock->statistic);
     if (spin_thrld < ++spins) Yield();
   }
@@ -200,24 +265,17 @@ enterCritical(al_t* lock)
 }
 
 void
-exitCritical(al_t* lock)
+exitCritical_0(al_t* lock)
 {
-  intptr_t prev,next;
+  while(1)
+    RELEASE();
+}
 
-  while (1) {
-    prev = lock->state;
-    if (lockHeld(prev) == 0) {
-      assert(lockHeld(prev) == 0);
-      assert(thrdsInStmMode(prev));
-      next = setThrdsInStmMode(prev,thrdsInStmMode(prev)-1);
-      if (CAS(lock->state,prev,next) == prev) break;
-    } else {
-      assert(lockHeld(prev));
-      assert(thrdsInStmMode(prev) == 0);
-      next = setLockHeld(prev,0);
-      if (CAS(lock->state,prev,next) == prev) break;
-    }
-  }
+void
+exitCritical_1(al_t* lock)
+{
+  while(1)
+    RELEASE();
 }
 
 void

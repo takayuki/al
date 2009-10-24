@@ -15,7 +15,9 @@ help(void)
           "  -a  use adaptive lock (default)\n"
           "  -l  use lock only\n"
           "  -t  use transaction only\n"
-          "  -x  transactional overhead (default: 25)\n"
+          "  -s  lock scheme (default: 1)\n"
+          "  -x  transactional overhead (default: 5.0)\n"
+          "  -f  power number of locks (default: 0(single lock))\n"
           "  -h  show this\n");
   exit(0);
 }
@@ -36,10 +38,12 @@ LIST_HEAD(bucket_head,hash_node);
 
 typedef struct {
   struct bucket_head table[NBUCKETS];
-  unsigned long entries;
+  al_t locks[1];
 } hash_table;
 
-static hash_table t;
+static hash_table* ht;
+static unsigned long NLOCKS = 1;
+static unsigned long LOCKMASK = 0;
 
 static hash_code
 hash(const char* s)
@@ -53,9 +57,9 @@ hash(const char* s)
   return h;
 }
 
-__attribute__((atomic ("l1")))
+__attribute__((atomic))
 hash_node*
-insert(hash_node* newnode)
+atomic_insert(al_t* lock,hash_node* newnode)
 {
   struct bucket_head* head;
   hash_node* prev;
@@ -65,7 +69,7 @@ insert(hash_node* newnode)
 
   newnode->hash = hash(newnode->key);
   h = newnode->hash;
-  head = &t.table[(h & BUCKETMASK)];
+  head = &ht->table[(h & BUCKETMASK)];
   prev = 0;
   LIST_FOREACH(node,head,next) {
     h2 = node->hash;
@@ -80,14 +84,13 @@ insert(hash_node* newnode)
   }
   if (prev) LIST_INSERT_AFTER(prev,newnode,next);
   else LIST_INSERT_HEAD(head,newnode,next);
-  t.entries++;
  done:
   return result;
 }
 
-__attribute__((atomic ("l1")))
+__attribute__((atomic))
 hash_node*
-delete(char* key)
+atomic_delete(al_t* lock,char* key)
 {
   struct bucket_head* head;
   hash_node* node;
@@ -95,12 +98,11 @@ delete(char* key)
   hash_node* result = 0;
 
   h = hash(key);
-  head = &t.table[(h & BUCKETMASK)];
+  head = &ht->table[(h & BUCKETMASK)];
   LIST_FOREACH(node,head,next) {
     h2 = node->hash;
     if (h == h2 && strcmp(key,node->key) == 0) {
       LIST_REMOVE(node,next);
-      t.entries--;
       result = node;
       goto done;
     }
@@ -109,9 +111,9 @@ delete(char* key)
   return result;
 }
 
-__attribute__((atomic ("l1","ro")))
+__attribute__((atomic ("ro")))
 hash_node*
-find(char* key)
+atomic_find(al_t* lock,char* key)
 {
   struct bucket_head* head;
   hash_node* node;
@@ -119,7 +121,7 @@ find(char* key)
   hash_node* result = 0;
 
   h = hash(key);
-  head = &t.table[(h & BUCKETMASK)];
+  head = &ht->table[(h & BUCKETMASK)];
   LIST_FOREACH(node,head,next) {
     h2 = node->hash;
     if (h == h2 && strcmp(key,node->key) == 0) {
@@ -129,6 +131,24 @@ find(char* key)
   }
  done:
   return result;
+}
+
+hash_node*
+insert(hash_node* node)
+{
+  return atomic_insert(&ht->locks[(hash(node->key) & LOCKMASK)],node);
+}
+
+hash_node*
+delete(char* key)
+{
+  return atomic_delete(&ht->locks[(hash(key) & LOCKMASK)],key);
+}
+
+hash_node*
+find(char* key)
+{
+  return atomic_find(&ht->locks[(hash(key) & LOCKMASK)],key);
 }
 
 void*
@@ -140,7 +160,7 @@ validate(void* arg)
   unsigned long entries = 0;
 
   for (i = 0; i < NBUCKETS; i++) {
-    head = &t.table[i];
+    head = &ht->table[i];
     LIST_FOREACH(node,head,next) {
       if (node->hash != hash(node->key))
 	printf("*** Oops, %s(%lx/%lx)\n",
@@ -148,7 +168,7 @@ validate(void* arg)
       entries++;
     }
   }
-  printf("number of entries=%ld/%ld\n",entries,t.entries);
+  printf("number of entries=%ld\n",entries);
   return 0;
 }
 
@@ -164,7 +184,7 @@ task(void* arg)
   hash_node* node;
   unsigned short xseed[3] = {id,id,id};
   unsigned long rand;
-
+  
   while (n--) {
     rand = nrand48(xseed);
     sprintf(key,"k%ld",(rand % 1000));
@@ -222,15 +242,18 @@ main(int argc,char* argv[])
   pthread_t t[256];
   void* r;
   double elapse;
+  size_t size;
 
-  while ((ch = getopt(argc,argv,"p:n:altx:")) != -1) {
+  while ((ch = getopt(argc,argv,"p:n:alts:x:f:h")) != -1) {
     switch (ch) {
-    case 'n': iter = atoi(optarg); break;
     case 'p': thrd = atoi(optarg); break;
+    case 'n': iter = atoi(optarg); break;
     case 'a': setAdaptMode(0); break;
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
+    case 's': setLockScheme(atoi(optarg)); break;
     case 'x': setTransactOvhd(atof(optarg)); break;
+    case 'f': NLOCKS = 1<<atoi(optarg); LOCKMASK = NLOCKS-1; break;
     case 'h':
     default: help();
     }
@@ -238,6 +261,10 @@ main(int argc,char* argv[])
   argc -= optind;
   argv += optind;
 
+  if (NBUCKETS < NLOCKS) { NLOCKS = NBUCKETS; LOCKMASK = NLOCKS-1; }
+  size = sizeof(hash_table) + sizeof(al_t) * (NLOCKS-1);
+  if ((ht = (hash_table*)malloc(size)) == 0) abort();
+  memset(ht,0,size);
   if (256 <= thrd) thrd = 256;
   for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
   for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
@@ -251,5 +278,6 @@ main(int argc,char* argv[])
 #endif
   printf("elapse=%.3lf,exec_per_sec=%.3lf\n",
 	 elapse,((double)(thrd*iter))/elapse);
+  free(ht);
   return 0;
 }

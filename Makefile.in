@@ -2,7 +2,7 @@ srcdir = @srcdir@
 prefix = @prefix@
 
 CC = @CC@
-CPPFLAGS = @DEFS@ -I. @CPPFLAGS@ #-DNDEBUG
+CPPFLAGS = @DEFS@ -I. -DNDEBUG @CPPFLAGS@
 CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
 LDFLAGS = -Ltl2 @PTHREAD_CFLAGS@ @LDFLAGS@
 LIBS = -ltl2 @PTHREAD_LIBS@ @LIBS@
@@ -16,7 +16,7 @@ GNUMAKE = @GNUMAKE@
 INSTALL = @INSTALL@
 SUBDIRS = tl2 cil
 CILLY = cil/bin/cilly
-CILLYFLAGS = --keepunused --doatomic --save-temps --check
+CILLYFLAGS = --keepunused --doatomic --save-temps #--check
 
 .SUFFIXES: .ml .mli .cmo .cmi .cmx .check
 

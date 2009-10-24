@@ -238,12 +238,14 @@ class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
     | _ -> DoChildren
 
   method vinst i =
-    let prefix = "" in
+    let prefix = "_" in
     match vs with
       [lock;rawfunc;stmfunc] ->
       (match i with
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"lock") ->
-           ChangeTo([Set((Var v,NoOffset),mkAddrOf(var lock),loc)])
+           if isPointerType lock.vtype
+           then ChangeTo([Set((Var v,NoOffset),Lval(var lock),loc)])
+           else ChangeTo([Set((Var v,NoOffset),mkAddrOf(var lock),loc)])
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"ro") && ro ->
            ChangeTo([Set((Var v,NoOffset),one,loc)])
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"ro") && not ro ->
@@ -311,29 +313,36 @@ let findAtomic = function
           let decl = GVarDecl(f.svar,loc) in
           atomic_list := decl :: !atomic_list;
           let base = f.svar.vname in
-          let lock,ro = match (filterAttributes "atomic" attr) with
-                          [Attr(_,[])] -> base,false
-                        | [Attr(_,[AStr "ro"])] -> base,true
-                        | [Attr(_,[AStr param])] -> param,false
-                        | [Attr(_,[AStr param;AStr "ro"])] -> param,true
-                        | _ -> E.s (E.error "'%a' has invalid attribute in %a"
-                                    d_attrlist attr d_loc loc) in
-          let p,q = try findLock lock,[]
-                    with Not_found ->
-                    (let p = makeGlobalVar
-                             ("_"^lock^"_lock") (al_t()) in
-                     lock_list := (lock,p) :: !lock_list;
-                     let c = buildInit (f,loc,p) in
-                     let d = buildAtExit (f,loc,p) in
-                     (p,[GVar(p,{init=None},loc);c;d])) in
-          let r = copyFunction f ("_raw_"^base) in
-          let s = copyFunction f ("_stm_"^base) in
-          let t = TPtr(findType "Thread",[]) in
-          let v = makeFormalVar s ~where:"^" "self" t in
-            ignore(compileRaw r);
-            ignore(compileStm (s,v,ro));
-            let f' = buildAl(f,[p;r.svar;s.svar],ro) in
-              q@[GFun(r,loc);GFun(s,loc);GFun(f',loc)]
+          let lock,ro,userLock =
+            match (filterAttributes "atomic" attr) with
+            | [Attr(_,[])] -> base,false,true
+            | [Attr(_,[AStr "ro"])] -> base,true,true
+            | [Attr(_,[AStr param])] -> param,false,false
+            | [Attr(_,[AStr param;AStr "ro"])] -> param,true,false
+            | _ -> E.s (E.error "'%a' has invalid attribute in %a"
+                       d_attrlist attr d_loc loc) in
+          let p,q =
+            if userLock
+            then match f.svar.vtype with
+                   TFun(_,Some((nam,typ,_)::_),_,_) ->
+                     (makeVarinfo false nam typ),[]
+                 | _ -> E.s (E.bug "template should have function type")
+            else try findLock lock,[]
+                 with Not_found ->
+                   (let p = makeGlobalVar
+                            ("_"^lock^"_lock") (al_t()) in
+                    lock_list := (lock,p) :: !lock_list;
+                    let c = buildInit (f,loc,p) in
+                    let d = buildAtExit (f,loc,p) in
+                    (p,[GVar(p,{init=None},loc);c;d])) in
+            let r = copyFunction f ("_raw_"^base) in
+            let s = copyFunction f ("_stm_"^base) in
+            let t = TPtr(findType "Thread",[]) in
+            let v = makeFormalVar s ~where:"^" "self" t in
+              ignore(compileRaw r);
+              ignore(compileStm (s,v,ro));
+              let f' = buildAl(f,[p;r.svar;s.svar],ro) in
+                q@[GFun(r,loc);GFun(s,loc);GFun(f',loc)]
         else [g]
       | _ -> E.s (E.bug "'%a' should have function type" d_global g))
 | g -> [g]

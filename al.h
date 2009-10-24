@@ -70,11 +70,13 @@ int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 
 extern pthread_key_t _al_key;
 int setAdaptMode(int);
+int setLockScheme(int);
+int getLockScheme(void);
 double setTransactOvhd(double);
-int transactMode(al_t*);
-void Yield(void);
-int enterCritical(al_t*);
-void exitCritical(al_t*);
+int enterCritical_0(al_t*);
+int enterCritical_1(al_t*);
+void exitCritical_0(al_t*);
+void exitCritical_1(al_t*);
 void TxStoreSized(Thread*,intptr_t*,intptr_t*,size_t);
 void TxLoadSized(Thread*,intptr_t*,intptr_t*,size_t);
 #ifdef HAVE_GETHRTIME
