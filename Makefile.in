@@ -1,0 +1,59 @@
+srcdir = @srcdir@
+prefix = @prefix@
+
+CC = @CC@
+CPPFLAGS = @DEFS@ -I. @CPPFLAGS@
+CFLAGS = -Wall @CFLAGS@ @PTHREAD_CFLAGS@
+LDFLAGS = -Ltl2 @PTHREAD_CFLAGS@ @LDFLAGS@
+LIBS = -ltl2 @PTHREAD_LIBS@ @LIBS@
+OCAMLC = @OCAMLC@
+OCAMLOPT = @OCAMLOPT@
+OCAMLDEP = @OCAMLDEP@
+OCAMLCPPFLAGS = -I cil/obj/@ARCHOS@
+OCAMLCFLAGS = -w Ae
+OCAMLLDFLAGS =
+GNUMAKE = @GNUMAKE@
+INSTALL = @INSTALL@
+SUBDIRS = tl2 cil
+CILLY = cil/bin/cilly
+CILLYFLAGS = --doatomic --keepunused --check --save-temps
+
+.SUFFIXES: .ml .mli .cmo .cmi .cmx
+
+.c.o:
+	$(CILLY) $(CILLYFLAGS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+.ml.cmo .mli.cmi:
+	$(OCAMLC) $(OCAMLCPPFLAGS) $(OCAMLCFLAGS) -c $(srcdir)/$<
+.ml.cmx:
+	$(OCAMLOPT) $(OCAMLCPPFLAGS) $(OCAMLCFLAGS) -c $(srcdir)/$<
+
+all: subdirs test
+
+test: test.o al.o port.o
+	$(CC) $(LDFLAGS) -o test test.o al.o port.o $(LIBS)
+
+test.o: test.c al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
+
+al.o: al.c al.h stm.h tl2/tl2.h tl2/tmalloc.h port.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+port.o: port.c port.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$<
+
+check: atomic.cmo
+
+subdirs:
+	for dir in $(SUBDIRS); do\
+	  if test -d "$$dir"; then $(GNUMAKE) -C "$$dir"; fi;\
+	done
+
+clean:
+	rm -f *.cmi *.cmo *.cmx *.cil.i *.cil.c *.i
+	rm -f test *.o *~ core *.core
+
+distclean: clean
+	for dir in $(SUBDIRS); do\
+	  if test -d "$$dir"; then $(GNUMAKE) -C "$$dir" distclean; fi;\
+	done
+	rm -f Makefile config.h .depend
+	rm -f config.cache config.log config.status
