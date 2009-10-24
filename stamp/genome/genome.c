@@ -163,7 +163,7 @@ parseArgs (long argc, char* const argv[])
 		setAdaptMode(1);
 		break;
 	    case 'X':
-		setTranxOvhd(atoi(optarg));
+		setTranxOvhd(atof(optarg));
 		break;
             case '?':
             default:

@@ -5,6 +5,10 @@
  *
  * =============================================================================
  *
+ * Copyright (C) 2008, University of Oregon.  All Rights Reserved.
+ *
+ * =============================================================================
+ *
  * Copyright (C) Stanford University, 2006.  All Rights Reserved.
  * Author: Chi Cao Minh
  *

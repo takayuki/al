@@ -1,3 +1,37 @@
+/*
+ * Al -- an implementation of the adaptive locks
+ *
+ * Copyright (C) 2008, University of Oregon
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ * 
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in
+ *     the documentation and/or other materials provided with the
+ *     distribution.
+ * 
+ *   * Neither the name of University of Oregon nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY UNIVERSITY OF OREGON ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -68,6 +102,7 @@ _dispatcher(void* _arg)
   self = malloc(sizeof(*self));
   if (self == 0)
     return (void*)EAGAIN;
+  memset(self,0,sizeof(*self));
   self->stmThread = TxNewThread();
   if (self->stmThread == 0) {
     free(self);
@@ -300,34 +335,10 @@ exitCritical_1(al_t* lock)
     RELEASE();
 }
 
-unsigned long
-Random(unsigned long* next)
-{
-  return (*next = *next * 1103515245 + 12345) % ((unsigned long)RAND_MAX + 1);
-}
-
-intptr_t
-LocalStore(intptr_t* dest,intptr_t src)
-{
-  return (*dest = src);
-}
-
-intptr_t
-LocalLoad(intptr_t* src)
-{
-  return *src;
-}
-
-float
-LocalStoreF(float* dest,float src)
-{
-  return (*dest = src);
-}
-
-float LocalLoadF(float* src)
-{
-  return *src;
-}
+intptr_t LocalStore(intptr_t* dest,intptr_t src) { return (*dest = src); }
+intptr_t LocalLoad(intptr_t* src) { return *src; }
+float LocalStoreF(float* dest,float src) { return (*dest = src); }
+float LocalLoadF(float* src) { return *src; }
 
 void
 TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
@@ -424,9 +435,6 @@ timer_stop(struct timeval* start,struct timeval* acc,al_t* lock,int stmMode)
 void
 dump_profile(al_t* lock)
 {
-#ifdef ENABLE_TIMER
-  printf("%s: raw=%.3lf,stm=%.3lf\n",lock->name,timeRaw,timeSTM);
-#endif
 }
 
 static void
@@ -460,5 +468,6 @@ __attribute__((destructor)) void
 finish(void)
 {
   printf("tranxOvhd=%d,tranxOvhdScale=%d\n",tranxOvhd,tranxOvhdScale);
+  printf("raw=%.3lf,stm=%.3lf\n",timeRaw,timeSTM);
   TxShutdown();
 }

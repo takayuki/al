@@ -189,7 +189,7 @@ MAIN(argc, argv)
 		setAdaptMode(1);
 		break;
 	    case 'X':
-		setTranxOvhd(atoi(optarg));
+		setTranxOvhd(atof(optarg));
 		break;
             case '?': usage((char*)argv[0]);
                       break;

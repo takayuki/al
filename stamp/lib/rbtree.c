@@ -5,6 +5,10 @@
  *
  * =============================================================================
  *
+ * Copyright (C) 2008, University of Oregon.  All Rights Reserved.
+ *
+ * =============================================================================
+ *
  * Copyright (C) Sun Microsystems Inc., 2006.  All Rights Reserved.
  * Authors: Dave Dice, Nir Shavit, Ori Shalev.
  *
