@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "al.h"
 
-volatile int cnt[3] = {0,0,0};
+volatile long cnt[3] = {0,0,0};
 
 void
 help(void)
@@ -21,10 +21,10 @@ __attribute__((atomic ("l1")))
 void* 
 incr (void* arg)
 {
-  int n; int* p;
+  long n; long* p;
 
   cnt[1]++;
-  p = &cnt[2]; n = (int)arg; *p += n;
+  p = &cnt[2]; n = (long)arg; *p += n;
   return 0;
 }
 
@@ -32,10 +32,10 @@ __attribute__((atomic ("l1")))
 void*
 decr (void* arg)
 {
-  int n; int* p;
+  long n; long* p;
 
   cnt[1]++;
-  p = &cnt[2]; n = (int)arg; *p -= n;
+  p = &cnt[2]; n = (long)arg; *p -= n;
   return 0;
 }
 

@@ -6,11 +6,23 @@
 #include <stdlib.h>
 #include "port.h"
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 #define mb()  __asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
 #define rmb() __asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
 #define wmb() __asm__ __volatile__ ("" : : : "memory")
 
+#ifdef __LP64__
+intptr_t
+__cmpxchg_u64(volatile intptr_t* ptr,intptr_t old,intptr_t new)
+{
+  intptr_t prev;
+   __asm__ __volatile__("lock; cmpxchgq %1,%2"
+			: "=a"(prev)
+			: "r"(new), "m"(*ptr), "0"(old)
+			: "memory");
+   return prev;
+}
+#else
 intptr_t
 __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 {
@@ -21,6 +33,7 @@ __cmpxchg_u32(volatile intptr_t* ptr,intptr_t old,intptr_t new)
 		       : "memory");
   return prev;
 }
+#endif /* __LP64__ */
 #endif /* __i386__ */
 #ifdef __sparc__
 #define membar_safe(type)				\
@@ -50,8 +63,13 @@ static intptr_t
 __cmpxchg(volatile intptr_t* ptr,intptr_t old,intptr_t new,int size)
 {
   switch (size) {
+#ifndef __LP64__
   case 4:
     return __cmpxchg_u32(ptr,old,new);
+#else
+  case 8:
+    return __cmpxchg_u64(ptr,old,new);
+#endif
   }
   abort();
   return old;

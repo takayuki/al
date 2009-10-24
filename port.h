@@ -12,7 +12,9 @@ intptr_t fetch_and_sub1(volatile intptr_t*);
 #define CAS(var,old,new)	cmpxchg(&(var),(old),(new))
 #define INC(var)		fetch_and_add1(&(var))
 #define DEC(var)		fetch_and_sub1(&(var))
-#define LOAD(var)		(var)
-#define STORE(var,val)		((var)=(val))
+#define inc(var)		fetch_and_add1(&(var))
+#define dec(var)		fetch_and_sub1(&(var))
+#define load(var)		(var)
+#define store(var,val)		((var)=(val))
 
 #endif

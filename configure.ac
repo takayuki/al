@@ -1,4 +1,4 @@
-AC_INIT([CIS 609 Final Project],[0.1],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.2],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -7,7 +7,23 @@ m4_include([build/acx_pthread.m4])
 m4_include([build/check_gnu_make.m4])
 AC_PROG_CC
 AC_PROG_INSTALL
+AC_CHECK_HEADERS([inttypes.h])
+AC_CHECK_HEADERS([sched.h])
+AC_SEARCH_LIBS([sched_yield],[rt])
 ACX_PTHREAD
+_ac_save_CFLAGS=$CFLAGS
+_ac_save_LDFLAGS=$LDFLAGS
+_ac_save_LIBS=$LIBS
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+LDFLAGS="$LDFLAGS $PTHREAD_CFLAGS"
+LIBS="$PTHREAD_LIBS $LIBS"
+AC_CHECK_FUNC([sched_yield],[AC_DEFINE([HAVE_SCHED_YIELD],[1],
+              [Define to 1 if you have the POSIX sched_yield function.])])
+AC_CHECK_FUNC([pthread_yield],[AC_DEFINE([HAVE_PTHREAD_YIELD],[1],
+              [Define to 1 if you have the POSIX pthread_yield function.])])
+CFLAGS=$_ac_save_CFLAGS
+LDFLAGS=$_ac_save_LDFLAGS
+LIBS=$_ac_save_LIBS
 AC_CHECK_PROG([OCAMLC],[ocamlc],[ocamlc])
 AC_CHECK_PROG([OCAMLOPT],[ocamlopt],[ocamlopt])
 AC_CHECK_PROG([OCAMLDEP],[ocamldep],[ocamldep])

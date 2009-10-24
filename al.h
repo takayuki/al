@@ -18,7 +18,6 @@ typedef struct {
   const char* name;
   volatile intptr_t lockHeld;
   volatile intptr_t threadsWaiting;
-  volatile intptr_t threadsInStmMode;
   volatile intptr_t tries;
   volatile intptr_t commit;
   volatile intptr_t invokeInLockMode;
@@ -34,9 +33,11 @@ extern pthread_key_t _thread_self_key;
 extern double transactOvhd;
 int isInStmMode(void);
 int isInLockMode(void);
-void* al(_profile_t*,void* (*)(void*),void* (*)(Thread*,void*),void*);
+void* al(_profile_t*,void* (*)(void*),void* (*)(Thread*,void*),void*,int);
 void* mallocInStm(size_t);
 void freeInStm(void*);
+void* mallocInLock(size_t);
+void freeInLock(void*);
 void dump_profile(_profile_t*);
 
 #endif

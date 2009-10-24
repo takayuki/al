@@ -31,11 +31,17 @@ class collectGlobals = object
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxStore" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "TxStoreLocal" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "al" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "mallocInStm" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "freeInStm" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "mallocInLock" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "freeInLock" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "dump_profile" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
@@ -45,7 +51,29 @@ end
 let current_func = ref (emptyFunction "")
 let assignment_list = ref []
 
-class tweakMemAccess (thread_self : varinfo) = object
+class locked = object
+  inherit nopCilVisitor
+
+  method vfunc f =
+    current_func := f; DoChildren
+
+  method vlval lv =
+    match lv with
+      Var v,NoOffset when
+        v.vglob && isFunctionType v.vtype ->
+        (match v.vname with
+           "malloc" -> ChangeTo (var (findSymbol "mallocInLock"))
+         | "free" -> ChangeTo (var (findSymbol "freeInLock"))
+         | _ -> SkipChildren)
+    | _ -> SkipChildren
+end
+
+let hasIntPtrSize (ts : typ list) =
+  let fold = List.fold_left (fun x y -> x && y) true in
+  let test t = bitsSizeOf t = bitsSizeOf intPtrType in
+    fold (List.map test ts)
+
+class transactional ((thread_self,ro) : varinfo * bool) = object
   inherit nopCilVisitor
 
   method vfunc f =
@@ -58,8 +86,25 @@ class tweakMemAccess (thread_self : varinfo) = object
 
   method vinst i =
     match i with
-    | Set(((Var v,_) as lv),e,loc)
-        when v.vglob ->
+    | Set((Var v,_),_,loc) when
+      v.vglob && ro -> E.s (E.error
+"assignment in read-only atomic section in %a." d_loc loc)
+    | Set(((Var v,_) as lv),e,loc) when
+      hasIntPtrSize [typeOfLval lv; (typeOf e)] ->
+        let store = if v.vglob then Lval(var (findSymbol "TxStore"))
+                    else Lval(var (findSymbol "TxStoreLocal")) in
+        let arg = [e] in
+        let inst = Call(None,store,arg,loc) in
+        let protect x =
+          match x with
+            Call(None,proc,arg,loc)
+              when proc == store ->
+              let arg' = [Lval(var thread_self);mkAddrOf lv] @ arg in
+                Call(None,proc,arg',loc)
+          | _ -> x
+        in ChangeDoChildrenPost ([inst],fun x -> List.map protect x)
+    | Set(((Mem _,_) as lv),e,loc) when
+      hasIntPtrSize [typeOfLval lv; (typeOf e)] ->
         let store = Lval(var (findSymbol "TxStore")) in
         let arg = [e] in
         let inst = Call(None,store,arg,loc) in
@@ -71,19 +116,11 @@ class tweakMemAccess (thread_self : varinfo) = object
                 Call(None,proc,arg',loc)
           | _ -> x
         in ChangeDoChildrenPost ([inst],fun x -> List.map protect x)
-    | Set((Var _,_),_,_) -> DoChildren
-    | Set(((Mem _,_) as lv),e,loc) ->
-        let store = Lval(var (findSymbol "TxStore")) in
-        let arg = [e] in
-        let inst = Call(None,store,arg,loc) in
-        let protect x =
-          match x with
-            Call(None,proc,arg,loc)
-              when proc == store ->
-              let arg' = [Lval(var thread_self);mkAddrOf lv] @ arg in
-                Call(None,proc,arg',loc)
-          | _ -> x
-        in ChangeDoChildrenPost ([inst],fun x -> List.map protect x)
+    | Set(lv,_,loc) when
+      hasIntPtrSize [typeOfLval lv] -> E.s (E.error
+"assignment to a non-interger-sized variable in %a." d_loc loc)
+    | Set(_,_,loc) -> E.s (E.error
+"assignment from a non-interger-sized value in %a." d_loc loc)
     | Call(None,_,_,_) -> DoChildren
     | Call(Some((Var v,_) as lv),arg,f,loc)
         when v.vglob ->
@@ -97,14 +134,12 @@ class tweakMemAccess (thread_self : varinfo) = object
 
   method vlval lv =
     match lv with
-      Var v,NoOffset when
-        v.vglob && isFunctionType v.vtype ->
+      Var v,NoOffset when v.vglob && isFunctionType v.vtype ->
         (match v.vname with
            "malloc" -> ChangeTo (var (findSymbol "mallocInStm"))
          | "free" -> ChangeTo (var (findSymbol "freeInStm"))
          | _ -> SkipChildren)
-    | Var v,_ when
-      v.vglob && bitsSizeOf (typeOfLval lv) = bitsSizeOf intPtrType ->
+    | Var v,_ when v.vglob && hasIntPtrSize [typeOfLval lv] ->
         let t = makeTempVar !current_func ~name:"tmp" (typeOfLval lv) in
         let load = findSymbol "TxLoad" in
         let arg = [Lval(var thread_self);mkAddrOf lv] in
@@ -112,7 +147,7 @@ class tweakMemAccess (thread_self : varinfo) = object
         let inst = Call(Some (var t),Lval(var load),arg,loc) in
          (assignment_list := inst :: !assignment_list; ChangeTo (var t))
     | Var v,_ when v.vglob -> 
-        E.s (E.error "global variable %s has non-pointer size in %a"
+        E.s (E.error "global variable `%s' has non-pointer size in %a"
                       v.vname d_loc !currentLoc)
     | Var _,_ -> SkipChildren
     | Mem e,_ ->
@@ -131,17 +166,21 @@ class tweakMemAccess (thread_self : varinfo) = object
     | _ -> DoChildren
 end
 
-let compile ((f,self) : fundec * varinfo) =
-  visitCilFunction (new tweakMemAccess self) f
+let compileRaw (f : fundec) =
+  visitCilFunction (new locked) f
 
-let buildAl ((f,l,vs) : fundec * location * (varinfo list)) =
+let compileStm ((f,self,ro) : fundec * varinfo * bool) =
+  visitCilFunction (new transactional (self,ro)) f
+
+let buildAl ((f,l,vs,ro) : fundec * location * (varinfo list) * bool) =
   begin
     f.slocals <- [];
     let t = makeTempVar f ~name:"tmp" voidPtrType in
     begin
      f.slocals <- [t];
      let arg = (List.map (fun v -> mkAddrOf(var v)) vs) @
-               (List.map (fun v -> Lval(var v)) f.sformals) in
+               (List.map (fun v -> Lval(var v)) f.sformals) @
+               [if ro then one else zero] in
      let s1 = mkStmtOneInstr
               (Call(Some (var t),Lval(var (findSymbol "al")),arg,l)) in
      let s2 = mkStmt (Return(Some(Lval(var t)),l)) in
@@ -186,11 +225,13 @@ let findAtomic (g : global) =
             let decl = GVarDecl(f.svar,loc) in
             atomic_list := decl :: !atomic_list;
             let base = f.svar.vname in
-            let lock = match (filterAttributes "atomic" attr) with
-                         [Attr(_,[])] -> base
-                       | [Attr(_,[AStr param])] -> param
-                       | _ -> E.s (E.error
-                         "attribute error in %a" d_loc !currentLoc) in
+            let lock,ro = match (filterAttributes "atomic" attr) with
+                            [Attr(_,[])] -> base,false
+                          | [Attr(_,[AStr "ro"])] -> base,true
+                          | [Attr(_,[AStr param])] -> param,false
+                          | [Attr(_,[AStr param;AStr "ro"])] -> param,true
+                          | _ -> E.s (E.error
+"syntax error in atomic attribute in %a." d_loc loc) in
             let p,q = try findLock lock,[]
                       with Not_found ->
                       (let p = makeGlobalVar
@@ -203,8 +244,9 @@ let findAtomic (g : global) =
             let s = copyFunction f ("_stm_"^base) in
             let t = TPtr(findType "Thread",[]) in
             let v = makeFormalVar s ~where:"^" "self" t in
-              ignore(compile (s,v));
-              buildAl (f,loc,[p;r.svar;s.svar]);
+              ignore(compileRaw r);
+              ignore(compileStm (s,v,ro));
+              buildAl (f,loc,[p;r.svar;s.svar],ro);
               q@[GFun(r,loc);GFun(s,loc);g]
           else
             [g]
