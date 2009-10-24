@@ -487,7 +487,7 @@ TMlist_getSize (al_t* lock, list_t* listPtr)
 static list_node_t*
 findPrevious (list_t* listPtr, void* dataPtr)
 {
-    al_t dummy = AL_INITIALIZER;
+    al_t dummy = AL_INITIALIZER(__FILE__ ":" __func__);
     list_node_t* prevPtr = &(listPtr->head);
     list_node_t* nodePtr = prevPtr->nextPtr;
 
@@ -536,7 +536,7 @@ TMfindPrevious (al_t* lock, list_t* listPtr, void* dataPtr)
 void*
 list_find (list_t* listPtr, void* dataPtr)
 {
-    al_t dummy = AL_INITIALIZER;
+    al_t dummy = AL_INITIALIZER(__FILE__ ":" __func__);
     list_node_t* nodePtr;
     list_node_t* prevPtr = findPrevious(listPtr, dataPtr);
 
@@ -583,7 +583,7 @@ TMlist_find (al_t* lock, list_t* listPtr, void* dataPtr)
 bool_t
 list_insert (list_t* listPtr, void* dataPtr)
 {
-    al_t dummy = AL_INITIALIZER;
+    al_t dummy = AL_INITIALIZER(__FILE__ ":" __func__);
     list_node_t* prevPtr;
     list_node_t* nodePtr;
     list_node_t* currPtr;
@@ -619,7 +619,7 @@ list_insert (list_t* listPtr, void* dataPtr)
 bool_t
 Plist_insert (list_t* listPtr, void* dataPtr)
 {
-    al_t dummy = AL_INITIALIZER;
+    al_t dummy = AL_INITIALIZER(__FILE__ ":" __func__);
     list_node_t* prevPtr;
     list_node_t* nodePtr;
     list_node_t* currPtr;
@@ -692,7 +692,7 @@ TMlist_insert (al_t* lock, list_t* listPtr, void* dataPtr)
 bool_t
 list_remove (list_t* listPtr, void* dataPtr)
 {
-    al_t dummy = AL_INITIALIZER;
+    al_t dummy = AL_INITIALIZER(__FILE__ ":" __func__);
     list_node_t* prevPtr;
     list_node_t* nodePtr;
 
@@ -722,7 +722,7 @@ list_remove (list_t* listPtr, void* dataPtr)
 bool_t
 Plist_remove (list_t* listPtr, void* dataPtr)
 {
-    al_t dummy = AL_INITIALIZER;
+    al_t dummy = AL_INITIALIZER(__FILE__ ":" __func__);
     list_node_t* prevPtr;
     list_node_t* nodePtr;
 
@@ -908,7 +908,7 @@ int
 main ()
 {
     pthread_t t;
-    al_t lock = AL_INITIALIZER;
+    al_t dummy = AL_INITIALIZER(__FILE__ ":" __func__);
 
     setAdaptMode(1);
     pthread_create(&t,0,test,&lock);

@@ -53,6 +53,7 @@ typedef struct {
   volatile unsigned long state;
   volatile unsigned long statistic;
   volatile unsigned long triesCommits;
+  volatile long tranxOvhd;
 } al_t;
 
 #define lockMode(x)		((x)&0x80000000UL)
@@ -109,12 +110,12 @@ typedef struct {
 #endif
 } thread_t;
 
-#define AL_INITIALIZER  {0,0,0,0}
+#define AL_INITIALIZER(name)  {(name),0,0,0,0}
 
 int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 #define pthread_create al_pthread_create
-
 thread_t* thread_self(void);
+void al_init(al_t*,char*);
 void setAdaptMode(int);
 void setTranxOvhd(double);
 void setTranxInstr(int,int);
@@ -143,6 +144,6 @@ void timer_stop(hrtime_t*,hrtime_t*);
 void timer_start(struct timeval*);
 void timer_stop(struct timeval*,struct timeval*);
 #endif
-void dump_profile(al_t*);
+void al_dump(al_t*);
 
 #endif

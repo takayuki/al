@@ -365,6 +365,8 @@ MAIN(argc, argv)
     adtree_free(adtreePtr);
     learner_free(learnerPtr);
 
+    al_dump(&learnerLock);
+
     TM_SHUTDOWN();
     P_MEMORY_SHUTDOWN();
 

@@ -471,6 +471,8 @@ MAIN(argc, argv)
     puts("done.");
     fflush(stdout);
 
+    al_dump(&clientLock);
+
     TM_SHUTDOWN();
     P_MEMORY_SHUTDOWN();
 

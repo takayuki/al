@@ -264,6 +264,8 @@ start(void* _arg)
     maze_free(mazePtr);
     router_free(routerPtr);
 
+    al_dump(&routerLock);
+
     TM_SHUTDOWN();
     P_MEMORY_SHUTDOWN();
 

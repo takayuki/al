@@ -309,13 +309,19 @@ main(int argc,char* argv[])
   argc -= optind;
   argv += optind;
 
-  if (NBUCKETS < NLOCKS) { NLOCKS = NBUCKETS; LOCKMASK = NLOCKS-1; }
+  if (NBUCKETS < NLOCKS) {
+    NLOCKS = NBUCKETS; LOCKMASK = NLOCKS-1;
+  }
+  for (i = 0; i < NLOCKS; i++)
+    al_init(&ht.locks[i],"ht.locks[]");
   if (256 <= thrd) thrd = 256;
 #ifdef HAVE_PTHREAD_BARRIER
   pthread_barrier_init(&invokeBarrier,0,thrd);
 #endif
-  for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
-  for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
+  for (i = 0; i < thrd; i++)
+    pthread_create(&t[i],0,invoke,i+1);
+  for (i = 0; i < thrd; i++)
+    pthread_join(t[i],&r);
   pthread_create(&t[0],0,validate,0);
   pthread_join(t[0],&r);
 #ifdef HAVE_GETHRTIME
@@ -326,5 +332,7 @@ main(int argc,char* argv[])
 #endif
   printf("elapse=%.3lf,exec_per_sec=%.3lf\n",
 	 elapse,((double)(thrd*iter))/elapse);
+  for (i = 0; i < NLOCKS; i++)
+    al_dump(&ht.locks[i]);
   return 0;
 }

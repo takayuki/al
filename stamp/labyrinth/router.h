@@ -69,6 +69,7 @@
 #define ROUTER_H 1
 
 
+#include "al.h"
 #include "grid.h"
 #include "maze.h"
 #include "tm.h"
@@ -111,6 +112,8 @@ router_free (router_t* routerPtr);
 void
 router_solve (void* argPtr);
 
+
+extern al_t routerLock;
 
 #endif /* ROUTER_H */
 

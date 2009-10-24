@@ -69,6 +69,7 @@
 #ifndef LEARNER_H
 #define LEARNER_H 1
 
+#include "al.h"
 #include "adtree.h"
 #include "data.h"
 #include "net.h"
@@ -126,6 +127,7 @@ learner_run (learner_t* learnerPtr, long numThread);
 float
 learner_score (learner_t* learnerPtr);
 
+extern al_t learnerLock;
 
 #endif /* LEARNER_H */
 

@@ -155,7 +155,7 @@ selectAction (long r, long percentUser)
  */
 #define MAXQUERYPERTRANSACTION 8
 
-static al_t clientLock;
+al_t clientLock = AL_INITIALIZER("clientLock");
 
 __attribute__((atomic))
 static void

@@ -224,8 +224,10 @@ main(int argc,char* argv[])
 #ifdef HAVE_PTHREAD_BARRIER
   pthread_barrier_init(&invokeBarrier,0,thrd);
 #endif
-  for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
-  for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
+  for (i = 0; i < thrd; i++)
+    pthread_create(&t[i],0,invoke,i+1);
+  for (i = 0; i < thrd; i++)
+    pthread_join(t[i],&r);
   pthread_create(&t[0],0,validate,0);
   pthread_join(t[0],&r);
 #ifdef HAVE_GETHRTIME

@@ -86,8 +86,6 @@ class collectGlobals = object
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "StxStSized" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
-  | GVarDecl(v,_) when v.vname = "al" ->
-      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxAlloc" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxFree" ->
@@ -100,7 +98,9 @@ class collectGlobals = object
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "tmalloc_release" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
-  | GVarDecl(v,_) when v.vname = "dump_profile" ->
+  | GVarDecl(v,_) when v.vname = "al_init" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "al_dump" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | _ -> DoChildren
 end
@@ -427,11 +427,9 @@ let buildInit ((f,loc,v) : fundec * location * varinfo) =
   let base = f.svar.vname in
   let g = emptyFunction ("_init_"^base) in
   setFunctionType g (TFun(TVoid[Attr("constructor",[])],Some[],false,[]));
-  let f = match unrollType v.vtype with
-            TComp(ci,_) -> getCompField ci "name"
-          | _ -> E.s (E.bug "profile should have composite type") in
+  let arg = [mkAddrOf(var v);Const(CStr(v.vname))] in
   let s = mkStmtOneInstr
-          (Set((Var v,Field(f,NoOffset)),Const(CStr(v.vname)),loc)) in
+          (Call(None,Lval(var (findSymbol "al_init")),arg,loc)) in
   let body = mkBlock [s] in
     g.sbody <- body; GFun(g,loc)
 
@@ -441,7 +439,7 @@ let buildAtExit ((f,loc,v) : fundec * location * varinfo) =
   setFunctionType g (TFun(TVoid[Attr("destructor",[])],Some[],false,[]));
   let arg = [mkAddrOf(var v)] in
   let s = mkStmtOneInstr
-          (Call(None,Lval(var (findSymbol "dump_profile")),arg,loc)) in
+          (Call(None,Lval(var (findSymbol "al_dump")),arg,loc)) in
   let body = mkBlock [s] in
     g.sbody <- body; GFun(g,loc)
 

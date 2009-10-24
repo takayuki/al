@@ -269,6 +269,8 @@ MAIN (argc,argv)
     puts("done.");
     fflush(stdout);
 
+    al_dump(&sequencerLock);
+
     TM_SHUTDOWN();
     P_MEMORY_SHUTDOWN();
 

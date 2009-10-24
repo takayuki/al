@@ -147,13 +147,19 @@ main(int argc,char* argv[])
   argc -= optind;
   argv += optind;
 
-  if (MAXLOCKS < NLOCKS) { NLOCKS = MAXLOCKS; LOCKMASK = NLOCKS-1; }
+  if (MAXLOCKS < NLOCKS) {
+    NLOCKS = MAXLOCKS; LOCKMASK = NLOCKS-1;
+  }
+  for (i = 0; i < NLOCKS; i++)
+    al_init(&locks[i],"locks[]");
   if (256 <= thrd) thrd = 256;
 #ifdef HAVE_PTHREAD_BARRIER
   pthread_barrier_init(&invokeBarrier,0,thrd);
 #endif
-  for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
-  for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
+  for (i = 0; i < thrd; i++)
+    pthread_create(&t[i],0,invoke,i+1);
+  for (i = 0; i < thrd; i++)
+    pthread_join(t[i],&r);
 #ifdef HAVE_GETHRTIME
   elapse = ((double)totalElapse) / 1000000000.0;
 #else
@@ -162,5 +168,7 @@ main(int argc,char* argv[])
 #endif
   printf("elapse=%.3lf,exec_per_sec=%.3lf\n",
 	 elapse,((double)(thrd*iter))/elapse);
+  for (i = 0; i < NLOCKS; i++)
+    al_dump(&locks[i]);
   return 0;
 }

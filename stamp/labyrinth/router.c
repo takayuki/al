@@ -351,7 +351,7 @@ PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
  * router_solve
  * =============================================================================
  */
-static al_t routerLock;
+al_t routerLock = AL_INITIALIZER("routerLock");
 
 __inline__ 
 __attribute__((atomic))

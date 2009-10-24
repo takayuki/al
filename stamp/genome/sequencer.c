@@ -233,7 +233,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
  * sequencer_run
  * =============================================================================
  */
-static al_t sequencerLock;
+al_t sequencerLock = AL_INITIALIZER("sequencerLock");
 
 __attribute__((atomic))
 void

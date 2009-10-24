@@ -69,6 +69,7 @@
 #define CLIENT_H 1
 
 
+#include "al.h"
 #include "action.h"
 #include "manager.h"
 #include "random.h"
@@ -115,6 +116,7 @@ client_free (client_t* clientPtr);
 void
 client_run (void* argPtr);
 
+extern al_t clientLock;
 
 #endif /* CLIENT_H */
 

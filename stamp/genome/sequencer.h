@@ -141,6 +141,8 @@ void
 sequencer_free (sequencer_t* sequencerPtr);
 
 
+extern al_t sequencerLock;
+
 #endif /* SEQUENCER_H */
 
 

@@ -60,10 +60,10 @@ static TLS thread_t* _al_self;
 #endif
 static pthread_key_t _al_key;
 static int adaptMode = 0;
-static int tranxOvhd = 250;
-static int tranxOvhdScale = 100;
-static int tranxInstrLd = 95;
-static int tranxInstrSt = 95 * 2;
+static long defaultTranxOvhd = 150;
+static long tranxOvhdScale = 100;
+static long tranxInstrLd = 85;
+static long tranxInstrSt = 85 * 2;
 static uint64_t instrCntOvhd = 0;
 static long txLd;
 static long txSt;
@@ -76,6 +76,7 @@ static cpc_event_t cpc;
 #endif
 static pthread_mutex_t globMutex = PTHREAD_MUTEX_INITIALIZER;  
 
+
 void
 setAdaptMode(int mode)
 {
@@ -85,7 +86,7 @@ setAdaptMode(int mode)
 void
 setTranxOvhd(double ovhd)
 {
-  tranxOvhd = ovhd * tranxOvhdScale;
+  defaultTranxOvhd = ovhd * tranxOvhdScale;
 }
 
 void
@@ -207,6 +208,16 @@ thread_self(void)
 #endif
 }
 
+void
+al_init(al_t* lock,char* name)
+{
+  lock->name = name;
+  lock->state = 0;
+  lock->statistic = 0;
+  lock->triesCommits = 0; 
+  lock->tranxOvhd = 0;
+}
+
 typedef struct {
   void* (*start)(void*);
   void* arg;
@@ -294,6 +305,7 @@ transactMode_1(al_t* lock,int spins)
   unsigned long triesCommits;
   unsigned long Tries;
   unsigned long Commits;
+  unsigned long tranxOvhd;
 
   if (adaptMode == -1) return 0;
   if (adaptMode == 1) return 1;
@@ -311,13 +323,13 @@ transactMode_1(al_t* lock,int spins)
   Tries = tries(triesCommits);
   Commits = commits(triesCommits);
   if (0 == Commits) { Commits = 1; Tries = 1; }
-  
-#if 1
+  if ((tranxOvhd = lock->tranxOvhd) == 0) {
+    // On the first run, tranxOvhd is set to zero which then enforces
+    // transaction mode to estimate the initial overhead value.
+    lock->tranxOvhd = defaultTranxOvhd;
+  }
+
   return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
-#else
-  return (((Tries%Commits)?((Tries/Commits)+1):(Tries/Commits)) * tranxOvhd)
-    < (tranxOvhdScale * thrdsContend);
-#endif
 }
 
 int
@@ -329,13 +341,13 @@ transactMode_0(al_t* lock,int spins)
   unsigned long thrdsContend;
   unsigned long Tries;
   unsigned long Commits;
+  unsigned long tranxOvhd;
 
   if (adaptMode == -1) return 0;
   if (adaptMode == 1) return 1;
   state = lock->state;
   statistic = lock->statistic;
   thrdsContend = contention(statistic);
-  if (spins == 0) thrdsContend++;
   thrdsInTranx = thrdsInStmMode(state);
   if (0 < thrdsInTranx) thrdsContend += thrdsInTranx;
 #if 0
@@ -344,13 +356,10 @@ transactMode_0(al_t* lock,int spins)
   Tries = tries(statistic);
   Commits = commits(statistic);
   if (0 == Commits) { Commits = 1; Tries = 1; }
+  if ((tranxOvhd = lock->tranxOvhd)  == 0)
+    lock->tranxOvhd = defaultTranxOvhd;
 
-#if 1
   return (Tries * tranxOvhd) < (Commits * tranxOvhdScale * thrdsContend);
-#else
-  return (((Tries%Commits)?((Tries/Commits)+1):(Tries/Commits)) * tranxOvhd)
-    < (tranxOvhdScale * thrdsContend);
-#endif
 }
 
 void
@@ -592,10 +601,11 @@ StxCommit(thread_t* self)
   atom = cpcAtom[0] - instrCntOvhd;
   trnx = tranxInstrLd * self->txLd + tranxInstrSt * self->txSt;
 #endif
-  if (10000 < atom && 0 < trnx && trnx < atom) {
+  if (self->lock->tranxOvhd == 0)
+    self->lock->tranxOvhd = defaultTranxOvhd;
+  if (0 < atom && trnx < atom && 1000 < (atom-trnx)) {
     tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
-    tranxOvhd = (tranxOvhd + tranxOvhdNew) / 2;
-    //fprintf(stderr,"%d %lld %lld\n",tranxOvhd,atom,atom - trnx);
+    self->lock->tranxOvhd = (self->lock->tranxOvhd + tranxOvhdNew) / 2;
   }
 #elif defined(HAVE_OBSOLETE_CPC)
   uint64_t atom;
@@ -612,12 +622,14 @@ StxCommit(thread_t* self)
 #else
   TxCommit(self->tl2Thread);
   Cpc_diff(&self->cpcAtom,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
-  atom = self->cpcAtom.ce_pic[0] - 842;
+  atom = self->cpcAtom.ce_pic[0] - instrCntOvhd;
   trnx = tranxInstrLd * self->txLd + tranxInstrSt * self->txSt;
 #endif
+  if (self->lock->tranxOvhd == 0)
+    self->lock->tranxOvhd = defaultTranxOvhd;
   if (trnx < atom) {
     tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
-    tranxOvhd = (tranxOvhd + tranxOvhdNew) / 2;
+    self->lock->tranxOvhd = (self->lock->tranxOvhd + tranxOvhdNew) / 2;
   }
 #else
   TxCommit(self->tl2Thread);
@@ -765,8 +777,11 @@ timer_stop(struct timeval* start,struct timeval* accum)
 #endif
 
 void
-dump_profile(al_t* lock)
+al_dump(al_t* lock)
 {
+  printf("%s:tranxOvhd=%d/%d,tries=%ld,commits=%ld\n",
+	 lock->name,lock->tranxOvhd,tranxOvhdScale,
+	 tries(lock->triesCommits),commits(lock->triesCommits));
 }
 
 static void
@@ -806,7 +821,7 @@ init(void)
 __attribute__((destructor)) void
 finish(void)
 {
-  printf("tranxOvhd=%d/%d,tranxInstrLd=%d,tranxInstrSt=%d,instrCntOvhd=%lld\n",
-	 tranxOvhd,tranxOvhdScale,tranxInstrLd,tranxInstrSt,instrCntOvhd);
+  printf("tranxInstrLd=%d,tranxInstrSt=%d,instrCntOvhd=%lld\n",
+	 tranxInstrLd,tranxInstrSt,instrCntOvhd);
   TxShutdown();
 }

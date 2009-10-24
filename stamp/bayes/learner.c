@@ -298,7 +298,7 @@ createPartition (long min, long max, long id, long n,
  * -- baseLogLikelihoods and taskListPtr are updated
  * =============================================================================
  */
-static al_t learnerLock;
+al_t learnerLock = AL_INITIALIZER("learnerLock");
 
 __attribute__((atomic))
 static float
