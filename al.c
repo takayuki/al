@@ -21,9 +21,10 @@
 
 pthread_key_t _al_key;
 static int adaptiveMode = 0;
-static double transactOvhd = 25.0;
+static double transactOvhd = 5.0;
 static double timeSTM = 0.0;
 static double timeRaw = 0.0;
+static pthread_mutex_t timeMutex = PTHREAD_MUTEX_INITIALIZER;  
 
 int
 setAdaptMode(int mode)
@@ -89,24 +90,26 @@ al_pthread_create(pthread_t* thread,
 int
 transactMode(profile_t* prof)
 {
-  long lockHeld = prof->lockHeld;
-  long threadsWaiting = prof->threadsWaiting;
-  unsigned long triesCommit = prof->triesCommit;
-  double tries = (double)high(triesCommit);
-  double commit = (double)low(triesCommit);
+  unsigned long state = prof->state;
+  unsigned long statistic = prof->statistic;
+  unsigned long triesCommits = prof->triesCommits;
+  double thrdsInTransact = (double)thrdsInStmMode(state);
+  double thrdsContending = (double)contention(statistic);
+  double Tries = (double)tries(triesCommits);
+  double Commits = (double)commits(triesCommits);
   double avgTries;
 
   if (adaptiveMode == -1) return 0;
   if (adaptiveMode == 1) return 1;
-  if (0 < lockHeld) threadsWaiting += lockHeld;
-  if (low(triesCommit) == 0) avgTries =  1.0;
-  else avgTries = tries / commit;
-  if (threadsWaiting <= 0)  threadsWaiting = 0;
-  return (avgTries * transactOvhd) < ((double)threadsWaiting);
+  if (0 < thrdsInTransact) thrdsContending += thrdsInTransact;
+  if (lockHeld(state)) thrdsContending += 1.0;
+  if (!(0 < Commits)) avgTries =  1.0;
+  else avgTries = Tries / Commits;
+  return (avgTries * transactOvhd) < thrdsContending;
 }
 
 void
-busy(void)
+Yield(void)
 {
 #if HAVE_SCHED_YIELD	
   sched_yield();
@@ -122,7 +125,8 @@ TxStoreSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 {
   int n,i;
 
-  assert((size % sizeof(intptr_t)) == 0);
+  if ((size % sizeof(intptr_t)) != 0)
+    abort();
   n = size / sizeof(intptr_t);
   for (i = 0; i < n; i++)
     TxStore(self,dest+i,*(src+i));
@@ -134,25 +138,48 @@ TxLoadSized(Thread* self,intptr_t* dest,intptr_t* src,size_t size)
 {
   int n,i;
 
-  assert((size % sizeof(intptr_t)) == 0);
+  if ((size % sizeof(intptr_t)) != 0)
+    abort();
   n = size / sizeof(intptr_t);
   for (i = 0; i < n; i++)
     *(dest+i) = TxLoad(self,src+i);
   return;
 }
 
+#ifdef HAVE_GETHRTIME
 void
-timer_start(struct timeval* tv)
+timer_start(hrtime_t* start)
 {
-  assert(gettimeofday(tv,0) == 0);
+  *start = gethrtime();
+}
+
+void
+timer_stop(hrtime_t* start,hrtime_t* acc)
+{
+  hrtime_t stop;
+  stop = gethrtime();
+  *acc += stop - *start;
+}
+#else
+void
+timer_start(struct timeval* start)
+{
+  int status;
+
+  status = gettimeofday(start,0);
+  if (status != 0)
+    abort();
 }
 
 void
 timer_stop(struct timeval* start,struct timeval* acc)
 {
+  int status;
   struct timeval stop;
 
-  assert(gettimeofday(&stop,0) == 0);
+  status = gettimeofday(&stop,0);
+  if (status != 0)
+    abort();
   stop.tv_sec -= start->tv_sec;
   stop.tv_usec -= start->tv_usec;
   if (stop.tv_usec < 0) {
@@ -161,7 +188,7 @@ timer_stop(struct timeval* start,struct timeval* acc)
   }
   if (!((0 <= stop.tv_sec && 0 < stop.tv_usec) ||
 	(0 < stop.tv_sec && 0 <= stop.tv_usec)))
-    stop.tv_usec++;
+    if (start->tv_usec%2) stop.tv_usec++;
   acc->tv_sec += stop.tv_sec;
   acc->tv_usec += stop.tv_usec;
   if (1000000 <= acc->tv_usec) {
@@ -169,24 +196,29 @@ timer_stop(struct timeval* start,struct timeval* acc)
     acc->tv_usec -= 1000000;
   }
 }
+#endif
 
 void
 dump_profile(profile_t* prof)
 {
-  printf("raw=%.3lf[s],stm=%.3lf[s]\n",timeRaw,timeSTM);
+  printf("%s: raw=%.3lf,stm=%.3lf\n",prof->name,timeRaw,timeSTM);
 }
 
 static void
 destroy_thread(void* arg)
 {
   thread_t* self = (thread_t*)arg;
-  static pthread_mutex_t l = PTHREAD_MUTEX_INITIALIZER;  
 
-  pthread_mutex_lock(&l);
+  pthread_mutex_lock(&timeMutex);
+#ifdef HAVE_GETHRTIME
+  timeRaw += ((double)self->timeRaw) / 1000000000.0;
+  timeSTM += ((double)self->timeSTM) / 1000000000.0;
+#else
   timeRaw += (double)self->timeRaw.tv_sec;
-  timeRaw += ((double)self->timeRaw.tv_usec) / 1000000;
+  timeRaw += ((double)self->timeRaw.tv_usec) / 1000000.0;
   timeSTM += (double)self->timeSTM.tv_sec;
-  timeSTM += ((double)self->timeSTM.tv_usec) / 1000000;
+  timeSTM += ((double)self->timeSTM.tv_usec) / 1000000.0;
+#endif
   TxFreeThread(self->stmThread);
   while (!SLIST_EMPTY(&self->prof_list)) {
     nest_t* nest;
@@ -195,7 +227,7 @@ destroy_thread(void* arg)
     free(nest);
   }
   free(arg);
-  pthread_mutex_unlock(&l);
+  pthread_mutex_unlock(&timeMutex);
 }
 
 __attribute__((constructor)) void

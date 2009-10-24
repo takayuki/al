@@ -86,11 +86,11 @@ class locked = object
   method vlval lv =
     match lv with
       Var v,NoOffset
-      when v.vglob && isFunctionType v.vtype ->
-       (match v.vname with
-          "malloc" -> ChangeTo (var (findSymbol "tmalloc_reserve"))
-        | "free" -> ChangeTo (var (findSymbol "tmalloc_release"))
-        | _ -> SkipChildren)
+      when v.vglob && isFunctionType v.vtype && v.vname = "malloc" ->
+        ChangeTo (var (findSymbol "tmalloc_reserve"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "free" ->
+        ChangeTo (var (findSymbol "tmalloc_release"))
     | _ -> SkipChildren
 end
 
@@ -145,28 +145,29 @@ class transact ((thread_self,ro) : varinfo * bool) = object
     | Set(lv,_,loc) ->
         E.s (E.error "transact update '%a' is to be aligned in %a"
                       d_lval lv d_loc loc)
-    | Call(lv,Lval(Var v,NoOffset),arg,loc) ->
-        (match v.vname with
-           "malloc" ->
-             let f = Lval(var (findSymbol "TxAlloc")) in
-             let arg = Lval(var thread_self) :: arg in
-               ChangeDoChildrenPost([Call(lv,f,arg,loc)],fun x -> x)
-         | "free" ->
-             let f = Lval(var (findSymbol "TxFree")) in
-             let arg = Lval(var thread_self) :: arg in
-               ChangeDoChildrenPost([Call(lv,f,arg,loc)],fun x -> x)
-         | _ -> DoChildren)
+    | Call(lv,Lval(Var v,NoOffset),arg,loc)
+      when v.vname = "malloc" ->
+        let f = Lval(var (findSymbol "TxAlloc")) in
+        let arg = Lval(var thread_self) :: arg in
+          ChangeDoChildrenPost([Call(lv,f,arg,loc)],fun x -> x)
+    | Call(lv,Lval(Var v,NoOffset),arg,loc)
+      when v.vname = "free" ->
+        let f = Lval(var (findSymbol "TxFree")) in
+        let arg = Lval(var thread_self) :: arg in
+          ChangeDoChildrenPost([Call(lv,f,arg,loc)],fun x -> x)
     | Call(None,_,_,_) -> DoChildren
     | Call(Some((Var v,_) as lv),f,arg,loc)
       when v.vglob ->
         let t = makeTempVar !current_func ~name:"tmp" (typeOfLval lv) in
-        let inst = [Call(Some(var t),f,arg,loc);Set(lv,Lval(var t),loc)]
-        in ChangeDoChildrenPost (inst,fun x -> x)
+        let inst = [Call(Some(var t),f,arg,loc);Set(lv,Lval(var t),loc)] in
+        let revist = visitCilInstr (new transact (thread_self,ro)) in
+          ChangeTo (List.concat (List.map revist inst))
     | Call(Some(Var _,_),_,_,_) -> DoChildren
     | Call(Some((Mem _,_) as lv),f,arg,loc) ->
         let t = makeTempVar !current_func ~name:"tmp" (typeOfLval lv) in
-        let inst = [Call(Some(var t),f,arg,loc);Set(lv,Lval(var t),loc)]
-        in ChangeDoChildrenPost (inst,fun x -> x)
+        let inst = [Call(Some(var t),f,arg,loc);Set(lv,Lval(var t),loc)] in
+        let revist = visitCilInstr (new transact (thread_self,ro)) in
+          ChangeTo (List.concat (List.map revist inst))
     | Asm _ -> SkipChildren
 
   method vlval lv =

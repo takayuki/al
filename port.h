@@ -30,7 +30,7 @@ intptr_t fetch_and_sub1(volatile intptr_t*);
 #define CAS(var,old,new)  cmpxchg(&(var),(old),(new))
 #define INC(var)          fetch_and_add1(&(var))
 #define DEC(var)          fetch_and_sub1(&(var))
-#define inc(var)          (((volatile intptr_t)var)++)
-#define dec(var)          (((volatile intptr_t)var)--)
+#define inc(var)          (((intptr_t)var)++)
+#define dec(var)          (((intptr_t)var)--)
 
 #endif

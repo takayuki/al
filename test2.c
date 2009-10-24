@@ -20,104 +20,208 @@ help(void)
   exit(0);
 }
 
-LIST_HEAD(head,list_entry) tab = LIST_HEAD_INITIALIZER(tab);
+#define NBUCKETS	1024
+#define BUCKETMASK	(NBUCKETS-1)
 
-struct list_entry {
-  long key;
-  long val;
-  LIST_ENTRY(list_entry) links;
-};
+typedef unsigned long hash_code;
 
-__attribute__((atomic ("l1")))
-void
-add(long n)
+typedef struct hash_node {
+  SLIST_ENTRY(hash_node) next;
+  hash_code hash;
+  char* key;
+  char* value;
+} hash_node;
+
+SLIST_HEAD(bucket_head,hash_node);
+
+typedef struct {
+  struct bucket_head table[NBUCKETS];
+  unsigned long entries;
+} hash_table;
+
+static hash_table t;
+
+static hash_code
+hash(const char* s)
 {
-  struct list_entry *p,*q,*r;
-  
-  assert((r = (struct list_entry*)malloc(sizeof(*r))));
-  r->key = n;
-  r->val = n+1;
-  q = 0;
-  LIST_FOREACH(p,&tab,links) {
-    if (n == p->key) {
-      free(r);
-      break;
-    }
-    if (n < p->key) {
-      LIST_INSERT_BEFORE(p,r,links);
-      break;
-    }
-    q = p;
+  hash_code h = 1;
+  hash_code ch;
+  while (ch = *(unsigned char *)s) {
+    h = h * 1000003 + ch;
+    s++;
   }
-  if (p == 0) {
-    if (q == 0)
-      LIST_INSERT_HEAD(&tab,r,links);
-    else
-      LIST_INSERT_AFTER(q,r,links);
-  }
-  return;
+  return h;
 }
 
 __attribute__((atomic ("l1")))
-int
-del(long n)
+hash_node*
+insert(hash_node* newnode)
 {
-  struct list_entry *p;
-  
-  LIST_FOREACH(p,&tab,links) {
-    if (n == p->key) {
-      LIST_REMOVE(p,links);
-      free(p);
-      return 1;
+  struct bucket_head* head;
+  hash_node* node;
+  hash_code h,h2;
+  hash_node* result = 0;
+
+  newnode->hash = hash(newnode->key);
+  h = newnode->hash;
+  head = &t.table[(h & BUCKETMASK)];
+  SLIST_FOREACH(node,head,next) {
+    h2 = node->hash;
+    if (h == h2 && strcmp(newnode->key,node->key) == 0) {
+      SLIST_REMOVE(head,node,hash_node,next);
+      SLIST_INSERT_HEAD(head,newnode,next);
+      result = node;
+      goto done;
     }
   }
-  return 0;
+  SLIST_INSERT_HEAD(head,newnode,next);
+  t.entries++;
+ done:
+  return result;
+}
+
+__attribute__((atomic ("l1")))
+hash_node*
+delete(char* key)
+{
+  struct bucket_head* head;
+  hash_node* node;
+  hash_code h,h2;
+  hash_node* result = 0;
+
+  h = hash(key);
+  head = &t.table[(h & BUCKETMASK)];
+  SLIST_FOREACH(node,head,next) {
+    h2 = node->hash;
+    if (h == h2 && strcmp(key,node->key) == 0) {
+      SLIST_REMOVE(head,node,hash_node,next);
+      t.entries--;
+      result = node;
+      goto done;
+    }
+  }
+ done:
+  return result;
 }
 
 __attribute__((atomic ("l1","ro")))
-int
-lookup(long n,struct list_entry* ret)
+hash_node*
+find(char* key)
 {
-  struct list_entry *p;
-  
-  LIST_FOREACH(p,&tab,links) {
-    if (n == p->key) {
-      memcpy(ret,p,sizeof(*p));
-      return 1;
+  struct bucket_head* head;
+  hash_node* node;
+  hash_code h,h2;
+  hash_node* result = 0;
+
+  h = hash(key);
+  head = &t.table[(h & BUCKETMASK)];
+  SLIST_FOREACH(node,head,next) {
+    h2 = node->hash;
+    if (h == h2 && strcmp(key,node->key) == 0) {
+      result = node;
+      goto done;
     }
   }
+ done:
+  return result;
+}
+
+void*
+validate(void* arg)
+{
+  int i;
+  struct bucket_head* head;
+  hash_node* node;
+  unsigned long entries = 0;
+
+  for (i = 0; i < NBUCKETS; i++) {
+    head = &t.table[i];
+    SLIST_FOREACH(node,head,next) {
+      if (node->hash != hash(node->key))
+	printf("*** Oops, %s(%lx/%lx)\n",
+	       node->key,node->hash,hash(node->key));
+      entries++;
+    }
+  }
+  printf("number of entries=%ld/%ld\n",entries,t.entries);
   return 0;
 }
+
+static int thrd = 2;
+static int iter = 100000;
 
 void*
 task(void* arg)
 {
-  long n = (int)arg;
-  long t;
-  struct list_entry ret;
+  unsigned short id = (unsigned short)(unsigned int)arg;
+  long n = iter;
+  char key[20];
+  hash_node* node;
+  unsigned short xseed[3] = {id,id,id};
+  unsigned long rand;
 
   while (n--) {
-    t = random() % 1000;
-    switch(n%4) {
-    case 0: add(t); break;
-    case 1: del(t); break;
-    default: lookup(t,&ret); break;
+    rand = nrand48(xseed);
+    sprintf(key,"k%ld",rand);
+    switch(rand%4) {
+    case 0:
+      if ((node = malloc(sizeof(hash_node))) == 0) abort();
+      if ((node->key = strdup(key)) == 0) abort();
+      if ((node->value = strdup(node->key)) == 0) abort();
+      node = insert(node);
+      if (node) { free(node->key); free(node->value); free(node); }
+      break;
+    case 1:
+      node = delete(key);
+      if (node) { free(node->key); free(node->value); free(node); }
+      break;
+    default:
+      find(key);
+      break;
     }
   }
   return 0;
+}
+
+#ifdef HAVE_GETHRTIME
+static hrtime_t start;
+static hrtime_t totalElapse;
+#else
+static struct timeval start;
+static struct timeval totalElapse;
+#endif
+static int totalThreads;
+static pthread_mutex_t totalMutex = PTHREAD_MUTEX_INITIALIZER;  
+
+void*
+invoke(void* arg)
+{
+  void* ret;
+
+  pthread_mutex_lock(&totalMutex);
+  if (totalThreads == 0) timer_start(&start);
+  totalThreads++;
+  pthread_mutex_unlock(&totalMutex);
+  ret = task(arg);
+  pthread_mutex_lock(&totalMutex);
+  totalThreads--;
+  if (totalThreads == 0) timer_stop(&start,&totalElapse);
+  pthread_mutex_unlock(&totalMutex);
+  return ret;
 }
 
 int
 main(int argc,char* argv[])
 {
-  int p = 2,n = 100,ch,i;
+  int ch,i;
   pthread_t t[256];
   void* r;
+  double elapse;
 
   while ((ch = getopt(argc,argv,"p:n:altx:")) != -1) {
     switch (ch) {
-    case 'n': n = atoi(optarg); break;
-    case 'p': p = atoi(optarg); break;
+    case 'n': iter = atoi(optarg); break;
+    case 'p': thrd = atoi(optarg); break;
     case 'a': setAdaptMode(0); break;
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
@@ -129,19 +233,18 @@ main(int argc,char* argv[])
   argc -= optind;
   argv += optind;
 
-  if (256 <= p) p = 256;
-  for (i = 0; i < p; i++) pthread_create(&t[i],0,task,(void*)n);
-  for (i = 0; i < p; i++) pthread_join(t[i],&r);
-  {
-    struct list_entry *p;
-    long a = 0,b = 0,c = 0;
-
-    LIST_FOREACH(p,&tab,links) {
-      b = p->key;
-      if (!(a <= b)) printf("*** Oops, %ld <= %ld\n",a,b);
-      a = b; c++; //printf("%ld\n",a);
-    }
-    printf("number of elements=%ld\n",c);
-  }
+  if (256 <= thrd) thrd = 256;
+  for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
+  for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
+  pthread_create(&t[0],0,validate,0);
+  pthread_join(t[0],&r);
+#ifdef HAVE_GETHRTIME
+  elapse = ((double)totalElapse) / 1000000000.0;
+#else
+  elapse = (double)totalElapse.tv_sec;
+  elapse += ((double)totalElapse.tv_usec) / 1000000.0;
+#endif
+  printf("elapse=%.3lf,exec_per_sec=%.3lf\n",
+	 elapse,((double)(thrd*iter))/elapse);
   return 0;
 }

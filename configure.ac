@@ -1,4 +1,4 @@
-AC_INIT([CIS 609 Final Project],[0.5],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.6],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -17,6 +17,7 @@ AX_CFLAGS_GCC_OPTION([-mcpu=v9])
 AC_CHECK_HEADERS([inttypes.h])
 AC_CHECK_HEADERS([sched.h])
 AC_SEARCH_LIBS([sched_yield],[rt])
+AC_CHECK_FUNCS([gethrtime clock_gettime nrand48])
 ACX_PTHREAD
 _ac_save_CFLAGS=$CFLAGS
 _ac_save_LDFLAGS=$LDFLAGS

@@ -19,7 +19,7 @@ help(void)
   exit(0);
 }
 
-long cnt;
+static long cnt;
 
 __attribute__((atomic ("l1")))
 void
@@ -35,27 +35,57 @@ decr(void)
   cnt--;
 }
 
+static int thrd = 2;
+static int iter = 100000;
+
 void*
 task(void* arg)
 {
-  int n = (int)arg;
+  long n = iter;
 
-  while (n--)
-    if (n % 2) decr(); else incr();
+  while (n--) if (n % 2) decr(); else incr();
   return 0;
+}
+
+#ifdef HAVE_GETHRTIME
+static hrtime_t start;
+static hrtime_t totalElapse;
+#else
+static struct timeval start;
+static struct timeval totalElapse;
+#endif
+static int totalThreads;
+static pthread_mutex_t totalMutex = PTHREAD_MUTEX_INITIALIZER;  
+
+void*
+invoke(void* arg)
+{
+  void* ret;
+
+  pthread_mutex_lock(&totalMutex);
+  if (totalThreads == 0) timer_start(&start);
+  totalThreads++;
+  pthread_mutex_unlock(&totalMutex);
+  ret = task(arg);
+  pthread_mutex_lock(&totalMutex);
+  totalThreads--;
+  if (totalThreads == 0) timer_stop(&start,&totalElapse);
+  pthread_mutex_unlock(&totalMutex);
+  return ret;
 }
 
 int
 main(int argc,char* argv[])
 {
-  int p = 2,n = 1000000,ch,i;
+  int ch,i;
   pthread_t t[256];
   void* r;
+  double elapse;
 
   while ((ch = getopt(argc,argv,"p:n:altx:")) != -1) {
     switch (ch) {
-    case 'n': n = atoi(optarg); break;
-    case 'p': p = atoi(optarg); break;
+    case 'n': iter = atoi(optarg); break;
+    case 'p': thrd = atoi(optarg); break;
     case 'a': setAdaptMode(0); break;
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
@@ -67,9 +97,17 @@ main(int argc,char* argv[])
   argc -= optind;
   argv += optind;
 
-  if (256 <= p) p = 256;
-  for (i = 0; i < p; i++) pthread_create(&t[i],0,task,(void*)n);
-  for (i = 0; i < p; i++) pthread_join(t[i],&r);
-  printf("p=%d,n=%d,cnt=%ld\n",p,n,cnt);
+  if (256 <= thrd) thrd = 256;
+  for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
+  for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
+  printf("cnt=%ld\n",cnt);
+#ifdef HAVE_GETHRTIME
+  elapse = ((double)totalElapse) / 1000000000.0;
+#else
+  elapse = (double)totalElapse.tv_sec;
+  elapse += ((double)totalElapse.tv_usec) / 1000000.0;
+#endif
+  printf("elapse=%.3lf,exec_per_sec=%.3lf\n",
+	 elapse,((double)(thrd*iter))/elapse);
   return 0;
 }

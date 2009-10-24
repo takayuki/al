@@ -31,8 +31,7 @@ __attribute__((atomic ("l1")))
 int
 node_cmp(struct tree_node* x,struct tree_node* y)
 {
-  assert(x != 0);
-  assert(y != 0);
+  if (x == 0 || y == 0) abort();
   return x->key - y->key;
 }
 
@@ -45,7 +44,8 @@ add(long n)
 {
   struct tree_node* r;
   
-  assert((r = (struct tree_node*)malloc(sizeof(*r))));
+  if ((r = (struct tree_node*)malloc(sizeof(*r))) == 0)
+    abort();
   r->key = n;
   r->val = n+1;
   TREE_SPLAY_INSERT(&tab,r);
@@ -76,15 +76,22 @@ lookup(long n)
   return TREE_SPLAY_FIND(&tab, &find);
 }
 
+static int thrd = 2;
+static int iter = 100000;
+
 void*
 task(void* arg)
 {
-  long n = (int)arg;
+  unsigned short id = (unsigned short)(unsigned int)arg;
+  long n = iter;
   long t;
+  unsigned short xseed[3] = {id,id,id};
+  unsigned long rand;
 
   while (n--) {
-    t = random() % 1000;
-    switch(n%4) {
+    rand = nrand48(xseed);
+    t = rand % 1000;
+    switch(rand%4) {
     case 0: add(t); break;
     case 1: del(t); break;
     default: lookup(t); break;
@@ -111,17 +118,45 @@ validate(void* arg)
   return 0;
 }
 
+#ifdef HAVE_GETHRTIME
+static hrtime_t start;
+static hrtime_t totalElapse;
+#else
+static struct timeval start;
+static struct timeval totalElapse;
+#endif
+static int totalThreads;
+static pthread_mutex_t totalMutex = PTHREAD_MUTEX_INITIALIZER;  
+
+void*
+invoke(void* arg)
+{
+  void* ret;
+
+  pthread_mutex_lock(&totalMutex);
+  if (totalThreads == 0) timer_start(&start);
+  totalThreads++;
+  pthread_mutex_unlock(&totalMutex);
+  ret = task(arg);
+  pthread_mutex_lock(&totalMutex);
+  totalThreads--;
+  if (totalThreads == 0) timer_stop(&start,&totalElapse);
+  pthread_mutex_unlock(&totalMutex);
+  return ret;
+}
+
 int
 main(int argc,char* argv[])
 {
-  int p = 2,n = 100,ch,i;
+  int ch,i;
   pthread_t t[256];
   void* r;
+  double elapse;
 
   while ((ch = getopt(argc,argv,"p:n:atlx:")) != -1) {
     switch (ch) {
-    case 'n': n = atoi(optarg); break;
-    case 'p': p = atoi(optarg); break;
+    case 'n': iter = atoi(optarg); break;
+    case 'p': thrd = atoi(optarg); break;
     case 'a': setAdaptMode(0); break;
     case 'l': setAdaptMode(-1); break;
     case 't': setAdaptMode(1); break;
@@ -133,10 +168,18 @@ main(int argc,char* argv[])
   argc -= optind;
   argv += optind;
 
-  if (256 <= p) p = 256;
-  for (i = 0; i < p; i++) pthread_create(&t[i],0,task,(void*)n);
-  for (i = 0; i < p; i++) pthread_join(t[i],&r);
+  if (256 <= thrd) thrd = 256;
+  for (i = 0; i < thrd; i++) pthread_create(&t[i],0,invoke,i+1);
+  for (i = 0; i < thrd; i++) pthread_join(t[i],&r);
   pthread_create(&t[0],0,validate,0);
   pthread_join(t[0],&r);
+#ifdef HAVE_GETHRTIME
+  elapse = ((double)totalElapse) / 1000000000.0;
+#else
+  elapse = (double)totalElapse.tv_sec;
+  elapse += ((double)totalElapse.tv_usec) / 1000000.0;
+#endif
+  printf("elapse=%.3lf,exec_per_sec=%.3lf\n",
+	 elapse,((double)(thrd*iter))/elapse);
   return 0;
 }

@@ -2,7 +2,7 @@ srcdir = @srcdir@
 prefix = @prefix@
 
 CC = @CC@
-CPPFLAGS = @DEFS@ -I. @CPPFLAGS@
+CPPFLAGS = @DEFS@ -I. @CPPFLAGS@ #-DNDEBUG
 CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
 LDFLAGS = -Ltl2 @PTHREAD_CFLAGS@ @LDFLAGS@
 LIBS = -ltl2 @PTHREAD_LIBS@ @LIBS@
@@ -69,7 +69,7 @@ subdirs:
 	done
 
 clean:
-	rm -f *.cmi *.cmo *.cmx *.cil.i *.i
+	rm -f *.cmi *.cmo *.cmx *.cil.c *.cil.i *.i
 	rm -f test? *.o *.check *~ core *.core
 
 distclean: clean
