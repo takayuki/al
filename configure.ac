@@ -32,7 +32,7 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 #  THE POSSIBILITY OF SUCH DAMAGE.
 #
-AC_INIT([CIS 609 Final Project],[0.17],[tusui@uoregon.edu],[al])
+AC_INIT([CIS 609 Final Project],[0.18],[tusui@uoregon.edu],[al])
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([atomic.ml])
 AC_CONFIG_AUX_DIR([build])
@@ -43,8 +43,6 @@ m4_include([build/ax_cflags_gcc_option.m4])
 m4_include([build/ax_tls.m4])
 AC_ARG_ENABLE([m32],[AS_HELP_STRING([--enable-m32],[generate 32-bit code])],
               [CFLAGS="-m32 $CFLAGS"; LDFLAGS="$LDFLAGS -m32"])
-AC_ARG_ENABLE([m64],[AS_HELP_STRING([--enable-m64],[generate 64-bit code])],
-              [CFLAGS="-m64 $CFLAGS"; LDFLAGS="$LDFLAGS -m64"])
 AC_ARG_ENABLE([pg],[AS_HELP_STRING([--enable-pg],[generate code to profile])],
               [CFLAGS="-pg $CFLAGS"; LDFLAGS="$LDFLAGS -pg"])
 AC_ARG_ENABLE([tls],[AS_HELP_STRING([--disable-tls],

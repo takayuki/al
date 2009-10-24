@@ -54,6 +54,7 @@ typedef struct {
   volatile unsigned long statistic;
   volatile unsigned long triesCommits;
   volatile long tranxOvhd;
+  volatile unsigned long lockDone;
 } al_t;
 
 #define lockMode(x)		((x)&0x80000000UL)
@@ -85,7 +86,7 @@ typedef struct {
 typedef struct {
   Thread* tl2Thread;
   al_t* lock;
-  long transactMode;
+  long enableStatistic;
   long nestLevel;
   long txLd;
   long txSt;
@@ -110,7 +111,7 @@ typedef struct {
 #endif
 } thread_t;
 
-#define AL_INITIALIZER(name)  {(name),0,0,0,0}
+#define AL_INITIALIZER(name)  {(name),0,0,0,0,0}
 
 int al_pthread_create(pthread_t*,const pthread_attr_t*,void* (*)(void*),void*);
 #define pthread_create al_pthread_create
@@ -137,6 +138,14 @@ void StxStSized(thread_t*,intptr_t*,intptr_t*,size_t);
 void StxLdSized(thread_t*,intptr_t*,intptr_t*,size_t);
 void* StxAlloc (thread_t*,size_t);
 void StxFree(thread_t*,void*);
+void RaxStart(thread_t*,sigjmp_buf*,int*);
+void RaxCommit(thread_t*);
+void RaxStore(thread_t*,intptr_t*,intptr_t);
+intptr_t RaxLoad(thread_t*,intptr_t*);
+void RaxStSized(thread_t*,intptr_t*,intptr_t*,size_t);
+void RaxLdSized(thread_t*,intptr_t*,intptr_t*,size_t);
+void* RaxAlloc (thread_t*,size_t);
+void RaxFree(thread_t*,void*);
 #ifdef HAVE_GETHRTIME
 void timer_start(hrtime_t*);
 void timer_stop(hrtime_t*,hrtime_t*);

@@ -52,16 +52,6 @@ _al_template(void)
   thread_t* self;
   volatile unsigned long tries;
   sigjmp_buf buf;
-#ifndef ENABLE_TIMER
-#define timer_start(x)
-#define timer_stop(w,x,y,z)
-#else
-#ifdef HAVE_GETHRTIME
-  hrtime_t start;
-#else
-  struct timeval start;
-#endif
-#endif
 
   self = thread_self();
   if (self == 0) {
@@ -78,23 +68,19 @@ _al_template(void)
     if (enterCritical_1(_lock)) {
       tries = 0;
       if (sigsetjmp(buf,1)) self->nestLevel = 0;
-      timer_start(&start);
       inc(self->nestLevel);
       inc(tries);
       TxStart(self->tl2Thread,&buf,&_ro);
       _stmfunc(self->tl2Thread);
       TxCommit(self->tl2Thread);
-      dec(self->nestLevel);
       _lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
       exitCritical_1(_lock);
-      timer_stop(&start,&self->timeSTM,_lock,1);
+      dec(self->nestLevel);
     } else {
-      timer_start(&start);
       self->nestLevel = -1;
       _rawfunc();
-      self->nestLevel = 0;
       exitCritical_1(_lock);
-      timer_stop(&start,&self->timeRaw,_lock,0);
+      self->nestLevel = 0;
     }
   } else {
     fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
@@ -103,8 +89,4 @@ _al_template(void)
   }
   return;
 }
-#ifndef ENABLE_TIMER
-#undef timer_start
-#undef timer_stop
-#endif
 #endif

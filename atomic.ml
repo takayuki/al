@@ -86,6 +86,14 @@ class collectGlobals = object
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "StxStSized" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "RaxLoad" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "RaxStore" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "RaxLdSized" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "RaxStSized" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxAlloc" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "TxFree" ->
@@ -93,6 +101,10 @@ class collectGlobals = object
   | GVarDecl(v,_) when v.vname = "StxAlloc" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "StxFree" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "RaxAlloc" ->
+      (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
+  | GVarDecl(v,_) when v.vname = "RaxFree" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
   | GVarDecl(v,_) when v.vname = "tmalloc_reserve" ->
       (symbol_list := (v.vname,v) :: !symbol_list; SkipChildren)
@@ -349,6 +361,32 @@ class transactStatistics ((thread_self,ro) : varinfo * bool) = object
     | _ -> SkipChildren
 end
 
+class lockedStatistics ((thread_self,ro) : varinfo * bool) = object
+  inherit nopCilVisitor
+
+  method vlval lv =
+    match lv with
+      Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxLoad" ->
+        ChangeTo (var (findSymbol "RaxLoad"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxStore" ->
+        ChangeTo (var (findSymbol "RaxStore"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "StmLdSized" ->
+        ChangeTo (var (findSymbol "RaxLdSized"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "StmStSized" ->
+        ChangeTo (var (findSymbol "RaxStSized"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxAlloc" ->
+        ChangeTo (var (findSymbol "RaxAlloc"))
+    | Var v,NoOffset
+      when v.vglob && isFunctionType v.vtype && v.vname = "TxFree" ->
+        ChangeTo (var (findSymbol "RaxFree"))
+    | _ -> SkipChildren
+end
+
 let compileRaw (f : fundec) =
   visitCilFunction (new locked) f
 
@@ -359,6 +397,12 @@ let compileStx ((f,self,ro) : fundec * varinfo * bool) =
   begin
     ignore(visitCilFunction (new transact (self,ro)) f);
     visitCilFunction (new transactStatistics (self,ro)) f
+  end
+
+let compileRax ((f,self,ro) : fundec * varinfo * bool) =
+  begin
+    ignore(visitCilFunction (new transact (self,ro)) f);
+    visitCilFunction (new lockedStatistics (self,ro)) f
   end
 
 class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
@@ -379,7 +423,7 @@ class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
   method vinst i =
     let prefix = "_" in
     match vs with
-      [lock;rawfunc;stmfunc;stxfunc] ->
+      [lock;rawfunc;stmfunc;stxfunc;raxfunc] ->
       (match i with
        | Set((Var v,NoOffset),_,loc) when v.vname = (prefix^"lock") ->
            if isPointerType lock.vtype
@@ -407,6 +451,12 @@ class tweakAl ((vs,ro,ret) : varinfo list * bool * varinfo list) = object
                                (!current_func).sformals in
            let ret = match ret with [v] -> Some(var v) | _ -> None in
              ChangeTo([Call(ret,Lval(Var stxfunc,NoOffset),arg@arg',loc)])
+       | Call(None,Lval(Mem(Lval(Var v,NoOffset)),NoOffset),arg,loc)
+         when v.vname = (prefix^"raxfunc") ->
+           let arg' = List.map (fun v -> Lval(var v))
+                               (!current_func).sformals in
+           let ret = match ret with [v] -> Some(var v) | _ -> None in
+             ChangeTo([Call(ret,Lval(Var raxfunc,NoOffset),arg@arg',loc)])
        | _ -> DoChildren)
     | _ -> E.s (E.bug "invalid number of arguments")
 end
@@ -481,15 +531,16 @@ let findAtomic = function
             let r  = copyFunction f ("_raw_"^base) in
             let s  = copyFunction f ("_stm_"^base) in
             let s' = copyFunction f ("_stx_"^base) in
+            let r' = copyFunction f ("_rax_"^base) in
             let t  = TPtr(findType "Thread",[]) in
-            let v  = makeFormalVar s ~where:"^" "self" t in
             let t' = TPtr(findType "thread_t",[]) in
-            let v' = makeFormalVar s' ~where:"^" "self" t' in
               ignore(compileRaw r);
-              ignore(compileStm (s,v,ro));
-              ignore(compileStx (s',v',ro));
-              let f' = buildAl(f,[p;r.svar;s.svar;s'.svar],ro) in
-                q@[GFun(r,loc);GFun(s,loc);GFun(s',loc);GFun(f',loc)]
+              ignore(compileStm (s, makeFormalVar s  ~where:"^" "self" t, ro));
+              ignore(compileStx (s',makeFormalVar s' ~where:"^" "self" t',ro));
+              ignore(compileRax (r',makeFormalVar r' ~where:"^" "self" t',ro));
+              let f' = buildAl(f,[p;r.svar;s.svar;s'.svar;r'.svar],ro) in
+                q@[GFun(r,loc);GFun(s,loc);GFun(s',loc);GFun(r',loc);
+                   GFun(f',loc)]
         else [g]
       | _ -> E.s (E.bug "'%a' should have function type" d_global g))
 | g -> [g]

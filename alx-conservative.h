@@ -74,13 +74,13 @@ _al_template(void)
       TxStart(self->tl2Thread,&buf,&_ro);
       _stmfunc(self->tl2Thread);
       TxCommit(self->tl2Thread);
-      dec(self->nestLevel);
       while (1) {
 	prev = _lock->statistic;
 	next = setTriesCommits(prev,tries);
 	if (CAS(_lock->statistic,prev,next) == prev) break;
       }
       exitCritical_0(_lock);
+      dec(self->nestLevel);
     } else {
       self->nestLevel = -1;
       _rawfunc();

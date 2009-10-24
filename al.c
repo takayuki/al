@@ -216,6 +216,7 @@ al_init(al_t* lock,char* name)
   lock->statistic = 0;
   lock->triesCommits = 0; 
   lock->tranxOvhd = 0;
+  lock->lockDone = 0;
 }
 
 typedef struct {
@@ -243,7 +244,7 @@ _dispatcher(void* _arg)
   }
   TxInitThread(self->tl2Thread,(long)pthread_self());
   self->lock = 0;
-  self->transactMode = 0;
+  self->enableStatistic = 0;
   self->nestLevel = 0;
   pthread_setspecific(_al_key,self);
 #ifdef TLS
@@ -627,7 +628,7 @@ StxCommit(thread_t* self)
 #endif
   if (self->lock->tranxOvhd == 0)
     self->lock->tranxOvhd = defaultTranxOvhd;
-  if (trnx < atom) {
+  if (0 < atom && trnx < atom && 1000 < (atom-trnx)) {
     tranxOvhdNew = (((double)atom) / ((double)(atom-trnx))) * tranxOvhdScale;
     self->lock->tranxOvhd = (self->lock->tranxOvhd + tranxOvhdNew) / 2;
   }
@@ -714,6 +715,116 @@ void
 StxFree(thread_t* self,void* ptr)
 {
   TxFree(self->tl2Thread,ptr);
+}
+
+void
+RaxStart(thread_t* self,sigjmp_buf* buf,int* ro)
+{
+  self->txLd = 0;
+  self->txSt = 0;
+#if defined(HAVE_CPC)
+  cpc_buf_zero(cpc,self->cpcAtom);
+  cpc_set_restart(cpc,set);
+  Cpc_sample(cpc,set,self->cpcStrt0);
+#elif defined(HAVE_OBSOLETE_CPC)
+  memset(&self->cpcAtom,0,sizeof(cpc_event_t));
+  Cpc_sample(&self->cpcStrt0);
+#endif
+}
+
+void
+RaxCommit(thread_t* self)
+{
+#if defined(HAVE_CPC)
+  uint64_t cpcAtom[1];
+  uint64_t cpcTrnx[1];
+  uint64_t atom;
+  uint64_t trnx;
+  int tranxOvhdNew;
+
+  Cpc_diff(cpc,set,self->cpcAtom,self->cpcDiff,self->cpcStrt0,self->cpcStop);
+  cpc_buf_get(cpc,self->cpcAtom,ind0,&cpcAtom[0]);
+  atom = cpcAtom[0] - instrCntOvhd;
+  trnx = tranxInstrLd * self->txLd + tranxInstrSt * self->txSt;
+  if (self->lock->tranxOvhd == 0)
+    self->lock->tranxOvhd = defaultTranxOvhd;
+  if (1000 < atom) {
+    tranxOvhdNew = (((double)(atom+trnx)) / ((double)atom)) * tranxOvhdScale;
+    self->lock->tranxOvhd = (self->lock->tranxOvhd + tranxOvhdNew) / 2;
+  }
+#elif defined(HAVE_OBSOLETE_CPC)
+  uint64_t atom;
+  uint64_t trnx;
+  int tranxOvhdNew;
+
+  Cpc_diff(&self->cpcAtom,&self->cpcDiff,&self->cpcStrt0,&self->cpcStop);
+  atom = self->cpcAtom.ce_pic[0] - instrCntOvhd;
+  trnx = tranxInstrLd * self->txLd + tranxInstrSt * self->txSt;
+  if (self->lock->tranxOvhd == 0)
+    self->lock->tranxOvhd = defaultTranxOvhd;
+  if (1000 < atom) {
+    tranxOvhdNew = (((double)(atom+trnx)) / ((double)atom)) * tranxOvhdScale;
+    self->lock->tranxOvhd = (self->lock->tranxOvhd + tranxOvhdNew) / 2;
+  }
+#endif
+}
+
+void
+RaxStore(thread_t* self,intptr_t* dest,intptr_t src)
+{
+  *dest = src;
+  self->txSt++;
+}
+
+intptr_t
+RaxLoad(thread_t* self,intptr_t* src)
+{
+  self->txLd++;
+  return *src;
+}
+
+void
+RaxStSized(thread_t* self,intptr_t* dest,intptr_t* src,size_t size)
+{
+  int n,i;
+
+  if ((size % sizeof(intptr_t)) != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
+    abort();
+  }
+  n = size / sizeof(intptr_t);
+  for (i = 0; i < n; i++)
+    RaxStore(self,dest+i,*(src+i));
+  return;
+}
+
+void
+RaxLdSized(thread_t* self,intptr_t* dest,intptr_t* src,size_t size)
+{
+  int n,i;
+
+  if ((size % sizeof(intptr_t)) != 0) {
+    fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
+	    __FILE__,__LINE__,__func__);
+    abort();
+  }
+  n = size / sizeof(intptr_t);
+  for (i = 0; i < n; i++)
+    *(dest+i) = RaxLoad(self,src+i);
+  return;
+}
+
+void*
+RaxAlloc(thread_t* self,size_t size)
+{
+  return tmalloc_reserve(size);
+}
+
+void
+RaxFree(thread_t* self,void* ptr)
+{
+  tmalloc_release(ptr);
 }
 
 #ifdef HAVE_GETHRTIME

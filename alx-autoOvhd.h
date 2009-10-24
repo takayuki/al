@@ -49,6 +49,7 @@ _al_template(void)
   void* (*_rawfunc)(void) = 0;
   void* (*_stmfunc)(Thread*) = 0;
   void* (*_stxfunc)(thread_t*) = 0;
+  void* (*_raxfunc)(thread_t*) = 0;
   int _ro = 0;
   thread_t* self;
   volatile unsigned long tries;
@@ -61,12 +62,15 @@ _al_template(void)
     abort();
   }
   if (self->lock == _lock && 0 < self->nestLevel) {
-    if (self->transactMode == 0)
+    if (self->enableStatistic == 0)
       _stmfunc(self->tl2Thread);
     else 
       _stxfunc(self);
   } else if (self->lock == _lock && self->nestLevel < 0) {
-    _rawfunc();
+    if (self->enableStatistic == 0)
+      _rawfunc();
+    else 
+      _raxfunc(self);
   } else if (self->nestLevel == 0) {
     self->lock = _lock;
     if (enterCritical_1(_lock)) {
@@ -78,11 +82,11 @@ _al_template(void)
 	TxStart(self->tl2Thread,&buf,&_ro);
 	_stmfunc(self->tl2Thread);
 	TxCommit(self->tl2Thread);
+	_lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
 	exitCritical_1(_lock);
 	dec(self->nestLevel);
-	_lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
       } else {
-	self->transactMode = 1;
+	self->enableStatistic = 1;
 	tries = 0;
 	if (sigsetjmp(buf,1)) self->nestLevel = 0;
 	inc(self->nestLevel);
@@ -90,16 +94,29 @@ _al_template(void)
 	StxStart(self,&buf,&_ro);
 	_stxfunc(self);
 	StxCommit(self);
+	_lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
 	exitCritical_1(_lock);
 	dec(self->nestLevel);
-	_lock->triesCommits = setTriesCommits(_lock->triesCommits,tries);
-	self->transactMode = 0;
+	self->enableStatistic = 0;
       }
     } else {
-      self->nestLevel = -1;
-      _rawfunc();
-      exitCritical_1(_lock);
-      self->nestLevel = 0;
+      if ((_lock->lockDone)%0x3FF) {
+	self->nestLevel = -1;
+	_rawfunc();
+	inc(_lock->lockDone);
+	exitCritical_1(_lock);
+	self->nestLevel = 0;
+      } else {
+	self->enableStatistic = 1;
+	self->nestLevel = -1;
+	RaxStart(self,&buf,&_ro);
+	_raxfunc(self);
+	RaxCommit(self);
+	inc(_lock->lockDone);
+	exitCritical_1(_lock);
+	self->nestLevel = 0;
+	self->enableStatistic = 0;
+      }
     }
   } else {
     fprintf(stderr,"abort: file \"%s\", line %d, function \"%s\"\n",
